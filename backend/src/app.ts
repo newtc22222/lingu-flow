@@ -45,7 +45,7 @@ app.get('/api/events', (req: Request, res: Response) => {
 });
 
 // Setup dummy user if not exists for MVP
-const setupDummyUser = async () => {
+export const setupDummyUser = async () => {
   const userId = '64dfb1234567890123456789';
   const existingUser = await User.findById(userId);
   if (!existingUser) {
@@ -60,17 +60,5 @@ const setupDummyUser = async () => {
   }
 };
 
-const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/linguflow';
-
-mongoose.connect(MONGO_URI)
-  .then(async () => {
-    console.log('Connected to MongoDB');
-    await setupDummyUser();
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('Failed to connect to MongoDB:', err);
-  });
+// Note: Serverless environments handle the listen port and db connection externally
+export default app;
