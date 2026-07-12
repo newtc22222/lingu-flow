@@ -22,6 +22,23 @@ export class AuthController {
 
   guestLogin = async (req: Request, res: Response): Promise<void> => {
     try {
+      const { guestToken } = req.body || {};
+
+      if (guestToken) {
+        const guestId = this.getGuestIdFromToken(guestToken);
+        if (guestId) {
+          const existingGuest = await User.findById(guestId);
+          if (existingGuest && existingGuest.isGuest) {
+            const token = jwt.sign({ userId: existingGuest._id }, JWT_SECRET, { expiresIn: '7d' });
+            res.status(200).json({
+              token,
+              user: { id: existingGuest._id, isGuest: true }
+            });
+            return;
+          }
+        }
+      }
+
       const user = new User({ isGuest: true });
       await user.save();
 

@@ -41,7 +41,14 @@ const handleLogin = async () => {
 const handleGuestLogin = async () => {
   isLoading.value = true;
   try {
-    const res = await fetch('/api/auth/guest', { method: 'POST' });
+    const guestToken = localStorage.getItem('guest_token');
+    const res = await fetch('/api/auth/guest', { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ guestToken: guestToken || undefined })
+    });
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem('token', data.token);
