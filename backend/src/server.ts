@@ -1,5 +1,6 @@
 import app, { setupDummyUser } from './app';
 import { connectDB } from './utils/db';
+import { seedExams } from './examSeed';
 
 const PORT = process.env.PORT || 3000;
 
@@ -7,6 +8,7 @@ const startServer = async () => {
   try {
     await connectDB();
     await setupDummyUser();
+    await seedExams();
     
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

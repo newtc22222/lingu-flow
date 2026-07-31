@@ -5,6 +5,7 @@ import { EventEmitter } from 'events';
 import cardRoutes from './routes/cardRoutes';
 import deckRoutes from './routes/deckRoutes';
 import authRoutes from './routes/authRoutes';
+import examRoutes from './routes/examRoutes';
 import { authMiddleware } from './utils/authMiddleware';
 import User from './models/User';
 
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', authMiddleware, cardRoutes);
 app.use('/api/decks', authMiddleware, deckRoutes);
+app.use('/api/exams', authMiddleware, examRoutes);
 
 // SSE Endpoint for Real-Time Updates
 app.get('/api/events', (req: Request, res: Response) => {
