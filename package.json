@@ -2,12 +2,9 @@
   "name": "lingu-flow",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
   "scripts": {
-    "dev": "npm run dev --workspaces",
-    "build": "npm run build --workspaces"
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "cd backend && .\\venv\\Scripts\\python -m uvicorn app.main:app --port 8000 --reload",
+    "build:frontend": "npm run build --prefix frontend"
   }
 }

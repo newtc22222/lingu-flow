@@ -1,54 +1,50 @@
 # LinguFlow
 
-LinguFlow is a minimalist, keyboard-driven flashcard web app utilizing a Spaced Repetition System (SRS) based on the SuperMemo-2 (SM-2) algorithm. It is designed to be distraction-free and highly efficient.
+LinguFlow is a minimalist, keyboard-driven flashcard web app and certification exam simulator utilizing a Spaced Repetition System (SRS) based on the SuperMemo-2 (SM-2) algorithm and automated mock test simulations (TOEIC, IELTS, HSK, JLPT).
 
 ## Features
 
-- **Keyboard-Driven**: Press `Spacebar` to flip cards, and `1`, `2`, `3`, `4` to grade yourself.
-- **Markdown Support**: Both front and back of the cards fully support Markdown.
-- **Spaced Repetition System (SRS)**: Employs the robust SM-2 algorithm to schedule cards optimally.
-- **Real-Time Updates**: Utilizes Server-Sent Events (SSE) to deliver instant progression notifications.
-- **Docker-Ready**: Packaged for ease of deployment.
+- **Certification Exam Simulator**: Timed mock exams with question banks, countdown timer, keyboard shortcuts (`A`/`B`/`C`/`D`), and detailed answer explanations.
+- **Keyboard-Driven Flashcards**: Press `Spacebar` to flip cards, and `1`, `2`, `3`, `4` to grade yourself.
+- **Markdown Support**: Full Markdown support for flashcards and reading passages.
+- **Spaced Repetition System (SRS)**: Robust SM-2 algorithm to schedule cards optimally.
+- **Real-Time Updates**: Server-Sent Events (SSE) for instant progression notifications.
+- **Docker-Ready**: Containerized deployment with PostgreSQL and FastAPI.
 
 ## Tech Stack
 
-- **Backend**: Node.js, Express, TypeScript, Mongoose
+- **Backend**: Python 3.12, FastAPI, SQLAlchemy 2.0 (Async), Alembic, Pydantic v2
 - **Frontend**: Vue.js 3 (Composition API), Vite, TailwindCSS v4
-- **Database**: MongoDB
+- **Database**: PostgreSQL (via `asyncpg`)
 
 ## Quickstart (Docker)
 
-The fastest way to test the MVP locally is using Docker.
+Run the full stack with Docker Compose:
 
-1. Ensure [Docker](https://www.docker.com/) and Docker Compose are installed.
-2. In the project root, run:
-   ```bash
-   docker-compose up --build
-   ```
-3. Open your browser to `http://localhost:8080`.
-   - The backend API runs on port `3000`.
-   - MongoDB runs on port `27017`.
+```bash
+docker-compose up --build
+```
+
+- Frontend UI: `http://localhost:8080`
+- FastAPI Backend: `http://localhost:8000`
+- API Interactive OpenAPI Docs: `http://localhost:8000/docs`
+- PostgreSQL: `localhost:5432`
 
 ### Local Development (Without Docker)
 
-You can also run the components locally if you have MongoDB installed on your system.
-
-**1. MongoDB:**
-Ensure MongoDB is running locally on `127.0.0.1:27017`.
-
-**2. Backend:**
+**1. Backend (Python):**
 ```bash
 cd backend
-npm install
-npm run dev
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000 --reload
 ```
 
-*(Optional: To seed the database with sample cards: `npx tsx src/seed.ts`)*
-
-**3. Frontend:**
+**2. Frontend (Vue 3):**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-*(Vite proxies API requests to the backend automatically).*
+*(Vite automatically proxies `/api` to `http://localhost:8000`).*
