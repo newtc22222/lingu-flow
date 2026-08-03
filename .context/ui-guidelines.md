@@ -121,3 +121,16 @@ The frontend is mid-migration (see root `CLAUDE.md` for the full picture). Two c
 - **Legacy flat `components/`** — `ExamHub.vue`, `ExamResults.vue`, `ExamCreator.vue` are still live and actively wired into `App.vue`, not yet migrated to `features/exam/`. They don't follow the `...View.vue` naming convention. Don't add new files here; if you're touching one of these three for a feature change, migrating it to `features/exam/` first is worth raising, but isn't required for a small fix.
 
 Both conventions already consume `AppButton`/`ManageListShell`/other `shared/components/*` identically — the shared-component layer is convention-agnostic, so this split doesn't change how you use any of the [MUST] rules above.
+
+---
+
+## Governance: periodic re-audit
+
+Re-run `/design-system audit` monthly against `frontend/src`, comparing results to this session's baseline (token extraction, AppButton/ManageListShell extraction, and the lint rollout — see `COMPONENTS.md` and the git history around the commits introducing `tokens.css`'s `--font-size-2xs`, `AppButton.vue`, and `ManageListShell.vue`).
+
+Watch specifically for:
+- **New hardcoded values slipping past lint.** Rare, but possible — anything landing inside an existing `stylelint-disable-next-line` block, or a new property/selector pattern the current rules don't cover.
+- **New near-duplicate components**, the way `CardManagementView.vue` and `DeckManagementView.vue` drifted before the `ManageListShell` extraction. Watch for two components independently re-implementing the same list/form/row shape.
+- **Drift in the `--font-size-2xs` pattern**: a raw value repeated 3+ times across unrelated components before anyone notices it should be a token. This has already happened twice (`--font-size-md-plus`, `--font-size-2xs`) — treat a third repeated-literal case as expected, not surprising.
+
+**If the disable-comment count grows significantly between audits, that's a signal the token system needs expanding — not a reason to add more exceptions silently.** Each new `stylelint-disable-next-line` should be justified per-site (as the existing ones are) at the time it's added; a rising count over time means the token scale itself has a gap, and the fix is a new token, not a bigger allowlist.
