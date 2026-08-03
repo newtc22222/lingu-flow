@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
-from app.routers import auth, cards, decks, health, media
+from app.routers import auth, cards, decks, exams, health, media
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linguflow")
@@ -45,6 +45,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(cards.router)
 app.include_router(decks.router)
+app.include_router(exams.router)
 app.include_router(media.router)
 
 
