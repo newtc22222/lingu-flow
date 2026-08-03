@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { apiFetch } from '../utils/api';
 import PixelFrame from '../shared/components/PixelFrame.vue';
+import AppButton from '../shared/components/AppButton.vue';
 
 interface QuestionData {
   _id: string;
@@ -165,7 +166,7 @@ onMounted(fetchResults);
 
       <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
       <div class="actions-row">
-        <button type="button" class="btn-guest font-label" @click="emit('back')">← BACK TO EXAMS</button>
+        <AppButton variant="secondary" @click="emit('back')">← BACK TO EXAMS</AppButton>
       </div>
 
       <!-- ── Question Review ─────────────────────────────────────────────────── -->
@@ -419,20 +420,6 @@ onMounted(fetchResults);
   margin: 0 auto;
   width: 100%;
 }
-.btn-guest {
-  background: transparent;
-  border: var(--space-1) solid var(--surface-panel-border);
-  color: var(--text-secondary);
-  padding: var(--space-5) var(--space-8);
-  font-size: var(--font-size-sm);
-  letter-spacing: var(--tracking-normal);
-  cursor: pointer;
-}
-.btn-guest:hover {
-  border-color: var(--color-accent);
-  color: var(--text-primary);
-}
-
 .review {
   max-width: 900px;
   margin: 0 auto;
@@ -626,9 +613,8 @@ onMounted(fetchResults);
   }
 }
 
-.btn-guest:focus-visible,
 .review-header:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>

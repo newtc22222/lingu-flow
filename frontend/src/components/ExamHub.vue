@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { apiFetch } from '../utils/api';
 import PixelFrame from '../shared/components/PixelFrame.vue';
+import AppButton from '../shared/components/AppButton.vue';
 
 interface ExamTemplate {
   _id: string;
@@ -105,9 +106,9 @@ onMounted(fetchData);
       </div>
       <p class="hub-tagline font-label">TOEIC · IELTS · HSK · JLPT — REAL CONDITIONS, REAL RESULTS</p>
 
-      <button type="button" class="btn-arcade hub-create-btn font-label" @click="emit('create-exam')">
+      <AppButton class="hub-create-btn" @click="emit('create-exam')">
         + CREATE CUSTOM EXAM
-      </button>
+      </AppButton>
 
       <!-- Stats Row -->
       <div class="hub-stats">
@@ -513,31 +514,13 @@ onMounted(fetchData);
   font-size: var(--font-size-sm);
 }
 
-.btn-arcade {
-  font-weight: 700;
-  font-size: var(--font-size-md);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  background: var(--status-success);
-  color: var(--text-on-accent);
-  border: none;
-  padding: var(--space-6) var(--space-10);
-  cursor: pointer;
-  box-shadow: 0 4px 0 var(--status-success-subtle);
-}
-.btn-arcade:active {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-
 .filter-tab:focus-visible,
-.hub-create-btn:focus-visible,
 .hub-recent-row:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 .exam-card:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: -2px;
 }
 </style>

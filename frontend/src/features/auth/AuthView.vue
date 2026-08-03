@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
+import AppButton from '@/shared/components/AppButton.vue'
 
 const emit = defineEmits<{
   (e: 'auth-success', user: unknown): void
@@ -170,7 +171,7 @@ onMounted(() => {
             <input id="auth-password" v-model="password" type="password" required class="arcade-input" />
           </div>
 
-          <button type="submit" class="btn-arcade font-label" :disabled="isLoading">
+          <AppButton type="submit" class="auth-submit-btn" :disabled="isLoading">
             {{
               isLoading
                 ? mode === 'login'
@@ -180,7 +181,7 @@ onMounted(() => {
                   ? 'ĐĂNG NHẬP'
                   : 'TẠO TÀI KHOẢN'
             }}
-          </button>
+          </AppButton>
         </form>
 
         <div class="auth-divider font-label">
@@ -191,9 +192,9 @@ onMounted(() => {
 
         <div ref="googleBtnRef" class="auth-google"></div>
 
-        <button type="button" class="btn-guest font-label" :disabled="isLoading" @click="handleGuestLogin">
+        <AppButton variant="secondary" class="auth-guest-btn" :disabled="isLoading" @click="handleGuestLogin">
           TIẾP TỤC KHÔNG CẦN TÀI KHOẢN
-        </button>
+        </AppButton>
       </div>
     </PixelFrame>
   </div>
@@ -276,26 +277,9 @@ onMounted(() => {
   border-left: var(--border-width-accent) solid var(--status-danger);
   padding: var(--space-5) var(--space-6);
 }
-.btn-arcade {
-  font-weight: 700;
-  font-size: var(--font-size-md);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  background: var(--status-success);
-  color: var(--text-on-accent);
-  border: none;
-  padding: var(--space-7);
-  cursor: pointer;
-  box-shadow: 0 4px 0 var(--status-success-subtle);
+.auth-submit-btn {
+  width: 100%;
   margin-top: var(--space-3);
-}
-.btn-arcade:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-.btn-arcade:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 .auth-divider {
   display: flex;
@@ -313,28 +297,12 @@ onMounted(() => {
 .auth-google {
   margin-bottom: var(--space-6);
 }
-.btn-guest {
+.auth-guest-btn {
   width: 100%;
-  background: transparent;
-  border: var(--space-1) solid var(--surface-panel-border);
-  color: var(--text-secondary);
   padding: var(--space-6);
-  font-size: var(--font-size-sm);
-  letter-spacing: var(--tracking-normal);
-  cursor: pointer;
 }
-.btn-guest:hover:not(:disabled) {
-  border-color: var(--color-accent);
-  color: var(--text-primary);
-}
-.btn-guest:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.auth-tab:focus-visible,
-.btn-arcade:focus-visible,
-.btn-guest:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+.auth-tab:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>

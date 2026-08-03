@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PixelFrame from '@/shared/components/PixelFrame.vue'
+import AppButton from '@/shared/components/AppButton.vue'
 import AnswerOption from './AnswerOption.vue'
 import type { ExamQuestion } from '../store/examStore'
 import { OPTION_KEYS } from '../store/examStore'
@@ -49,14 +50,9 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
       </div>
 
       <div class="submit-row">
-        <button
-          type="button"
-          class="btn-arcade font-label"
-          :disabled="disabled || !selectedAnswer"
-          @click="$emit('submit')"
-        >
+        <AppButton :disabled="disabled || !selectedAnswer" @click="$emit('submit')">
           {{ isLastQuestion ? 'HOÀN THÀNH BÀI THI' : 'NỘP CÂU TRẢ LỜI' }}
-        </button>
+        </AppButton>
       </div>
     </div>
   </PixelFrame>
@@ -73,7 +69,7 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   display: block;
 }
 .q-passage {
-  font-size: 14px;
+  font-size: var(--font-size-md-plus);
   line-height: 1.6;
   color: var(--text-secondary);
   background: var(--surface-page);
@@ -113,25 +109,5 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 .submit-row {
   display: flex;
   justify-content: flex-end;
-}
-.btn-arcade {
-  font-weight: 700;
-  font-size: var(--font-size-md);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  background: var(--status-success);
-  color: var(--text-on-accent);
-  border: none;
-  padding: var(--space-8) 28px;
-  cursor: pointer;
-  box-shadow: 0 4px 0 var(--status-success-subtle);
-}
-.btn-arcade:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-.btn-arcade:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 </style>

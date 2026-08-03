@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { apiFetch } from '@/utils/api'
 import FlashCard from './components/FlashCard.vue'
 import DeckProgress from './components/DeckProgress.vue'
+import AppButton from '@/shared/components/AppButton.vue'
 
 interface Card {
   id: string
@@ -97,12 +98,8 @@ onUnmounted(() => {
       <FlashCard :front="currentCard.front" :back="currentCard.back" :flipped="flipped" @toggle="flipped = !flipped" />
 
       <div class="fc-actions">
-        <button type="button" class="btn-fc no font-label" @click="submitReview(SCORE_DONT_KNOW)">
-          ✕ CHƯA THUỘC
-        </button>
-        <button type="button" class="btn-fc yes font-label" @click="submitReview(SCORE_KNOW)">
-          ✓ ĐÃ THUỘC
-        </button>
+        <AppButton variant="danger" @click="submitReview(SCORE_DONT_KNOW)">✕ CHƯA THUỘC</AppButton>
+        <AppButton variant="primary" @click="submitReview(SCORE_KNOW)">✓ ĐÃ THUỘC</AppButton>
       </div>
     </template>
 
@@ -123,29 +120,6 @@ onUnmounted(() => {
   display: flex;
   gap: var(--space-6);
   justify-content: center;
-}
-.btn-fc {
-  font-weight: 700;
-  font-size: var(--font-size-base);
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  border: none;
-  padding: var(--space-7) var(--space-9);
-  cursor: pointer;
-}
-.btn-fc.no {
-  background: var(--status-danger);
-  color: var(--text-on-accent);
-  box-shadow: 0 4px 0 var(--status-danger-subtle);
-}
-.btn-fc.yes {
-  background: var(--status-success);
-  color: var(--text-on-accent);
-  box-shadow: 0 4px 0 var(--status-success-subtle);
-}
-.btn-fc:active {
-  transform: translateY(4px);
-  box-shadow: none;
 }
 .fc-status {
   color: var(--text-secondary);

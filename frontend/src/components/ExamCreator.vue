@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { apiFetch } from '../utils/api';
 import PixelFrame from '../shared/components/PixelFrame.vue';
+import AppButton from '../shared/components/AppButton.vue';
 
 const emit = defineEmits<{
   (e: 'back'): void;
@@ -220,9 +221,9 @@ const saveExam = async () => {
               </div>
             </div>
 
-            <button type="button" class="btn-arcade full-width font-label" :disabled="!step1Valid()" @click="goToStep2">
+            <AppButton class="full-width" :disabled="!step1Valid()" @click="goToStep2">
               NEXT: ADD QUESTIONS →
-            </button>
+            </AppButton>
           </div>
         </PixelFrame>
       </div>
@@ -318,14 +319,9 @@ const saveExam = async () => {
         <!-- Save Button -->
         <div class="save-block">
           <p v-if="saveError" class="save-error font-label">{{ saveError }}</p>
-          <button
-            type="button"
-            class="btn-arcade full-width font-label"
-            :disabled="!step2Valid() || isSaving"
-            @click="saveExam"
-          >
+          <AppButton class="full-width" :disabled="!step2Valid() || isSaving" @click="saveExam">
             {{ isSaving ? 'SAVING…' : `CREATE EXAM (${questions.length} QUESTIONS)` }}
-          </button>
+          </AppButton>
         </div>
       </div>
 
@@ -616,35 +612,13 @@ const saveExam = async () => {
   font-size: var(--font-size-base);
 }
 
-.btn-arcade {
-  font-weight: 700;
-  font-size: var(--font-size-md);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  background: var(--status-success);
-  color: var(--text-on-accent);
-  border: none;
-  padding: var(--space-7);
-  cursor: pointer;
-  box-shadow: 0 4px 0 var(--status-success-subtle);
-}
-.btn-arcade:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: none;
-}
-.btn-arcade:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 .header-back:focus-visible,
 .type-btn:focus-visible,
 .arcade-input:focus-visible,
-.btn-arcade:focus-visible,
 .btn-remove:focus-visible,
 .answer-key:focus-visible,
 .btn-add-question:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>
