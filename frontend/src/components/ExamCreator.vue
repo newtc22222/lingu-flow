@@ -583,10 +583,12 @@ const saveExam = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 100px 0;
   text-align: center;
 }
 .done-icon {
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - font-size one-off, see design-tokens.json notes */
   font-size: 56px;
   margin-bottom: var(--space-7);
   animation: done-bounce 0.6s ease infinite alternate;

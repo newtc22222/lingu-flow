@@ -101,6 +101,7 @@ onMounted(() => {
   color: var(--text-secondary);
   font-size: var(--font-size-md);
   text-align: center;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 40px 0;
 }
 .dash-status--error {

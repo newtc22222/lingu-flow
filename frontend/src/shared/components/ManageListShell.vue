@@ -90,6 +90,7 @@ const emit = defineEmits<{
   color: var(--text-secondary);
   font-size: var(--font-size-base);
   text-align: center;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 30px 0;
 }
 .manage-list {

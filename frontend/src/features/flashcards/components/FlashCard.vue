@@ -94,6 +94,7 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 28px;
   text-align: center;
 }

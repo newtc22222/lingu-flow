@@ -191,6 +191,7 @@ const backToExamHub = () => { currentView.value = 'exams' }
 .arcade-app {
   max-width: 920px;
   margin: 0 auto;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 28px var(--space-9) 60px;
 }
 </style>

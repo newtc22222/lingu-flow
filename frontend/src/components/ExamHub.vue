@@ -240,6 +240,7 @@ onMounted(fetchData);
   margin-bottom: var(--space-2);
 }
 .hub-icon {
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- isolated emoji-icon size, not part of the type scale */
   font-size: 28px;
 }
 .hub-title {
@@ -337,6 +338,7 @@ onMounted(fetchData);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-8);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   margin-bottom: 32px;
 }
 .exam-card {
@@ -413,11 +415,13 @@ onMounted(fetchData);
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   padding-top: var(--space-4);
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - isolated 1px border, no repeated pattern, see design-tokens.json notes */
   border-top: 1px solid var(--surface-panel-border);
 }
 
 .hub-empty {
   text-align: center;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
   padding: 60px 0;
   color: var(--text-secondary);
 }
@@ -491,6 +495,7 @@ onMounted(fetchData);
 .score-badge {
   font-size: var(--font-size-sm);
   font-weight: 700;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- isolated badge padding, not part of the spacing scale */
   padding: 3px 9px;
   border: var(--space-1) solid;
 }

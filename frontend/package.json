@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint:style": "stylelint \"src/**/*.vue\" \"src/**/*.css\"",
+    "lint:js": "eslint \"src/**/*.vue\""
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
@@ -18,17 +20,25 @@
     "vue": "^3.5.39"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.2",
     "@types/dompurify": "^3.0.5",
     "@types/marked": "^5.0.2",
     "@types/node": "^24.13.2",
+    "@typescript-eslint/parser": "^8.65.0",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vue/tsconfig": "^0.9.1",
     "autoprefixer": "^10.5.2",
+    "eslint": "^10.8.0",
+    "eslint-plugin-vue": "^10.10.0",
     "postcss": "^8.5.17",
+    "postcss-html": "^2.0.0",
+    "stylelint": "^17.14.1",
+    "stylelint-declaration-strict-value": "^1.11.1",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
+    "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.3.5"
   }
 }
