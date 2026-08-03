@@ -209,7 +209,7 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 .card-title {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -222,7 +222,7 @@ onMounted(() => {
 .count-badge {
   font-size: var(--font-size-base);
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--color-accent);
   background: var(--surface-page);
   border: var(--space-1) solid var(--color-accent);
@@ -249,7 +249,7 @@ onMounted(() => {
 }
 .form-title {
   font-size: var(--font-size-base);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-label-accent);
   margin: 0;
 }
@@ -269,7 +269,7 @@ select.arcade-input {
 .btn-arcade {
   font-weight: 700;
   font-size: var(--font-size-md);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
@@ -288,7 +288,7 @@ select.arcade-input {
   color: var(--text-secondary);
   padding: var(--space-5) var(--space-8);
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 .btn-guest:hover {
@@ -302,7 +302,7 @@ select.arcade-input {
 }
 .preview-label {
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-secondary);
 }
 .preview-panel {
@@ -312,7 +312,7 @@ select.arcade-input {
 }
 .preview-eyebrow {
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-label-accent);
   margin-bottom: var(--space-4);
 }
@@ -322,7 +322,7 @@ select.arcade-input {
 }
 .preview-content {
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   min-height: 2.5rem;
 }
 .preview-placeholder {
@@ -354,7 +354,7 @@ select.arcade-input {
   justify-content: space-between;
   gap: var(--space-8);
   background: var(--surface-panel);
-  border-left: 3px solid var(--surface-panel-border);
+  border-left: var(--border-width-accent) solid var(--surface-panel-border);
   padding: var(--space-7) var(--space-8);
   transition: border-color 0.12s, background 0.12s;
 }
@@ -368,7 +368,7 @@ select.arcade-input {
 }
 .card-row-eyebrow {
   font-size: var(--font-size-xs);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-label-accent);
   margin-bottom: var(--space-2);
 }
@@ -391,7 +391,7 @@ select.arcade-input {
 .btn-edit,
 .btn-delete {
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   padding: var(--space-3) var(--space-6);
   border: none;
   cursor: pointer;

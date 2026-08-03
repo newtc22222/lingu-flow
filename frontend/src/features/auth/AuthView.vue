@@ -212,7 +212,7 @@ onMounted(() => {
 .auth-wordmark {
   font-size: var(--font-size-2xl);
   color: var(--color-accent);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
 }
 .auth-cursor {
   margin-left: var(--space-2);
@@ -231,7 +231,7 @@ onMounted(() => {
 .auth-tagline {
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   margin: var(--space-4) 0 var(--space-9);
   text-align: center;
 }
@@ -251,7 +251,7 @@ onMounted(() => {
   flex: 1;
   padding: var(--space-5);
   font-size: var(--font-size-base);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   background: var(--surface-panel-border);
   color: var(--text-secondary);
   border: none;
@@ -273,13 +273,13 @@ onMounted(() => {
   color: var(--status-danger);
   font-size: var(--font-size-base);
   background: var(--surface-page);
-  border-left: 3px solid var(--status-danger);
+  border-left: var(--border-width-accent) solid var(--status-danger);
   padding: var(--space-5) var(--space-6);
 }
 .btn-arcade {
   font-weight: 700;
   font-size: var(--font-size-md);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
@@ -320,7 +320,7 @@ onMounted(() => {
   color: var(--text-secondary);
   padding: var(--space-6);
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 .btn-guest:hover:not(:disabled) {

@@ -160,7 +160,7 @@ const backToExamHub = () => { currentView.value = 'exams' }
 }
 .tab {
   font-size: var(--font-size-xs);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   padding: var(--space-6) var(--space-7);
   background: var(--surface-panel);
   color: var(--text-secondary);
@@ -178,7 +178,7 @@ const backToExamHub = () => { currentView.value = 'exams' }
   background: none;
   border: none;
   color: var(--text-secondary);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   cursor: pointer;
   padding: var(--space-2) 0;
 }

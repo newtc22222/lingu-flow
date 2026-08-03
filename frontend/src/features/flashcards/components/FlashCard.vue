@@ -100,7 +100,7 @@ const emit = defineEmits<{
 .fc-eyebrow {
   font-weight: 700;
   font-size: var(--font-size-sm);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--text-label-accent);
   margin-bottom: var(--space-8);
@@ -112,7 +112,7 @@ const emit = defineEmits<{
   color: var(--text-primary);
 }
 .fc-def {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   line-height: 1.6;
   color: var(--text-primary);
 }

@@ -356,7 +356,7 @@ onMounted(fetchResults);
   font-size: var(--font-size-2xl);
 }
 .hero-title {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -400,14 +400,14 @@ onMounted(fetchResults);
   gap: var(--space-3);
 }
 .hero-stat-value {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--text-primary);
 }
 .hero-stat-label {
   font-size: 9px;
   color: var(--text-secondary);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
 }
 
 .actions-row {
@@ -425,7 +425,7 @@ onMounted(fetchResults);
   color: var(--text-secondary);
   padding: var(--space-5) var(--space-8);
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 .btn-guest:hover {
@@ -441,7 +441,7 @@ onMounted(fetchResults);
   flex: 1;
 }
 .review-title {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-8);
@@ -453,7 +453,7 @@ onMounted(fetchResults);
 }
 .review-row {
   background: var(--surface-panel);
-  border-left: 3px solid var(--surface-panel-border);
+  border-left: var(--border-width-accent) solid var(--surface-panel-border);
 }
 .review-row--correct {
   border-left-color: var(--status-success);
@@ -547,7 +547,7 @@ onMounted(fetchResults);
 .review-passage-label {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   margin-bottom: var(--space-3);
 }
 .review-options {
@@ -598,7 +598,7 @@ onMounted(fetchResults);
   font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--text-label-accent);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   margin-bottom: var(--space-3);
 }
 .review-explanation-text {

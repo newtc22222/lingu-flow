@@ -27,7 +27,7 @@ withDefaults(
 .stat-label {
   font-weight: 700;
   font-size: var(--font-size-sm);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--text-secondary);
   margin-bottom: var(--space-4);

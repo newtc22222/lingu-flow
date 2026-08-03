@@ -79,17 +79,17 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   background: var(--surface-page);
   padding: var(--space-6) var(--space-7);
   margin: 0 0 var(--space-8);
-  border-left: 3px solid var(--border-info);
+  border-left: var(--border-width-accent) solid var(--border-info);
 }
 .q-passage-eyebrow {
   display: block;
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-secondary);
   margin-bottom: var(--space-3);
 }
 .q-text {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   line-height: 1.55;
   font-weight: 500;
   margin: 0 0 var(--space-10);
@@ -102,7 +102,7 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   padding: var(--space-6) var(--space-7);
   margin: 0 0 var(--space-10);
   overflow-x: auto;
-  border-left: 3px solid var(--color-accent);
+  border-left: var(--border-width-accent) solid var(--color-accent);
   white-space: pre-wrap;
 }
 .options {
@@ -117,7 +117,7 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 .btn-arcade {
   font-weight: 700;
   font-size: var(--font-size-md);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);

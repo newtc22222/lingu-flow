@@ -99,7 +99,7 @@ onUnmounted(() => {
   font-size: var(--font-size-base);
   color: var(--text-secondary);
   margin: 0 0 var(--space-8);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
 }
 .exam-meta {
   display: flex;

@@ -360,14 +360,14 @@ const saveExam = async () => {
   border: none;
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 .header-back:hover {
   color: var(--text-primary);
 }
 .creator-title {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -407,7 +407,7 @@ const saveExam = async () => {
 }
 
 .section-title {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-8);
@@ -453,7 +453,7 @@ const saveExam = async () => {
   color: var(--text-on-accent);
 }
 .type-btn-icon {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
 }
 
 .step1-grid {
@@ -495,7 +495,7 @@ const saveExam = async () => {
 .question-num {
   font-size: var(--font-size-sm);
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-label-accent);
 }
 .btn-remove {
@@ -503,7 +503,7 @@ const saveExam = async () => {
   border: none;
   color: var(--status-danger);
   font-size: var(--font-size-xs);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
   padding: var(--space-2) var(--space-4);
 }
@@ -562,7 +562,7 @@ const saveExam = async () => {
   border: var(--space-1) dashed var(--surface-panel-border);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   cursor: pointer;
 }
 .btn-add-question:hover {
@@ -577,7 +577,7 @@ const saveExam = async () => {
   color: var(--status-danger);
   font-size: var(--font-size-base);
   background: var(--surface-page);
-  border-left: 3px solid var(--status-danger);
+  border-left: var(--border-width-accent) solid var(--status-danger);
   padding: var(--space-5) var(--space-6);
   margin: 0 0 var(--space-6);
 }
@@ -619,7 +619,7 @@ const saveExam = async () => {
 .btn-arcade {
   font-weight: 700;
   font-size: var(--font-size-md);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);

@@ -57,7 +57,7 @@ const store = useExamStore()
 }
 .hud-time {
   font-weight: 700;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   min-width: 64px;
   text-align: right;
   color: var(--text-primary);

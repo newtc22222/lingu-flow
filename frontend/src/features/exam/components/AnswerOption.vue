@@ -35,7 +35,7 @@ defineEmits<{
   border: none;
   padding: var(--space-7) var(--space-8);
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;

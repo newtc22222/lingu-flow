@@ -102,20 +102,34 @@
 
   /* ---- Type scale ----
      Derived from a frequency audit of every font-size literal in
-     frontend/src (Aug 2026). --font-size-lg and --font-size-xl are
-     TODO: each has two real candidate values in use (15px vs 16px, and
-     18px vs 20px respectively) that are close enough to likely be the
-     same intended step — pick one per pair after a visual check, then
-     replace the literal below and re-run the token-extraction sweep on
-     the remaining call sites. */
+     frontend/src (Aug 2026). --font-size-lg and --font-size-xl were each
+     confirmed by visual check against their sibling candidate (16px and
+     20px respectively) and finalized Aug 2026. */
   --font-size-xs: 10px;
   --font-size-sm: 11px;
   --font-size-base: 12px;
   --font-size-md: 13px;
-  --font-size-lg: 15px; /* TODO: confirm vs 16px candidate — see summary */
-  --font-size-xl: 18px; /* TODO: confirm vs 20px candidate — see summary */
+  --font-size-lg: 15px;
+  --font-size-xl: 18px;
   --font-size-2xl: 22px;
   --font-size-display: 44px;
+
+  /* ---- Tracking (letter-spacing) scale ----
+     Derived from every letter-spacing literal in frontend/src (Aug 2026).
+     Does not include the 3 border-width literals that happened to share
+     a pixel value with tracking (0.5/1/1.5px never occur as a border
+     width anywhere in the codebase — see --border-width-accent below). */
+  --tracking-tight: 0.5px;
+  --tracking-normal: 1px;
+  --tracking-wide: 1.5px;
+
+  /* ---- Border width ----
+     Only one semantic border-width token exists: the 3px accent-bar
+     border reused across 10 call sites. The far more common 2px panel
+     border reuses --space-1 (2px) rather than getting its own token, and
+     the single 1px border at ExamHub.vue is left as a local literal
+     since it's an isolated case, not a repeated pattern. */
+  --border-width-accent: 3px;
 }
 
 @theme {
@@ -163,7 +177,7 @@
 .arcade-label {
   font-family: var(--font-label);
   font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-secondary);
 }
 .arcade-input {

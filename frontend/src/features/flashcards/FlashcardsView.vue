@@ -127,7 +127,7 @@ onUnmounted(() => {
 .btn-fc {
   font-weight: 700;
   font-size: var(--font-size-base);
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   text-transform: uppercase;
   border: none;
   padding: var(--space-7) var(--space-9);

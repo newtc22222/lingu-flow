@@ -242,14 +242,14 @@ onMounted(fetchData);
   font-size: 28px;
 }
 .hub-title {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   color: var(--color-accent);
   margin: 0;
 }
 .hub-tagline {
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   margin: 0 0 var(--space-8);
 }
 .hub-create-btn {
@@ -268,13 +268,13 @@ onMounted(fetchData);
   display: block;
   font-weight: 700;
   font-size: var(--font-size-xs);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--text-secondary);
   margin-bottom: var(--space-3);
 }
 .stat-value {
-  font-size: 18px;
+  font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-accent);
 }
@@ -294,7 +294,7 @@ onMounted(fetchData);
   gap: var(--space-3);
   padding: var(--space-5) var(--space-7);
   font-size: var(--font-size-sm);
-  letter-spacing: 0.5px;
+  letter-spacing: var(--tracking-tight);
   background: var(--surface-panel);
   color: var(--text-secondary);
   border: var(--space-1) solid var(--surface-panel-border);
@@ -372,7 +372,7 @@ onMounted(fetchData);
 .exam-card-type {
   font-size: var(--font-size-sm);
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--text-label-accent);
 }
 .exam-card-level {
@@ -382,14 +382,14 @@ onMounted(fetchData);
 }
 .badge-official {
   font-size: 9px;
-  letter-spacing: 1px;
+  letter-spacing: var(--tracking-normal);
   color: var(--status-success);
   border: var(--space-1) solid var(--status-success);
   padding: var(--space-1) var(--space-3);
   white-space: nowrap;
 }
 .exam-card-name {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
@@ -430,7 +430,7 @@ onMounted(fetchData);
 }
 
 .hub-recent-title {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-6);
@@ -449,7 +449,7 @@ onMounted(fetchData);
   justify-content: space-between;
   gap: var(--space-8);
   background: var(--surface-panel);
-  border-left: 3px solid var(--surface-panel-border);
+  border-left: var(--border-width-accent) solid var(--surface-panel-border);
   padding: var(--space-6) var(--space-8);
   cursor: pointer;
   transition: border-color 0.12s, background 0.12s;
@@ -465,7 +465,7 @@ onMounted(fetchData);
   min-width: 0;
 }
 .hub-recent-flag {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
 }
 .hub-recent-name {
   font-size: var(--font-size-md);
@@ -516,7 +516,7 @@ onMounted(fetchData);
 .btn-arcade {
   font-weight: 700;
   font-size: var(--font-size-md);
-  letter-spacing: 1.5px;
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
