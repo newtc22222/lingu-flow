@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { apiFetch } from '../utils/api';
+import PixelFrame from '../shared/components/PixelFrame.vue';
 
 interface ExamTemplate {
   _id: string;
@@ -35,42 +36,12 @@ const sessions = ref<ExamSession[]>([]);
 const isLoading = ref(true);
 const selectedType = ref<string>('all');
 
-const EXAM_CONFIG: Record<string, { label: string; icon: string; color: string; gradient: string; flag: string }> = {
-  toeic: {
-    label: 'TOEIC',
-    icon: '🇺🇸',
-    flag: '🇺🇸',
-    color: 'from-blue-500/20 to-cyan-500/20 border-blue-500/30',
-    gradient: 'from-blue-600 to-cyan-500',
-  },
-  ielts: {
-    label: 'IELTS',
-    icon: '🇬🇧',
-    flag: '🇬🇧',
-    color: 'from-red-500/20 to-orange-500/20 border-red-500/30',
-    gradient: 'from-red-600 to-orange-500',
-  },
-  hsk: {
-    label: 'HSK',
-    icon: '🇨🇳',
-    flag: '🇨🇳',
-    color: 'from-rose-500/20 to-pink-500/20 border-rose-500/30',
-    gradient: 'from-rose-600 to-pink-500',
-  },
-  jlpt: {
-    label: 'JLPT',
-    icon: '🇯🇵',
-    flag: '🇯🇵',
-    color: 'from-purple-500/20 to-violet-500/20 border-purple-500/30',
-    gradient: 'from-purple-600 to-violet-500',
-  },
-  custom: {
-    label: 'Custom',
-    icon: '⚙️',
-    flag: '⚙️',
-    color: 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30',
-    gradient: 'from-emerald-600 to-teal-500',
-  },
+const EXAM_CONFIG: Record<string, { label: string; flag: string }> = {
+  toeic: { label: 'TOEIC', flag: '🇺🇸' },
+  ielts: { label: 'IELTS', flag: '🇬🇧' },
+  hsk: { label: 'HSK', flag: '🇨🇳' },
+  jlpt: { label: 'JLPT', flag: '🇯🇵' },
+  custom: { label: 'Custom', flag: '⚙️' },
 };
 
 const typeFilters = [
@@ -119,201 +90,454 @@ const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
+const scoreTier = (score: number) => (score >= 80 ? 'good' : score >= 60 ? 'mid' : 'bad');
+
 onMounted(fetchData);
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-slate-900 text-slate-100 overflow-y-auto">
+  <div class="exam-hub">
     <!-- Header -->
-    <div class="relative overflow-hidden bg-gradient-to-br from-slate-800 via-slate-800 to-slate-900 border-b border-slate-700/60 px-6 py-8">
-      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(99,102,241,0.12),_transparent_60%)]"></div>
-      <div class="relative max-w-6xl mx-auto">
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <div class="flex items-center gap-3 mb-1">
-              <span class="text-3xl">🎓</span>
-              <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
-                Exam Simulator
-              </h1>
-            </div>
-            <p class="text-slate-400 text-sm ml-12">
-              TOEIC · IELTS · HSK · JLPT — real conditions, real results
-            </p>
-          </div>
-          <button
-            @click="emit('create-exam')"
-            class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white rounded-xl font-medium transition-all duration-200 shadow-lg shadow-indigo-500/20 cursor-pointer"
-          >
-            <span class="text-lg">+</span> Create Custom Exam
-          </button>
-        </div>
+    <div class="hub-header">
+      <div class="hub-heading">
+        <span class="hub-icon" aria-hidden="true">🎓</span>
+        <h1 class="hub-title font-pixel">EXAM SIMULATOR</h1>
+      </div>
+      <p class="hub-tagline font-label">TOEIC · IELTS · HSK · JLPT — REAL CONDITIONS, REAL RESULTS</p>
 
-        <!-- Stats Row -->
-        <div class="mt-6 grid grid-cols-3 gap-4 max-w-lg">
-          <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-            <div class="text-2xl font-bold text-indigo-400">{{ stats.total }}</div>
-            <div class="text-xs text-slate-400 mt-0.5">Exams Taken</div>
+      <button type="button" class="btn-arcade hub-create-btn font-label" @click="emit('create-exam')">
+        + CREATE CUSTOM EXAM
+      </button>
+
+      <!-- Stats Row -->
+      <div class="hub-stats">
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+          <div class="stat-inner">
+            <span class="stat-label font-label">EXAMS TAKEN</span>
+            <span class="stat-value font-label">{{ stats.total }}</span>
           </div>
-          <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-            <div class="text-2xl font-bold text-cyan-400">{{ stats.avgScore }}%</div>
-            <div class="text-xs text-slate-400 mt-0.5">Avg Score</div>
+        </PixelFrame>
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+          <div class="stat-inner">
+            <span class="stat-label font-label">AVG SCORE</span>
+            <span class="stat-value font-label">{{ stats.avgScore }}%</span>
           </div>
-          <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-            <div class="text-2xl font-bold text-emerald-400">{{ stats.bestScore }}%</div>
-            <div class="text-xs text-slate-400 mt-0.5">Best Score</div>
+        </PixelFrame>
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+          <div class="stat-inner">
+            <span class="stat-label font-label">BEST SCORE</span>
+            <span class="stat-value font-label stat-value--green">{{ stats.bestScore }}%</span>
           </div>
-        </div>
+        </PixelFrame>
       </div>
     </div>
 
-    <div class="flex-1 max-w-6xl mx-auto w-full px-6 py-6">
+    <!-- Filter Tabs -->
+    <div class="hub-filters">
+      <button
+        v-for="f in typeFilters"
+        :key="f.key"
+        type="button"
+        class="filter-tab font-label"
+        :class="{ 'filter-tab--active': selectedType === f.key }"
+        @click="selectedType = f.key"
+      >
+        <span aria-hidden="true">{{ f.icon }}</span> {{ f.label }}
+      </button>
+    </div>
 
-      <!-- Filter Tabs -->
-      <div class="flex gap-2 mb-6 flex-wrap">
-        <button
-          v-for="f in typeFilters"
-          :key="f.key"
-          @click="selectedType = f.key"
-          :class="[
-            'flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer',
-            selectedType === f.key
-              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 border border-slate-700',
-          ]"
+    <!-- Loading State -->
+    <div v-if="isLoading" class="hub-skeleton-grid">
+      <div v-for="i in 4" :key="i" class="hub-skeleton"></div>
+    </div>
+
+    <template v-else>
+      <!-- Exam Cards Grid -->
+      <div v-if="filteredTemplates.length" class="hub-grid">
+        <PixelFrame
+          v-for="template in filteredTemplates"
+          :key="template._id"
+          frame-color="amber"
+          surface="cabinet"
+          :ring-width="3"
+          class="exam-card-frame"
         >
-          <span>{{ f.icon }}</span> {{ f.label }}
-        </button>
+          <button type="button" class="exam-card" @click="emit('start-exam', template._id)">
+            <div class="exam-card-top">
+              <div class="exam-card-id">
+                <span class="exam-card-flag" aria-hidden="true">{{ EXAM_CONFIG[template.examType]?.flag || '📄' }}</span>
+                <div>
+                  <div class="exam-card-type font-label">{{ EXAM_CONFIG[template.examType]?.label || 'Custom' }}</div>
+                  <div v-if="template.level" class="exam-card-level font-label">{{ template.level }}</div>
+                </div>
+              </div>
+              <span v-if="template.isPublic" class="badge-official font-label">OFFICIAL</span>
+            </div>
+
+            <h3 class="exam-card-name font-body">{{ template.name }}</h3>
+            <p class="exam-card-desc font-body">{{ template.description }}</p>
+
+            <div class="exam-card-meta font-label">
+              <span>⏱ {{ template.duration }} MIN</span>
+              <span>❓ {{ template.totalQuestions }} Qs</span>
+              <span>PASS {{ template.passingScore }}%</span>
+            </div>
+          </button>
+        </PixelFrame>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="i in 4" :key="i"
-          class="h-48 bg-slate-800 rounded-2xl animate-pulse border border-slate-700"
-        ></div>
+      <!-- Empty state -->
+      <div v-else class="hub-empty font-label">
+        <div class="hub-empty-icon" aria-hidden="true">📭</div>
+        <p>NO EXAMS FOUND FOR THIS CATEGORY.</p>
+        <p class="hub-empty-sub">Try creating a custom exam!</p>
       </div>
 
-      <div v-else>
-        <!-- Exam Cards Grid -->
-        <div v-if="filteredTemplates.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div
-            v-for="template in filteredTemplates"
-            :key="template._id"
-            :class="[
-              'group relative bg-gradient-to-br border rounded-2xl p-5 flex flex-col cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl',
-              EXAM_CONFIG[template.examType]?.color || 'from-slate-700/20 to-slate-600/20 border-slate-600/30',
-            ]"
-            @click="emit('start-exam', template._id)"
+      <!-- Recent History -->
+      <div v-if="recentSessions.length" class="hub-recent">
+        <h2 class="hub-recent-title font-body">📋 Recent Sessions</h2>
+        <ul class="hub-recent-list">
+          <li
+            v-for="session in recentSessions"
+            :key="session._id"
+            class="hub-recent-row"
+            @click="emit('view-session', session._id)"
           >
-            <!-- Exam type badge -->
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <span class="text-2xl">{{ EXAM_CONFIG[template.examType]?.flag || '📄' }}</span>
-                <div>
-                  <div
-                    :class="[
-                      'text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r text-white inline-block',
-                      EXAM_CONFIG[template.examType]?.gradient || 'from-slate-600 to-slate-500',
-                    ]"
-                  >
-                    {{ EXAM_CONFIG[template.examType]?.label || 'Custom' }}
-                  </div>
-                  <div v-if="template.level" class="text-xs text-slate-400 mt-0.5">{{ template.level }}</div>
-                </div>
-              </div>
-              <div v-if="template.isPublic" class="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                Official
+            <div class="hub-recent-info">
+              <span class="hub-recent-flag" aria-hidden="true">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📄' }}</span>
+              <div>
+                <div class="hub-recent-name font-body">{{ session.examTemplateId?.name || 'Unknown Exam' }}</div>
+                <div class="hub-recent-date font-label">{{ formatDate(session.createdAt) }}</div>
               </div>
             </div>
-
-            <!-- Name & Description -->
-            <h3 class="font-semibold text-slate-100 mb-1 group-hover:text-white transition-colors leading-snug">
-              {{ template.name }}
-            </h3>
-            <p class="text-slate-400 text-xs leading-relaxed flex-1 line-clamp-2 mb-4">
-              {{ template.description }}
-            </p>
-
-            <!-- Meta -->
-            <div class="flex items-center justify-between mt-auto pt-3 border-t border-white/5">
-              <div class="flex gap-3 text-xs text-slate-400">
-                <span class="flex items-center gap-1">⏱ {{ template.duration }} min</span>
-                <span class="flex items-center gap-1">❓ {{ template.totalQuestions }} Qs</span>
-              </div>
-              <div class="text-xs text-slate-400">Pass: {{ template.passingScore }}%</div>
+            <div class="hub-recent-result">
+              <span class="hub-recent-count font-label">{{ session.correctCount }}/{{ session.totalCount }}</span>
+              <span class="score-badge font-label" :class="`score-badge--${scoreTier(session.score)}`">
+                {{ session.score }}%
+              </span>
+              <span class="hub-recent-arrow" aria-hidden="true">→</span>
             </div>
-
-            <!-- Hover CTA -->
-            <div class="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-              <div
-                :class="[
-                  'bg-gradient-to-r text-white px-6 py-2.5 rounded-xl font-semibold shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300',
-                  EXAM_CONFIG[template.examType]?.gradient || 'from-indigo-600 to-cyan-600',
-                ]"
-              >
-                Start Exam →
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Empty state -->
-        <div v-else class="text-center py-16 text-slate-500">
-          <div class="text-5xl mb-3">📭</div>
-          <p class="text-lg">No exams found for this category.</p>
-          <p class="text-sm mt-1">Try creating a custom exam!</p>
-        </div>
-
-        <!-- Recent History -->
-        <div v-if="recentSessions.length" class="mt-2">
-          <h2 class="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
-            <span>📋</span> Recent Sessions
-          </h2>
-          <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-            <div
-              v-for="session in recentSessions"
-              :key="session._id"
-              class="flex items-center justify-between px-5 py-3.5 border-b border-slate-700/50 last:border-0 hover:bg-slate-700/30 transition-colors cursor-pointer"
-              @click="emit('view-session', session._id)"
-            >
-              <div class="flex items-center gap-3">
-                <span class="text-lg">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📄' }}</span>
-                <div>
-                  <div class="text-sm font-medium text-slate-200">
-                    {{ session.examTemplateId?.name || 'Unknown Exam' }}
-                  </div>
-                  <div class="text-xs text-slate-500">{{ formatDate(session.createdAt) }}</div>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="text-sm text-slate-400">
-                  {{ session.correctCount }}/{{ session.totalCount }}
-                </div>
-                <div
-                  :class="[
-                    'text-sm font-bold px-3 py-1 rounded-full',
-                    session.score >= 70 ? 'bg-emerald-500/20 text-emerald-400' :
-                    session.score >= 50 ? 'bg-yellow-500/20 text-yellow-400' :
-                    'bg-rose-500/20 text-rose-400',
-                  ]"
-                >
-                  {{ session.score }}%
-                </div>
-                <span class="text-slate-500 text-xs">→</span>
-              </div>
-            </div>
-          </div>
-        </div>
+          </li>
+        </ul>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.line-clamp-2 {
+.exam-hub {
+  display: flex;
+  flex-direction: column;
+}
+.hub-header {
+  margin-bottom: 26px;
+}
+.hub-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.hub-icon {
+  font-size: 28px;
+}
+.hub-title {
+  font-size: 16px;
+  color: var(--color-accent);
+  margin: 0;
+}
+.hub-tagline {
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  margin: 0 0 16px;
+}
+.hub-create-btn {
+  margin-bottom: 20px;
+}
+.hub-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 480px;
+}
+.stat-inner {
+  padding: 14px;
+}
+.stat-label {
+  display: block;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.stat-value--green {
+  color: var(--status-success);
+}
+
+.hub-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+  border: 2px solid var(--surface-panel-border);
+  cursor: pointer;
+}
+.filter-tab:hover:not(.filter-tab--active) {
+  color: var(--text-primary);
+  border-color: var(--muted);
+}
+.filter-tab--active {
+  background: var(--state-selected-bg);
+  border-color: var(--state-selected-bg);
+  color: var(--text-on-accent);
+}
+
+.hub-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.hub-skeleton {
+  height: 180px;
+  background: var(--surface-panel);
+  border: 2px solid var(--surface-panel-border);
+  animation: hub-pulse 1.4s ease-in-out infinite;
+}
+@keyframes hub-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-skeleton {
+    animation: none;
+  }
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.exam-card {
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  padding: 16px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: background 0.12s;
+}
+.exam-card:hover {
+  background: var(--state-hover-surface);
+}
+.exam-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.exam-card-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.exam-card-flag {
+  font-size: 22px;
+}
+.exam-card-type {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-label-accent);
+}
+.exam-card-level {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.badge-official {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--status-success);
+  border: 2px solid var(--status-success);
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+.exam-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.exam-card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.exam-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding-top: 8px;
+  border-top: 1px solid var(--surface-panel-border);
+}
+
+.hub-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-secondary);
+}
+.hub-empty-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+.hub-empty-sub {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.hub-recent-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+.hub-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hub-recent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface-panel);
+  border-left: 3px solid var(--surface-panel-border);
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.hub-recent-row:hover {
+  border-left-color: var(--color-accent);
+  background: var(--state-hover-surface);
+}
+.hub-recent-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.hub-recent-flag {
+  font-size: 16px;
+}
+.hub-recent-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.hub-recent-date {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.hub-recent-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.hub-recent-count {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.score-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border: 2px solid;
+}
+.score-badge--good {
+  color: var(--status-success);
+  border-color: var(--status-success);
+  background: var(--status-success-subtle);
+}
+.score-badge--mid {
+  color: var(--status-caution);
+  border-color: var(--status-caution);
+  background: var(--status-caution-subtle);
+}
+.score-badge--bad {
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+  background: var(--status-danger-subtle);
+}
+.hub-recent-arrow {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.btn-arcade {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--status-success);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 12px 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--status-success-subtle);
+}
+.btn-arcade:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.filter-tab:focus-visible,
+.hub-create-btn:focus-visible,
+.hub-recent-row:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.exam-card:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: -2px;
 }
 </style>

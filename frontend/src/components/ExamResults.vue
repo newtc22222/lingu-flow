@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { apiFetch } from '../utils/api';
+import PixelFrame from '../shared/components/PixelFrame.vue';
 
 interface QuestionData {
   _id: string;
@@ -47,12 +48,12 @@ const session = ref<SessionDetails | null>(null);
 const isLoading = ref(true);
 const expandedIdx = ref<number | null>(null);
 
-const EXAM_CONFIG: Record<string, { gradient: string; flag: string }> = {
-  toeic: { gradient: 'from-blue-600 to-cyan-500', flag: '🇺🇸' },
-  ielts: { gradient: 'from-red-600 to-orange-500', flag: '🇬🇧' },
-  hsk: { gradient: 'from-rose-600 to-pink-500', flag: '🇨🇳' },
-  jlpt: { gradient: 'from-purple-600 to-violet-500', flag: '🇯🇵' },
-  custom: { gradient: 'from-emerald-600 to-teal-500', flag: '⚙️' },
+const EXAM_CONFIG: Record<string, { flag: string }> = {
+  toeic: { flag: '🇺🇸' },
+  ielts: { flag: '🇬🇧' },
+  hsk: { flag: '🇨🇳' },
+  jlpt: { flag: '🇯🇵' },
+  custom: { flag: '⚙️' },
 };
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
@@ -69,12 +70,11 @@ const timeTaken = computed(() => {
   return `${m}m ${s}s`;
 });
 
-const scoreColor = computed(() => {
-  if (!session.value) return 'text-slate-400';
-  const s = session.value.score;
-  if (s >= 80) return 'text-emerald-400';
-  if (s >= 60) return 'text-yellow-400';
-  return 'text-rose-400';
+const scoreTier = computed(() => {
+  const s = session.value?.score ?? 0;
+  if (s >= 80) return 'good';
+  if (s >= 60) return 'mid';
+  return 'bad';
 });
 
 const circumference = 2 * Math.PI * 52; // radius 52 SVG circle
@@ -100,184 +100,140 @@ onMounted(fetchResults);
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-slate-900 text-slate-100 overflow-y-auto">
+  <div class="results-screen">
 
     <!-- Loading -->
-    <div v-if="isLoading" class="flex-1 flex items-center justify-center">
-      <div class="text-center">
-        <div class="text-5xl mb-4 animate-spin">⏳</div>
-        <p class="text-slate-400 animate-pulse">Loading results...</p>
-      </div>
+    <div v-if="isLoading" class="results-loading">
+      <div class="loading-icon" aria-hidden="true">⏳</div>
+      <p class="font-label">LOADING RESULTS…</p>
     </div>
 
     <template v-else-if="session">
       <!-- ── Hero Score Section ──────────────────────────────────────────────── -->
-      <div
-        class="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border-b border-slate-700/60 px-6 py-10"
-      >
-        <div
-          :class="[
-            'absolute inset-0 opacity-10 bg-gradient-to-br',
-            passed ? 'from-emerald-500 to-teal-500' : 'from-rose-500 to-orange-500',
-          ]"
-        ></div>
-        <div class="relative max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8">
-
-          <!-- Circular Score Gauge -->
-          <div class="relative shrink-0">
-            <svg width="140" height="140" class="-rotate-90">
-              <circle cx="70" cy="70" r="52" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10" />
-              <circle
-                cx="70" cy="70" r="52" fill="none"
-                :stroke="passed ? '#10b981' : '#f43f5e'"
-                stroke-width="10"
-                stroke-linecap="round"
-                :stroke-dasharray="circumference"
-                :stroke-dashoffset="strokeDashoffset"
-                class="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span :class="['text-3xl font-bold', scoreColor]">{{ session.score }}%</span>
-              <span class="text-xs text-slate-400 mt-0.5">Score</span>
-            </div>
+      <div class="hero">
+        <!-- Circular Score Gauge -->
+        <div class="hero-gauge">
+          <svg width="140" height="140" class="gauge-svg">
+            <circle cx="70" cy="70" r="52" fill="none" stroke-width="10" class="gauge-track" />
+            <circle
+              cx="70" cy="70" r="52" fill="none"
+              stroke-width="10"
+              stroke-linecap="round"
+              :stroke-dasharray="circumference"
+              :stroke-dashoffset="strokeDashoffset"
+              :class="['gauge-fill', passed ? 'gauge-fill--pass' : 'gauge-fill--fail']"
+            />
+          </svg>
+          <div class="gauge-center">
+            <span class="gauge-score font-label" :class="`gauge-score--${scoreTier}`">{{ session.score }}%</span>
+            <span class="gauge-label font-label">SCORE</span>
           </div>
+        </div>
 
-          <!-- Summary Text -->
-          <div class="flex-1 text-center md:text-left">
-            <div class="flex items-center gap-2 justify-center md:justify-start mb-1">
-              <span class="text-2xl">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📝' }}</span>
-              <h1 class="text-2xl font-bold text-slate-100">{{ session.examTemplateId?.name }}</h1>
-            </div>
-            <div
-              :class="[
-                'inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold mt-1 mb-4',
-                passed
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
-              ]"
-            >
-              {{ passed ? '🎉 PASSED' : '❌ NOT PASSED' }}
-              <span class="text-xs opacity-70">(Pass: {{ session.examTemplateId?.passingScore }}%)</span>
-            </div>
-            <div class="grid grid-cols-3 gap-4 mt-2">
-              <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-                <div class="text-xl font-bold text-slate-100">{{ session.correctCount }}/{{ session.totalCount }}</div>
-                <div class="text-xs text-slate-400">Correct</div>
+        <!-- Summary Text -->
+        <div class="hero-summary">
+          <div class="hero-title-row">
+            <span class="hero-flag" aria-hidden="true">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📝' }}</span>
+            <h1 class="hero-title font-body">{{ session.examTemplateId?.name }}</h1>
+          </div>
+          <div class="pass-badge font-label" :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'">
+            {{ passed ? '🎉 PASSED' : '❌ NOT PASSED' }}
+            <span class="pass-badge-sub">(PASS: {{ session.examTemplateId?.passingScore }}%)</span>
+          </div>
+          <div class="hero-stats">
+            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+              <div class="hero-stat">
+                <span class="hero-stat-value font-label">{{ session.correctCount }}/{{ session.totalCount }}</span>
+                <span class="hero-stat-label font-label">CORRECT</span>
               </div>
-              <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-                <div class="text-xl font-bold text-slate-100">{{ timeTaken }}</div>
-                <div class="text-xs text-slate-400">Time Taken</div>
+            </PixelFrame>
+            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+              <div class="hero-stat">
+                <span class="hero-stat-value font-label">{{ timeTaken }}</span>
+                <span class="hero-stat-label font-label">TIME TAKEN</span>
               </div>
-              <div class="bg-slate-700/40 rounded-xl p-3 text-center border border-slate-600/30">
-                <div class="text-xl font-bold text-slate-100">{{ session.timeLimit }} min</div>
-                <div class="text-xs text-slate-400">Time Limit</div>
+            </PixelFrame>
+            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+              <div class="hero-stat">
+                <span class="hero-stat-value font-label">{{ session.timeLimit }} MIN</span>
+                <span class="hero-stat-label font-label">TIME LIMIT</span>
               </div>
-            </div>
+            </PixelFrame>
           </div>
         </div>
       </div>
 
       <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
-      <div class="px-6 py-4 flex gap-3 justify-end border-b border-slate-800 max-w-4xl mx-auto w-full">
-        <button
-          @click="emit('back')"
-          class="px-5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl transition-colors cursor-pointer text-sm font-medium"
-        >
-          ← Back to Exams
-        </button>
+      <div class="actions-row">
+        <button type="button" class="btn-guest font-label" @click="emit('back')">← BACK TO EXAMS</button>
       </div>
 
       <!-- ── Question Review ─────────────────────────────────────────────────── -->
-      <div class="flex-1 max-w-4xl mx-auto w-full px-6 py-6">
-        <h2 class="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <span>🔍</span> Question Review
-        </h2>
+      <div class="review">
+        <h2 class="review-title font-body">🔍 Question Review</h2>
 
-        <div class="space-y-3">
+        <div class="review-list">
           <div
             v-for="(record, idx) in session.answers"
             :key="record.questionId"
-            class="bg-slate-800 rounded-xl border overflow-hidden transition-all duration-200"
-            :class="record.isCorrect ? 'border-emerald-500/30' : 'border-rose-500/30'"
+            class="review-row"
+            :class="record.isCorrect ? 'review-row--correct' : 'review-row--incorrect'"
           >
             <!-- Question Header (always visible) -->
-            <div
-              class="flex items-start gap-3 p-4 cursor-pointer hover:bg-slate-700/30 transition-colors"
-              @click="expandedIdx = expandedIdx === idx ? null : idx"
-            >
-              <div
-                :class="[
-                  'shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold mt-0.5',
-                  record.isCorrect
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'bg-rose-500/20 text-rose-400 border border-rose-500/40',
-                ]"
-              >
+            <button type="button" class="review-header" @click="expandedIdx = expandedIdx === idx ? null : idx">
+              <span class="review-mark font-pixel" :class="record.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'">
                 {{ record.isCorrect ? '✓' : '✗' }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-slate-300 line-clamp-2">
+              </span>
+              <span class="review-body">
+                <span class="review-question font-body">
                   Q{{ idx + 1 }}. {{ session.questionsMap[record.questionId]?.questionText || 'Question not found' }}
-                </div>
-                <div class="flex items-center gap-3 mt-1 text-xs text-slate-500">
-                  <span>Your answer: <strong :class="record.isCorrect ? 'text-emerald-400' : 'text-rose-400'">{{ record.userAnswer || '—' }}</strong></span>
-                  <span v-if="!record.isCorrect">Correct: <strong class="text-emerald-400">{{ session.questionsMap[record.questionId]?.correctAnswer }}</strong></span>
-                  <span>⏱ {{ record.timeTaken }}s</span>
-                </div>
-              </div>
-              <span class="text-slate-500 text-xs mt-1 shrink-0">{{ expandedIdx === idx ? '▲' : '▼' }}</span>
-            </div>
+                </span>
+                <span class="review-meta font-label">
+                  <span>YOUR ANSWER: <strong :class="record.isCorrect ? 'text-correct' : 'text-incorrect'">{{ record.userAnswer || '—' }}</strong></span>
+                  <span v-if="!record.isCorrect">CORRECT: <strong class="text-correct">{{ session.questionsMap[record.questionId]?.correctAnswer }}</strong></span>
+                  <span>⏱ {{ record.timeTaken }}S</span>
+                </span>
+              </span>
+              <span class="review-chevron font-label" aria-hidden="true">{{ expandedIdx === idx ? '▲' : '▼' }}</span>
+            </button>
 
             <!-- Expanded Detail -->
             <Transition name="slide">
-              <div
-                v-if="expandedIdx === idx"
-                class="border-t border-slate-700/50 px-5 py-4 bg-slate-900/50 text-sm space-y-3"
-              >
+              <div v-if="expandedIdx === idx" class="review-detail">
                 <!-- Passage if present -->
-                <div
-                  v-if="session.questionsMap[record.questionId]?.passage"
-                  class="bg-slate-800 border border-slate-700 rounded-lg p-3 text-slate-400 text-xs leading-relaxed"
-                >
-                  <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Passage</div>
+                <div v-if="session.questionsMap[record.questionId]?.passage" class="review-passage font-body">
+                  <div class="review-passage-label font-label">PASSAGE</div>
                   {{ session.questionsMap[record.questionId].passage }}
                 </div>
 
                 <!-- Options -->
-                <div class="space-y-2">
+                <div class="review-options">
                   <div
                     v-for="(option, oi) in session.questionsMap[record.questionId]?.options"
                     :key="oi"
-                    :class="[
-                      'flex items-center gap-3 px-3 py-2 rounded-lg border text-sm',
-                      OPTION_KEYS[oi] === session.questionsMap[record.questionId]?.correctAnswer
-                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
-                        : OPTION_KEYS[oi] === record.userAnswer && !record.isCorrect
-                          ? 'bg-rose-500/10 border-rose-500/40 text-rose-300'
-                          : 'border-slate-700 text-slate-400',
-                    ]"
+                    class="review-option font-body"
+                    :class="{
+                      'review-option--correct': OPTION_KEYS[oi] === session.questionsMap[record.questionId]?.correctAnswer,
+                      'review-option--wrong': OPTION_KEYS[oi] === record.userAnswer && !record.isCorrect,
+                    }"
                   >
-                    <span class="font-bold w-5 shrink-0">{{ OPTION_KEYS[oi] }}</span>
-                    <span>{{ option }}</span>
+                    <span class="review-option-key font-label">{{ OPTION_KEYS[oi] }}</span>
+                    <span class="review-option-text">{{ option }}</span>
                     <span
                       v-if="OPTION_KEYS[oi] === session.questionsMap[record.questionId]?.correctAnswer"
-                      class="ml-auto text-emerald-400 text-xs font-semibold"
-                    >✓ Correct</span>
+                      class="review-option-tag text-correct font-label"
+                    >✓ CORRECT</span>
                     <span
                       v-else-if="OPTION_KEYS[oi] === record.userAnswer && !record.isCorrect"
-                      class="ml-auto text-rose-400 text-xs font-semibold"
-                    >Your answer</span>
+                      class="review-option-tag text-incorrect font-label"
+                    >YOUR ANSWER</span>
                   </div>
                 </div>
 
                 <!-- Explanation -->
-                <div
-                  v-if="session.questionsMap[record.questionId]?.explanation"
-                  class="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-3"
-                >
-                  <div class="text-xs text-indigo-400 uppercase tracking-wider font-semibold mb-1">💡 Explanation</div>
-                  <p class="text-slate-300 text-sm leading-relaxed">
+                <div v-if="session.questionsMap[record.questionId]?.explanation" class="review-explanation">
+                  <div class="review-explanation-label font-label">💡 EXPLANATION</div>
+                  <p class="review-explanation-text font-body">
                     {{ session.questionsMap[record.questionId].explanation }}
                   </p>
                 </div>
@@ -291,19 +247,388 @@ onMounted(fetchResults);
 </template>
 
 <style scoped>
-.line-clamp-2 {
+.results-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.results-loading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+.loading-icon {
+  font-size: 44px;
+  animation: results-spin 1.2s linear infinite;
+}
+@keyframes results-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-icon {
+    animation: none;
+  }
+}
+
+.hero {
+  background: var(--surface-panel);
+  border-bottom: 2px solid var(--surface-panel-border);
+  padding: 36px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+.hero-gauge {
+  position: relative;
+  flex-shrink: 0;
+}
+.gauge-svg {
+  transform: rotate(-90deg);
+}
+.gauge-track {
+  stroke: var(--surface-panel-border);
+}
+.gauge-fill {
+  transition: stroke-dashoffset 1s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gauge-fill {
+    transition: none;
+  }
+}
+.gauge-fill--pass {
+  stroke: var(--status-success);
+}
+.gauge-fill--fail {
+  stroke: var(--status-danger);
+}
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-score {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.gauge-score--good {
+  color: var(--status-success);
+}
+.gauge-score--mid {
+  color: var(--status-caution);
+}
+.gauge-score--bad {
+  color: var(--status-danger);
+}
+.gauge-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.hero-summary {
+  flex: 1;
+  min-width: 260px;
+}
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.hero-flag {
+  font-size: 22px;
+}
+.hero-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.pass-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border: 2px solid;
+  margin-bottom: 16px;
+}
+.pass-badge--pass {
+  color: var(--status-success);
+  border-color: var(--status-success);
+  background: var(--status-success-subtle);
+}
+.pass-badge--fail {
+  color: var(--status-danger);
+  border-color: var(--status-danger);
+  background: var(--status-danger-subtle);
+}
+.pass-badge-sub {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.hero-stat {
+  padding: 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hero-stat-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.hero-stat-label {
+  font-size: 9px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-bottom: 2px solid var(--surface-panel-border);
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+.btn-guest {
+  background: transparent;
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
+  padding: 10px 18px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.btn-guest:hover {
+  border-color: var(--color-accent);
+  color: var(--text-primary);
+}
+
+.review {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px;
+  flex: 1;
+}
+.review-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.review-row {
+  background: var(--surface-panel);
+  border-left: 3px solid var(--surface-panel-border);
+}
+.review-row--correct {
+  border-left-color: var(--status-success);
+}
+.review-row--incorrect {
+  border-left-color: var(--status-danger);
+}
+.review-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.review-header:hover {
+  background: var(--state-hover-surface);
+}
+.review-mark {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.review-mark--correct {
+  background: var(--status-success);
+  color: var(--text-on-accent);
+}
+.review-mark--incorrect {
+  background: var(--status-danger);
+  color: var(--text-on-accent);
+}
+.review-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.review-question {
+  font-size: 13px;
+  color: var(--text-primary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.slide-enter-active, .slide-leave-active {
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.text-correct {
+  color: var(--status-success);
+}
+.text-incorrect {
+  color: var(--status-danger);
+}
+.review-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.review-detail {
+  border-top: 2px solid var(--surface-panel-border);
+  padding: 16px 20px;
+  background: var(--surface-page);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.review-passage {
+  background: var(--surface-panel);
+  border: 2px solid var(--surface-panel-border);
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.review-passage-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.review-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.review-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.review-option--correct {
+  border-color: var(--status-success);
+  background: var(--status-success-subtle);
+  color: var(--text-primary);
+}
+.review-option--wrong {
+  border-color: var(--status-danger);
+  background: var(--status-danger-subtle);
+  color: var(--text-primary);
+}
+.review-option-key {
+  font-weight: 700;
+  width: 18px;
+  flex-shrink: 0;
+}
+.review-option-text {
+  flex: 1;
+}
+.review-option-tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.review-explanation {
+  background: var(--amber-dim);
+  border: 2px solid var(--amber);
+  padding: 12px;
+}
+.review-explanation-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-label-accent);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.review-explanation-text {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
   transition: max-height 0.25s ease, opacity 0.2s ease;
   max-height: 800px;
   overflow: hidden;
 }
-.slide-enter-from, .slide-leave-to {
+.slide-enter-from,
+.slide-leave-to {
   max-height: 0;
   opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide-enter-active,
+  .slide-leave-active {
+    transition: none;
+  }
+}
+
+.btn-guest:focus-visible,
+.review-header:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 </style>

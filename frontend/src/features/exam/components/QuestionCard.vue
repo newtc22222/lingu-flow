@@ -68,24 +68,24 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 }
 .q-label {
   font-size: 9px;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin-bottom: 14px;
   display: block;
 }
 .q-passage {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--muted);
-  background: var(--ink);
+  color: var(--text-secondary);
+  background: var(--surface-page);
   padding: 12px 14px;
   margin: 0 0 18px;
-  border-left: 3px solid var(--muted);
+  border-left: 3px solid var(--border-info);
 }
 .q-passage-eyebrow {
   display: block;
   font-size: 11px;
   letter-spacing: 1px;
-  color: var(--muted);
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 .q-text {
@@ -93,16 +93,16 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   line-height: 1.55;
   font-weight: 500;
   margin: 0 0 22px;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .code-snip {
   font-size: 13px;
-  background: var(--ink);
-  color: var(--code-fg);
+  background: var(--surface-page);
+  color: var(--text-code);
   padding: 12px 14px;
   margin: 0 0 22px;
   overflow-x: auto;
-  border-left: 3px solid var(--amber);
+  border-left: 3px solid var(--color-accent);
   white-space: pre-wrap;
 }
 .options {
@@ -119,12 +119,12 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  background: var(--green);
-  color: var(--ink);
+  background: var(--status-success);
+  color: var(--text-on-accent);
   border: none;
   padding: 16px 28px;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--green-shadow);
+  box-shadow: 0 4px 0 var(--status-success-subtle);
 }
 .btn-arcade:active:not(:disabled) {
   transform: translateY(4px);

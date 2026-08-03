@@ -29,16 +29,16 @@ withDefaults(
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--text-secondary);
   margin-bottom: 8px;
   display: block;
 }
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: var(--amber);
+  color: var(--color-accent);
 }
 .stat-value--green {
-  color: var(--green);
+  color: var(--status-success);
 }
 </style>

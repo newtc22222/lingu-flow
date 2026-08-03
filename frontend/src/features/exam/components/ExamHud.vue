@@ -39,20 +39,20 @@ const store = useExamStore()
 }
 .hud-bar-track {
   height: 20px;
-  background: var(--ink);
+  background: var(--surface-page);
   position: relative;
   overflow: hidden;
 }
 .hud-bar-fill {
   height: 100%;
   background:
-    linear-gradient(90deg, var(--amber), var(--amber-light)),
+    linear-gradient(90deg, var(--color-accent), var(--amber-light)),
     repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
   transition: width 0.25s linear, background 0.4s ease;
 }
 .hud-bar-fill--low {
   background:
-    linear-gradient(90deg, var(--red), var(--red-light)),
+    linear-gradient(90deg, var(--status-danger), var(--red-light)),
     repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
 }
 .hud-time {
@@ -60,14 +60,14 @@ const store = useExamStore()
   font-size: 20px;
   min-width: 64px;
   text-align: right;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .hud-time--low {
-  color: var(--red);
+  color: var(--status-danger);
 }
 .hud-lives {
   font-size: 14px;
-  color: var(--red);
+  color: var(--status-danger);
   letter-spacing: 3px;
 }
 

@@ -98,12 +98,12 @@ onMounted(() => {
   gap: 16px;
 }
 .dash-status {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 13px;
   text-align: center;
   padding: 40px 0;
 }
 .dash-status--error {
-  color: var(--red);
+  color: var(--status-danger);
 }
 </style>

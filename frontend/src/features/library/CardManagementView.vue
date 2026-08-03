@@ -211,7 +211,7 @@ onMounted(() => {
 .card-title {
   font-size: 20px;
   font-weight: 600;
-  color: var(--phosphor);
+  color: var(--text-primary);
   margin: 0;
 }
 .card-header-right {
@@ -223,9 +223,9 @@ onMounted(() => {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--amber);
-  background: var(--ink);
-  border: 2px solid var(--amber);
+  color: var(--color-accent);
+  background: var(--surface-page);
+  border: 2px solid var(--color-accent);
   padding: 4px 10px;
 }
 .card-form-frame {
@@ -250,7 +250,7 @@ onMounted(() => {
 .form-title {
   font-size: 12px;
   letter-spacing: 1px;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin: 0;
 }
 textarea.arcade-input {
@@ -271,12 +271,12 @@ select.arcade-input {
   font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  background: var(--green);
-  color: var(--ink);
+  background: var(--status-success);
+  color: var(--text-on-accent);
   border: none;
   padding: 12px 22px;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--green-shadow);
+  box-shadow: 0 4px 0 var(--status-success-subtle);
 }
 .btn-arcade:active {
   transform: translateY(4px);
@@ -284,16 +284,16 @@ select.arcade-input {
 }
 .btn-guest {
   background: transparent;
-  border: 2px solid var(--cabinet-light);
-  color: var(--muted);
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
   padding: 10px 18px;
   font-size: 11px;
   letter-spacing: 1px;
   cursor: pointer;
 }
 .btn-guest:hover {
-  border-color: var(--amber);
-  color: var(--phosphor);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
 }
 .card-preview {
   display: flex;
@@ -303,17 +303,17 @@ select.arcade-input {
 .preview-label {
   font-size: 11px;
   letter-spacing: 1px;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 .preview-panel {
-  background: var(--ink);
+  background: var(--surface-page);
   padding: 16px;
   flex: 1;
 }
 .preview-eyebrow {
   font-size: 11px;
   letter-spacing: 1px;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin-bottom: 8px;
 }
 .preview-eyebrow--back {
@@ -321,21 +321,21 @@ select.arcade-input {
   margin-top: 16px;
 }
 .preview-content {
-  color: var(--phosphor);
+  color: var(--text-primary);
   font-size: 15px;
   min-height: 2.5rem;
 }
 .preview-placeholder {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-style: italic;
 }
 .preview-divider {
   height: 1px;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
   margin-top: 16px;
 }
 .card-list-status {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 12px;
   text-align: center;
   padding: 30px 0;
@@ -353,14 +353,14 @@ select.arcade-input {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  background: var(--cabinet);
-  border-left: 3px solid var(--cabinet-light);
+  background: var(--surface-panel);
+  border-left: 3px solid var(--surface-panel-border);
   padding: 14px 16px;
   transition: border-color 0.12s, background 0.12s;
 }
 .card-row:hover {
-  border-left-color: var(--amber);
-  background: var(--surface-hover);
+  border-left-color: var(--color-accent);
+  background: var(--state-hover-surface);
 }
 .card-row-info {
   min-width: 0;
@@ -369,7 +369,7 @@ select.arcade-input {
 .card-row-eyebrow {
   font-size: 10px;
   letter-spacing: 1px;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin-bottom: 4px;
 }
 .card-row-eyebrow--back {
@@ -378,7 +378,7 @@ select.arcade-input {
 }
 .card-row-text {
   font-size: 14px;
-  color: var(--phosphor);
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -395,27 +395,27 @@ select.arcade-input {
   padding: 6px 12px;
   border: none;
   cursor: pointer;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
 }
 .btn-edit {
-  color: var(--amber);
+  color: var(--color-accent);
 }
 .btn-edit:hover {
-  background: var(--surface-selected);
+  background: var(--state-selected-surface);
 }
 .btn-delete {
-  color: var(--red);
+  color: var(--status-danger);
 }
 .btn-delete:hover {
-  background: var(--red-shadow);
-  color: var(--phosphor);
+  background: var(--status-danger-subtle);
+  color: var(--text-primary);
 }
 .arcade-input:focus-visible,
 .btn-arcade:focus-visible,
 .btn-guest:focus-visible,
 .btn-edit:focus-visible,
 .btn-delete:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>

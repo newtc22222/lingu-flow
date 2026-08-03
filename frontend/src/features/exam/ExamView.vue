@@ -97,7 +97,7 @@ onUnmounted(() => {
 <style scoped>
 .exam-title {
   font-size: 12px;
-  color: var(--muted);
+  color: var(--text-secondary);
   margin: 0 0 18px;
   letter-spacing: 0.5px;
 }
@@ -107,14 +107,14 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 14px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 .exam-loading,
 .exam-error {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 .exam-error {
-  color: var(--red);
+  color: var(--status-danger);
 }
 </style>

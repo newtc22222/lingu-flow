@@ -25,12 +25,12 @@ defineProps<{
 .dot {
   width: 10px;
   height: 10px;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
 }
 .dot.done {
-  background: var(--green);
+  background: var(--status-success);
 }
 .dot.current {
-  background: var(--amber);
+  background: var(--state-selected-bg);
 }
 </style>

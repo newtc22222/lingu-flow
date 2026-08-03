@@ -40,7 +40,7 @@ defineProps<{
 .world-title {
   font-size: 11px;
   margin-bottom: 14px;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .levels {
   display: flex;
@@ -56,32 +56,32 @@ defineProps<{
   justify-content: center;
   font-weight: 700;
   font-size: 13px;
-  background: var(--ink);
-  color: var(--muted);
+  background: var(--surface-page);
+  color: var(--text-secondary);
 }
 .level.done {
-  background: var(--green);
-  color: var(--ink);
+  background: var(--status-success);
+  color: var(--text-on-accent);
 }
 .level.current {
-  background: var(--amber);
-  color: var(--ink);
+  background: var(--state-selected-bg);
+  color: var(--text-on-accent);
   box-shadow: 0 0 0 2px var(--phosphor);
 }
 .level.locked {
-  color: var(--locked);
+  color: var(--text-disabled);
 }
 .world-progress-track {
   height: 8px;
-  background: var(--ink);
+  background: var(--surface-page);
   margin-bottom: 8px;
 }
 .world-progress-fill {
   height: 100%;
-  background: var(--amber);
+  background: var(--color-accent);
 }
 .world-sub {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 </style>

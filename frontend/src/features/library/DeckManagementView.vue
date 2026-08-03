@@ -159,16 +159,16 @@ onMounted(() => {
 .deck-title {
   font-size: 20px;
   font-weight: 600;
-  color: var(--phosphor);
+  color: var(--text-primary);
   margin: 0;
 }
 .count-badge {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--amber);
-  background: var(--ink);
-  border: 2px solid var(--amber);
+  color: var(--color-accent);
+  background: var(--surface-page);
+  border: 2px solid var(--color-accent);
   padding: 4px 10px;
 }
 .deck-form-frame {
@@ -183,7 +183,7 @@ onMounted(() => {
 .form-title {
   font-size: 12px;
   letter-spacing: 1px;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin: 0;
 }
 .form-actions {
@@ -197,12 +197,12 @@ onMounted(() => {
   font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  background: var(--green);
-  color: var(--ink);
+  background: var(--status-success);
+  color: var(--text-on-accent);
   border: none;
   padding: 12px 22px;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--green-shadow);
+  box-shadow: 0 4px 0 var(--status-success-subtle);
 }
 .btn-arcade:active {
   transform: translateY(4px);
@@ -210,19 +210,19 @@ onMounted(() => {
 }
 .btn-guest {
   background: transparent;
-  border: 2px solid var(--cabinet-light);
-  color: var(--muted);
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
   padding: 10px 18px;
   font-size: 11px;
   letter-spacing: 1px;
   cursor: pointer;
 }
 .btn-guest:hover {
-  border-color: var(--amber);
-  color: var(--phosphor);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
 }
 .deck-list-status {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 12px;
   text-align: center;
   padding: 30px 0;
@@ -240,14 +240,14 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--cabinet);
-  border-left: 3px solid var(--cabinet-light);
+  background: var(--surface-panel);
+  border-left: 3px solid var(--surface-panel-border);
   padding: 14px 16px;
   transition: border-color 0.12s, background 0.12s;
 }
 .deck-row:hover {
-  border-left-color: var(--amber);
-  background: var(--surface-hover);
+  border-left-color: var(--color-accent);
+  background: var(--state-hover-surface);
 }
 .deck-row-info {
   min-width: 0;
@@ -255,11 +255,11 @@ onMounted(() => {
 .deck-row-name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .deck-row-desc {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 .deck-row-actions {
@@ -274,27 +274,27 @@ onMounted(() => {
   padding: 6px 12px;
   border: none;
   cursor: pointer;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
 }
 .btn-edit {
-  color: var(--amber);
+  color: var(--color-accent);
 }
 .btn-edit:hover {
-  background: var(--surface-selected);
+  background: var(--state-selected-surface);
 }
 .btn-delete {
-  color: var(--red);
+  color: var(--status-danger);
 }
 .btn-delete:hover {
-  background: var(--red-shadow);
-  color: var(--phosphor);
+  background: var(--status-danger-subtle);
+  color: var(--text-primary);
 }
 .arcade-input:focus-visible,
 .btn-arcade:focus-visible,
 .btn-guest:focus-visible,
 .btn-edit:focus-visible,
 .btn-delete:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>

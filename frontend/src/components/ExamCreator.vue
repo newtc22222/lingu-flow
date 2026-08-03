@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { apiFetch } from '../utils/api';
+import PixelFrame from '../shared/components/PixelFrame.vue';
 
 const emit = defineEmits<{
   (e: 'back'): void;
@@ -56,7 +57,6 @@ const EXAM_TYPES: { value: ExamType; label: string; icon: string }[] = [
 ];
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'] as const;
-const OPTION_COLORS = ['text-blue-400', 'text-orange-400', 'text-rose-400', 'text-emerald-400'];
 
 const step1Valid = () => {
   return templateForm.value.name.trim().length >= 3 && templateForm.value.duration > 0;
@@ -117,211 +117,179 @@ const saveExam = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-slate-900 text-slate-100 overflow-y-auto">
-
+  <div class="creator-screen">
     <!-- Header -->
-    <div class="shrink-0 bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center gap-4">
-      <button
-        @click="emit('back')"
-        class="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-      >
-        ← Back
-      </button>
-      <h1 class="text-xl font-bold text-slate-100">Create Custom Exam</h1>
+    <div class="creator-header">
+      <button type="button" class="header-back font-label" @click="emit('back')">← BACK</button>
+      <h1 class="creator-title font-body">Create Custom Exam</h1>
       <!-- Step indicator -->
-      <div class="ml-auto flex items-center gap-2 text-sm">
+      <div class="step-indicator" aria-hidden="true">
         <span
           v-for="s in [1, 2, 3]" :key="s"
-          :class="[
-            'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-            step === s
-              ? 'bg-indigo-600 text-white'
-              : step > s
-                ? 'bg-emerald-600 text-white'
-                : 'bg-slate-700 text-slate-400',
-          ]"
+          class="step-cell font-label"
+          :class="{ 'step-cell--current': step === s, 'step-cell--done': step > s }"
         >
           {{ step > s ? '✓' : s }}
         </span>
       </div>
     </div>
 
-    <div class="flex-1 max-w-3xl mx-auto w-full px-6 py-6">
+    <div class="creator-body">
 
       <!-- ── Step 1: Exam Info ──────────────────────────────────────────────── -->
       <div v-if="step === 1">
-        <h2 class="text-lg font-semibold text-slate-200 mb-5">Step 1 — Exam Details</h2>
+        <h2 class="section-title font-body">Step 1 — Exam Details</h2>
 
-        <div class="bg-slate-800 rounded-2xl border border-slate-700 p-6 space-y-5">
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+          <div class="step-panel">
 
-          <!-- Exam Type Picker -->
-          <div>
-            <label class="block text-sm text-slate-400 mb-2">Exam Type</label>
-            <div class="grid grid-cols-5 gap-2">
-              <button
-                v-for="et in EXAM_TYPES" :key="et.value"
-                @click="templateForm.examType = et.value"
-                :class="[
-                  'flex flex-col items-center gap-1 p-3 rounded-xl border transition-all text-xs font-semibold cursor-pointer',
-                  templateForm.examType === et.value
-                    ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300'
-                    : 'bg-slate-700/50 border-slate-600 text-slate-400 hover:bg-slate-700',
-                ]"
-              >
-                <span class="text-xl">{{ et.icon }}</span>
-                {{ et.label }}
-              </button>
+            <!-- Exam Type Picker -->
+            <div class="arcade-field">
+              <span class="arcade-label">EXAM TYPE</span>
+              <div class="type-grid">
+                <button
+                  v-for="et in EXAM_TYPES" :key="et.value"
+                  type="button"
+                  class="type-btn font-label"
+                  :class="{ 'type-btn--active': templateForm.examType === et.value }"
+                  @click="templateForm.examType = et.value"
+                >
+                  <span class="type-btn-icon" aria-hidden="true">{{ et.icon }}</span>
+                  {{ et.label }}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <!-- Name -->
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Exam Name <span class="text-rose-400">*</span></label>
-            <input
-              v-model="templateForm.name"
-              type="text"
-              placeholder="e.g. My TOEIC Practice Set 1"
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors"
-            />
-          </div>
-
-          <!-- Description -->
-          <div>
-            <label class="block text-sm text-slate-400 mb-1">Description (optional)</label>
-            <textarea
-              v-model="templateForm.description"
-              rows="2"
-              placeholder="Brief description of this exam..."
-              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors resize-none"
-            ></textarea>
-          </div>
-
-          <!-- Duration & Passing Score & Level -->
-          <div class="grid grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm text-slate-400 mb-1">Duration (min) <span class="text-rose-400">*</span></label>
+            <!-- Name -->
+            <div class="arcade-field">
+              <label class="arcade-label" for="exam-name">EXAM NAME *</label>
               <input
-                v-model.number="templateForm.duration"
-                type="number"
-                min="1"
-                max="300"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label class="block text-sm text-slate-400 mb-1">Pass Score (%)</label>
-              <input
-                v-model.number="templateForm.passingScore"
-                type="number"
-                min="1"
-                max="100"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors"
-              />
-            </div>
-            <div>
-              <label class="block text-sm text-slate-400 mb-1">Level / Part</label>
-              <input
-                v-model="templateForm.level"
+                id="exam-name"
+                v-model="templateForm.name"
                 type="text"
-                placeholder="e.g. N4, HSK 3"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors"
+                placeholder="e.g. My TOEIC Practice Set 1"
+                class="arcade-input"
               />
             </div>
-          </div>
 
-          <button
-            @click="goToStep2"
-            :disabled="!step1Valid()"
-            class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Next: Add Questions →
-          </button>
-        </div>
+            <!-- Description -->
+            <div class="arcade-field">
+              <label class="arcade-label" for="exam-desc">DESCRIPTION (OPTIONAL)</label>
+              <textarea
+                id="exam-desc"
+                v-model="templateForm.description"
+                rows="2"
+                placeholder="Brief description of this exam..."
+                class="arcade-input"
+              ></textarea>
+            </div>
+
+            <!-- Duration & Passing Score & Level -->
+            <div class="step1-grid">
+              <div class="arcade-field">
+                <label class="arcade-label" for="exam-duration">DURATION (MIN) *</label>
+                <input
+                  id="exam-duration"
+                  v-model.number="templateForm.duration"
+                  type="number"
+                  min="1"
+                  max="300"
+                  class="arcade-input"
+                />
+              </div>
+              <div class="arcade-field">
+                <label class="arcade-label" for="exam-pass">PASS SCORE (%)</label>
+                <input
+                  id="exam-pass"
+                  v-model.number="templateForm.passingScore"
+                  type="number"
+                  min="1"
+                  max="100"
+                  class="arcade-input"
+                />
+              </div>
+              <div class="arcade-field">
+                <label class="arcade-label" for="exam-level">LEVEL / PART</label>
+                <input
+                  id="exam-level"
+                  v-model="templateForm.level"
+                  type="text"
+                  placeholder="e.g. N4, HSK 3"
+                  class="arcade-input"
+                />
+              </div>
+            </div>
+
+            <button type="button" class="btn-arcade full-width font-label" :disabled="!step1Valid()" @click="goToStep2">
+              NEXT: ADD QUESTIONS →
+            </button>
+          </div>
+        </PixelFrame>
       </div>
 
       <!-- ── Step 2: Questions ──────────────────────────────────────────────── -->
       <div v-else-if="step === 2">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="text-lg font-semibold text-slate-200">
+        <div class="step2-header">
+          <h2 class="section-title font-body">
             Step 2 — Add Questions
-            <span class="text-sm font-normal text-slate-400 ml-2">({{ questions.length }} so far)</span>
+            <span class="section-count font-label">({{ questions.length }} SO FAR)</span>
           </h2>
-          <button
-            @click="step = 1"
-            class="text-sm text-slate-400 hover:text-slate-200 cursor-pointer"
-          >
-            ← Back
-          </button>
+          <button type="button" class="header-back font-label" @click="step = 1">← BACK</button>
         </div>
 
-        <div class="space-y-4 mb-4">
-          <div
-            v-for="(q, qi) in questions"
-            :key="qi"
-            class="bg-slate-800 rounded-2xl border border-slate-700 p-5"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <span class="text-sm font-semibold text-indigo-400">Question {{ qi + 1 }}</span>
-              <button
-                @click="removeQuestion(qi)"
-                class="text-xs text-rose-400 hover:text-rose-300 cursor-pointer"
-              >
-                Remove
-              </button>
+        <div class="question-list">
+          <div v-for="(q, qi) in questions" :key="qi" class="question-card">
+            <div class="question-card-top">
+              <span class="question-num font-label">QUESTION {{ qi + 1 }}</span>
+              <button type="button" class="btn-remove font-label" @click="removeQuestion(qi)">REMOVE</button>
             </div>
 
             <!-- Question text -->
-            <div class="mb-3">
-              <label class="block text-xs text-slate-400 mb-1">Question Text <span class="text-rose-400">*</span></label>
+            <div class="arcade-field">
+              <label class="arcade-label">QUESTION TEXT *</label>
               <textarea
                 v-model="q.questionText"
                 rows="2"
                 placeholder="e.g. The meeting has been _____ until next Monday."
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors resize-none text-sm"
+                class="arcade-input"
               ></textarea>
             </div>
 
             <!-- Options -->
-            <div class="grid grid-cols-2 gap-2 mb-3">
-              <div v-for="(_, oi) in q.options" :key="oi">
-                <label :class="['block text-xs mb-1 font-semibold', OPTION_COLORS[oi]]">
-                  Option {{ OPTION_KEYS[oi] }}
-                  <span v-if="q.correctAnswer === OPTION_KEYS[oi]" class="text-emerald-400 font-normal ml-1">(correct)</span>
+            <div class="options-grid">
+              <div v-for="(_, oi) in q.options" :key="oi" class="arcade-field">
+                <label class="arcade-label">
+                  OPTION {{ OPTION_KEYS[oi] }}
+                  <span v-if="q.correctAnswer === OPTION_KEYS[oi]" class="correct-tag">(CORRECT)</span>
                 </label>
                 <input
                   v-model="q.options[oi]"
                   type="text"
                   :placeholder="`Answer ${OPTION_KEYS[oi]}...`"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors text-sm"
+                  class="arcade-input"
                 />
               </div>
             </div>
 
             <!-- Correct Answer + Difficulty -->
-            <div class="grid grid-cols-2 gap-4 mb-3">
-              <div>
-                <label class="block text-xs text-slate-400 mb-1">Correct Answer</label>
-                <div class="flex gap-2">
+            <div class="question-row2">
+              <div class="arcade-field">
+                <span class="arcade-label">CORRECT ANSWER</span>
+                <div class="answer-keys">
                   <button
                     v-for="k in OPTION_KEYS" :key="k"
+                    type="button"
+                    class="answer-key font-pixel"
+                    :class="{ 'answer-key--selected': q.correctAnswer === k }"
                     @click="q.correctAnswer = k"
-                    :class="[
-                      'w-9 h-9 rounded-lg font-bold text-sm transition-all cursor-pointer',
-                      q.correctAnswer === k
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600',
-                    ]"
                   >
                     {{ k }}
                   </button>
                 </div>
               </div>
-              <div>
-                <label class="block text-xs text-slate-400 mb-1">Difficulty</label>
-                <select
-                  v-model="q.difficulty"
-                  class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors text-sm"
-                >
+              <div class="arcade-field">
+                <label class="arcade-label">DIFFICULTY</label>
+                <select v-model="q.difficulty" class="arcade-input">
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
@@ -330,45 +298,353 @@ const saveExam = async () => {
             </div>
 
             <!-- Explanation -->
-            <div>
-              <label class="block text-xs text-slate-400 mb-1">Explanation (optional)</label>
+            <div class="arcade-field">
+              <label class="arcade-label">EXPLANATION (OPTIONAL)</label>
               <input
                 v-model="q.explanation"
                 type="text"
                 placeholder="Why is this answer correct?"
-                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:border-indigo-500 focus:outline-none transition-colors text-sm"
+                class="arcade-input"
               />
             </div>
           </div>
         </div>
 
         <!-- Add Question Button -->
-        <button
-          @click="addQuestion"
-          class="w-full py-3 border-2 border-dashed border-slate-700 hover:border-indigo-500 text-slate-400 hover:text-indigo-400 rounded-xl transition-all cursor-pointer text-sm"
-        >
-          + Add Question
+        <button type="button" class="btn-add-question font-label" @click="addQuestion">
+          + ADD QUESTION
         </button>
 
         <!-- Save Button -->
-        <div class="mt-6">
-          <p v-if="saveError" class="text-rose-400 text-sm mb-2">{{ saveError }}</p>
+        <div class="save-block">
+          <p v-if="saveError" class="save-error font-label">{{ saveError }}</p>
           <button
-            @click="saveExam"
+            type="button"
+            class="btn-arcade full-width font-label"
             :disabled="!step2Valid() || isSaving"
-            class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            @click="saveExam"
           >
-            {{ isSaving ? 'Saving...' : `Create Exam (${questions.length} questions)` }}
+            {{ isSaving ? 'SAVING…' : `CREATE EXAM (${questions.length} QUESTIONS)` }}
           </button>
         </div>
       </div>
 
       <!-- ── Step 3: Done ───────────────────────────────────────────────────── -->
-      <div v-else class="flex flex-col items-center justify-center py-20 text-center">
-        <div class="text-6xl mb-4 animate-bounce">🎉</div>
-        <h2 class="text-2xl font-bold text-emerald-400 mb-2">Exam Created!</h2>
-        <p class="text-slate-400">Redirecting you to the exam room...</p>
+      <div v-else class="done-screen">
+        <div class="done-icon" aria-hidden="true">🎉</div>
+        <h2 class="done-title font-body">Exam Created!</h2>
+        <p class="done-sub font-label">REDIRECTING YOU TO THE EXAM ROOM…</p>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.creator-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.creator-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--cabinet);
+  border-bottom: 2px solid var(--cabinet-light);
+  flex-shrink: 0;
+}
+.header-back {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.header-back:hover {
+  color: var(--text-primary);
+}
+.creator-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.step-indicator {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.step-cell {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface-page);
+  color: var(--text-secondary);
+}
+.step-cell--current {
+  background: var(--state-selected-bg);
+  color: var(--text-on-accent);
+}
+.step-cell--done {
+  background: var(--status-success);
+  color: var(--text-on-accent);
+}
+
+.creator-body {
+  flex: 1;
+  overflow-y: auto;
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+}
+.section-count {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: 6px;
+}
+
+.step-panel {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.type-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--surface-panel-border);
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.type-btn:hover:not(.type-btn--active) {
+  border-color: var(--muted);
+  color: var(--text-primary);
+}
+.type-btn--active {
+  background: var(--state-selected-bg);
+  border-color: var(--state-selected-bg);
+  color: var(--text-on-accent);
+}
+.type-btn-icon {
+  font-size: 18px;
+}
+
+.step1-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.step2-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.question-card {
+  background: var(--surface-panel);
+  border: 2px solid var(--surface-panel-border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.question-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.question-num {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-label-accent);
+}
+.btn-remove {
+  background: none;
+  border: none;
+  color: var(--status-danger);
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.btn-remove:hover {
+  background: var(--status-danger-subtle);
+  color: var(--text-primary);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.correct-tag {
+  color: var(--status-success);
+  font-weight: 400;
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.question-row2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.answer-keys {
+  display: flex;
+  gap: 8px;
+}
+.answer-key {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: var(--surface-page);
+  color: var(--text-secondary);
+  border: none;
+  cursor: pointer;
+}
+.answer-key:hover:not(.answer-key--selected) {
+  color: var(--text-primary);
+  background: var(--state-hover-surface);
+}
+.answer-key--selected {
+  background: var(--status-success);
+  color: var(--text-on-accent);
+}
+
+.btn-add-question {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 2px dashed var(--surface-panel-border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.btn-add-question:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.save-block {
+  margin-top: 22px;
+}
+.save-error {
+  color: var(--status-danger);
+  font-size: 12px;
+  background: var(--surface-page);
+  border-left: 3px solid var(--status-danger);
+  padding: 10px 12px;
+  margin: 0 0 12px;
+}
+
+.done-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  text-align: center;
+}
+.done-icon {
+  font-size: 56px;
+  margin-bottom: 14px;
+  animation: done-bounce 0.6s ease infinite alternate;
+}
+@keyframes done-bounce {
+  to {
+    transform: translateY(-10px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .done-icon {
+    animation: none;
+  }
+}
+.done-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--status-success);
+  margin: 0 0 8px;
+}
+.done-sub {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.btn-arcade {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: var(--status-success);
+  color: var(--text-on-accent);
+  border: none;
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--status-success-subtle);
+}
+.btn-arcade:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+.btn-arcade:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.header-back:focus-visible,
+.type-btn:focus-visible,
+.arcade-input:focus-visible,
+.btn-arcade:focus-visible,
+.btn-remove:focus-visible,
+.answer-key:focus-visible,
+.btn-add-question:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+</style>

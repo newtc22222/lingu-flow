@@ -211,7 +211,7 @@ onMounted(() => {
 }
 .auth-wordmark {
   font-size: 22px;
-  color: var(--amber);
+  color: var(--color-accent);
   letter-spacing: 1px;
 }
 .auth-cursor {
@@ -229,7 +229,7 @@ onMounted(() => {
   }
 }
 .auth-tagline {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 12px;
   letter-spacing: 0.5px;
   margin: 8px 0 20px;
@@ -252,17 +252,17 @@ onMounted(() => {
   padding: 10px;
   font-size: 12px;
   letter-spacing: 0.5px;
-  background: var(--cabinet-light);
-  color: var(--muted);
+  background: var(--surface-panel-border);
+  color: var(--text-secondary);
   border: none;
   cursor: pointer;
 }
 .auth-tab--active {
-  background: var(--amber);
-  color: var(--ink);
+  background: var(--state-selected-bg);
+  color: var(--text-on-accent);
 }
 .auth-tab:hover:not(.auth-tab--active) {
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .auth-form {
   display: flex;
@@ -270,10 +270,10 @@ onMounted(() => {
   gap: 14px;
 }
 .auth-error {
-  color: var(--red);
+  color: var(--status-danger);
   font-size: 12px;
-  background: var(--ink);
-  border-left: 3px solid var(--red);
+  background: var(--surface-page);
+  border-left: 3px solid var(--status-danger);
   padding: 10px 12px;
 }
 .btn-arcade {
@@ -281,12 +281,12 @@ onMounted(() => {
   font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  background: var(--green);
-  color: var(--ink);
+  background: var(--status-success);
+  color: var(--text-on-accent);
   border: none;
   padding: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 0 var(--green-shadow);
+  box-shadow: 0 4px 0 var(--status-success-subtle);
   margin-top: 6px;
 }
 .btn-arcade:active:not(:disabled) {
@@ -302,13 +302,13 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   margin: 18px 0 14px;
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 11px;
 }
 .auth-divider-line {
   flex: 1;
   height: 1px;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
 }
 .auth-google {
   margin-bottom: 12px;
@@ -316,16 +316,16 @@ onMounted(() => {
 .btn-guest {
   width: 100%;
   background: transparent;
-  border: 2px solid var(--cabinet-light);
-  color: var(--muted);
+  border: 2px solid var(--surface-panel-border);
+  color: var(--text-secondary);
   padding: 12px;
   font-size: 11px;
   letter-spacing: 1px;
   cursor: pointer;
 }
 .btn-guest:hover:not(:disabled) {
-  border-color: var(--amber);
-  color: var(--phosphor);
+  border-color: var(--color-accent);
+  color: var(--text-primary);
 }
 .btn-guest:disabled {
   opacity: 0.6;
@@ -334,7 +334,7 @@ onMounted(() => {
 .auth-tab:focus-visible,
 .btn-arcade:focus-visible,
 .btn-guest:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
 </style>

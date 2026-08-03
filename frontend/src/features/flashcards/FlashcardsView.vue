@@ -117,7 +117,7 @@ onUnmounted(() => {
   align-items: center;
   margin-bottom: 20px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 .fc-actions {
   display: flex;
@@ -134,26 +134,26 @@ onUnmounted(() => {
   cursor: pointer;
 }
 .btn-fc.no {
-  background: var(--red);
-  color: var(--ink);
-  box-shadow: 0 4px 0 var(--red-shadow);
+  background: var(--status-danger);
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 0 var(--status-danger-subtle);
 }
 .btn-fc.yes {
-  background: var(--green);
-  color: var(--ink);
-  box-shadow: 0 4px 0 var(--green-shadow);
+  background: var(--status-success);
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 0 var(--status-success-subtle);
 }
 .btn-fc:active {
   transform: translateY(4px);
   box-shadow: none;
 }
 .fc-status {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 13px;
   text-align: center;
   padding: 40px 0;
 }
 .fc-status--error {
-  color: var(--red);
+  color: var(--status-danger);
 }
 </style>

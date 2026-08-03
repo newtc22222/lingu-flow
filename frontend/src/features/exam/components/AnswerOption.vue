@@ -31,28 +31,28 @@ defineEmits<{
   align-items: center;
   gap: 14px;
   width: 100%;
-  background: var(--cabinet-light);
+  background: var(--surface-panel-border);
   border: none;
   padding: 14px 16px;
-  color: var(--phosphor);
+  color: var(--text-primary);
   font-size: 15px;
   cursor: pointer;
   text-align: left;
   transition: background 0.12s;
 }
 .opt-btn:hover:not(:disabled):not(.opt-btn--selected) {
-  background: var(--surface-hover);
+  background: var(--state-hover-surface);
 }
 .opt-btn--selected {
-  background: var(--surface-selected);
-  box-shadow: inset 0 0 0 2px var(--amber);
+  background: var(--state-selected-surface);
+  box-shadow: inset 0 0 0 2px var(--color-focus-ring);
 }
 .opt-btn:disabled {
   cursor: not-allowed;
 }
 .opt-key {
   font-size: 10px;
-  color: var(--ink);
+  color: var(--text-on-accent);
   background: var(--muted);
   width: 26px;
   height: 26px;
@@ -62,6 +62,6 @@ defineEmits<{
   flex-shrink: 0;
 }
 .opt-key--selected {
-  background: var(--amber);
+  background: var(--state-selected-bg);
 }
 </style>

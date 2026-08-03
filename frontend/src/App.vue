@@ -162,31 +162,31 @@ const backToExamHub = () => { currentView.value = 'exams' }
   font-size: 10px;
   letter-spacing: 0.5px;
   padding: 12px 14px;
-  background: var(--cabinet);
-  color: var(--muted);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
   border: none;
   cursor: pointer;
 }
 .tab--active {
-  background: var(--amber);
-  color: var(--ink);
+  background: var(--state-selected-bg);
+  color: var(--text-on-accent);
 }
 .tab:hover:not(.tab--active) {
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .util-link {
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--text-secondary);
   letter-spacing: 0.5px;
   cursor: pointer;
   padding: 4px 0;
 }
 .util-link:hover {
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .util-link--danger:hover {
-  color: var(--red);
+  color: var(--status-danger);
 }
 .arcade-app {
   max-width: 920px;

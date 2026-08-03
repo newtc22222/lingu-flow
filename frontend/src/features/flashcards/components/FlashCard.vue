@@ -73,7 +73,7 @@ const emit = defineEmits<{
   cursor: pointer;
 }
 .flip-card:focus-visible {
-  outline: 2px solid var(--amber);
+  outline: 2px solid var(--color-focus-ring);
   outline-offset: 4px;
 }
 .flip-card.flipped {
@@ -102,23 +102,23 @@ const emit = defineEmits<{
   font-size: 11px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--text-label-accent);
   margin-bottom: 16px;
 }
 .fc-term {
   font-size: 22px;
   font-weight: 600;
   line-height: 1.4;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .fc-def {
   font-size: 15px;
   line-height: 1.6;
-  color: var(--phosphor);
+  color: var(--text-primary);
 }
 .fc-hint {
   font-size: 11px;
-  color: var(--muted);
+  color: var(--text-secondary);
   margin-top: 16px;
 }
 
