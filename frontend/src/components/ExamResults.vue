@@ -406,7 +406,7 @@ onMounted(fetchResults);
   color: var(--text-primary);
 }
 .hero-stat-label {
-  font-size: 9px;
+  font-size: var(--font-size-2xs);
   color: var(--text-secondary);
   letter-spacing: var(--tracking-normal);
 }

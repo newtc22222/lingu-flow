@@ -63,7 +63,7 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   padding: var(--space-11) var(--space-10);
 }
 .q-label {
-  font-size: 9px;
+  font-size: var(--font-size-2xs);
   color: var(--text-label-accent);
   margin-bottom: var(--space-7);
   display: block;

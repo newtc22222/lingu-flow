@@ -104,7 +104,11 @@
      Derived from a frequency audit of every font-size literal in
      frontend/src (Aug 2026). --font-size-lg and --font-size-xl were each
      confirmed by visual check against their sibling candidate (16px and
-     20px respectively) and finalized Aug 2026. */
+     20px respectively) and finalized Aug 2026. --font-size-2xs (9px) was
+     added later, once the Rule 2 stylelint rollout caught the same 9px
+     eyebrow/label literal repeated 3 times across unrelated components -
+     the same pattern that produced --font-size-md-plus in Step 3.5. */
+  --font-size-2xs: 9px;
   --font-size-xs: 10px;
   --font-size-sm: 11px;
   --font-size-base: 12px;

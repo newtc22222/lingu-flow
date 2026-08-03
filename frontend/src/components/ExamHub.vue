@@ -382,7 +382,7 @@ onMounted(fetchData);
   margin-top: var(--space-1);
 }
 .badge-official {
-  font-size: 9px;
+  font-size: var(--font-size-2xs);
   letter-spacing: var(--tracking-normal);
   color: var(--status-success);
   border: var(--space-1) solid var(--status-success);
