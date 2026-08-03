@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import pathlib, runpy; p = next((p / '.claude/hooks/check_router_registration.py' for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / '.claude/hooks/check_router_registration.py').exists()), None); runpy.run_path(str(p)) if p else None\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -c \"import pathlib, runpy; p = next((p / '.claude/hooks/block_protected_files.py' for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / '.claude/hooks/block_protected_files.py').exists()), None); runpy.run_path(str(p)) if p else None\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
