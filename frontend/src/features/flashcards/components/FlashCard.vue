@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PixelFrame from '@/shared/components/PixelFrame.vue'
-import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue'
 
 withDefaults(
   defineProps<{

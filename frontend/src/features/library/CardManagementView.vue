@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/api'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
-import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue'
 
 interface Card {
   id: string
