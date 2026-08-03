@@ -32,6 +32,18 @@ class GoogleLoginRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class ForgotPasswordResponse(BaseModel):
+    message: str
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class UserResponse(BaseModel):
     id: uuid.UUID
     username: Optional[str] = None

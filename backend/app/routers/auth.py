@@ -5,6 +5,8 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     AuthTokenResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     GoogleLoginRequest,
     GuestLoginRequest,
     LoginRequest,
@@ -43,6 +45,13 @@ async def google_login(
     req: GoogleLoginRequest, db: AsyncSession = Depends(get_db)
 ):
     return await auth_service.google_login(db, req)
+
+
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
+async def forgot_password(
+    req: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+):
+    return await auth_service.forgot_password(db, req)
 
 
 @router.get("/me", response_model=UserResponse)

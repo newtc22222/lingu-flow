@@ -139,6 +139,16 @@ async def test_guest_login_and_migration(client: AsyncClient, db_session: AsyncS
 
 
 @pytest.mark.asyncio
+async def test_forgot_password(client: AsyncClient):
+    """Test POST /api/auth/forgot-password endpoint."""
+    response = await client.post(
+        "/api/auth/forgot-password", json={"email": "anyone@example.com"}
+    )
+    assert response.status_code == 200
+    assert "message" in response.json()
+
+
+@pytest.mark.asyncio
 async def test_get_current_user_profile(client: AsyncClient):
     """Test GET /api/auth/me protected endpoint."""
     # Unauthenticated request

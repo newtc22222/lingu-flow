@@ -16,6 +16,8 @@ from app.core.security import (
 from app.models.user import User
 from app.schemas.auth import (
     AuthTokenResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     GoogleLoginRequest,
     GuestLoginRequest,
     LoginRequest,
@@ -224,4 +226,26 @@ class AuthService:
         token = create_access_token(user.id)
         return AuthTokenResponse(
             token=token, user=UserResponse.model_validate(user)
+        )
+
+    async def forgot_password(
+        self, db: AsyncSession, req: ForgotPasswordRequest
+    ) -> ForgotPasswordResponse:
+        """Handle password reset requests. Always returns success message to prevent account enumeration."""
+        if not req.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is required",
+            )
+
+        # Check user existence (silent check)
+        result = await db.execute(select(User).where(User.email == req.email))
+        user = result.scalar_one_or_none()
+
+        if user:
+            # Future enhancement: Send actual reset email via SMTP / SendGrid / SES
+            pass
+
+        return ForgotPasswordResponse(
+            message="If an account with this email exists, password reset instructions have been sent."
         )
