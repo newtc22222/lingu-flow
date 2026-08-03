@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
-from app.routers import auth, health
+from app.routers import auth, cards, health
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linguflow")
@@ -53,6 +53,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(cards.router)
 
 
 if __name__ == "__main__":
