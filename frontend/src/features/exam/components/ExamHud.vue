@@ -66,9 +66,9 @@ const store = useExamStore()
   color: var(--status-danger);
 }
 .hud-lives {
-  font-size: 14px;
+  font-size: var(--font-size-md-plus);
   color: var(--status-danger);
-  letter-spacing: 3px;
+  letter-spacing: var(--tracking-wider);
 }
 
 @media (prefers-reduced-motion: reduce) {

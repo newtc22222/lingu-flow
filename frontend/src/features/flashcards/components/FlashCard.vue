@@ -73,7 +73,7 @@ const emit = defineEmits<{
   cursor: pointer;
 }
 .flip-card:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 4px;
 }
 .flip-card.flipped {

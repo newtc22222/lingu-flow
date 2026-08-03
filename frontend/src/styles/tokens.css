@@ -130,6 +130,19 @@
      the single 1px border at ExamHub.vue is left as a local literal
      since it's an isolated case, not a repeated pattern. */
   --border-width-accent: 3px;
+  --focus-ring-width: 2px; /* focus-visible outline width, used on nearly every interactive element */
+
+  /* ---- Step 3.5 additions (Aug 2026) ----
+     --font-size-md-plus fills the gap between --font-size-md (13px) and
+     --font-size-lg (15px) that 4 unrelated components had independently
+     landed on as a raw 14px literal (.arcade-input, CardManagementView's
+     row text, ExamHud's lives counter, and QuestionCard's reading-passage
+     text — the last one wasn't caught in the original token-extraction
+     audit). --tracking-wider covers the one orphaned 3px letter-spacing
+     usage (ExamHud lives counter) that fell outside the --tracking-*
+     scale (which otherwise tops out at 1.5px). */
+  --font-size-md-plus: 14px;
+  --tracking-wider: 3px;
 }
 
 @theme {
@@ -186,7 +199,7 @@
   color: var(--text-primary);
   padding: var(--space-5) var(--space-6);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--font-size-md-plus);
 }
 .arcade-input:focus-visible {
   outline: none;
