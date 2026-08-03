@@ -7,17 +7,21 @@ const emit = defineEmits<{
   (e: 'auth-success', user: unknown): void
 }>()
 
-const mode = ref<'login' | 'signup'>('login')
+const mode = ref<'login' | 'signup' | 'forgot'>('login')
 const username = ref('')
 const email = ref('')
 const password = ref('')
 const errorMsg = ref('')
 const isLoading = ref(false)
 const googleBtnRef = ref<HTMLElement | null>(null)
+const forgotEmail = ref('')
+const forgotSubmitted = ref(false)
 
-function switchMode(next: 'login' | 'signup') {
+function switchMode(next: 'login' | 'signup' | 'forgot') {
   mode.value = next
   errorMsg.value = ''
+  forgotEmail.value = ''
+  forgotSubmitted.value = false
 }
 
 async function handleSubmit() {
@@ -51,6 +55,28 @@ async function handleSubmit() {
     localStorage.setItem('token', data.token)
     localStorage.removeItem('guest_token')
     emit('auth-success', data.user)
+  } catch (err) {
+    errorMsg.value = 'Đã xảy ra lỗi. Vui lòng thử lại.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+async function handleForgotSubmit() {
+  isLoading.value = true
+  errorMsg.value = ''
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: forgotEmail.value }),
+    })
+    if (res.ok) {
+      forgotSubmitted.value = true
+    } else {
+      const data = await res.json()
+      errorMsg.value = data.error || 'Không thể gửi yêu cầu. Vui lòng thử lại.'
+    }
   } catch (err) {
     errorMsg.value = 'Đã xảy ra lỗi. Vui lòng thử lại.'
   } finally {
@@ -130,7 +156,7 @@ onMounted(() => {
 
     <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="auth-cabinet">
       <div class="auth-inner">
-        <div class="auth-tabs" role="tablist">
+        <div v-if="mode !== 'forgot'" class="auth-tabs" role="tablist">
           <button
             type="button"
             role="tab"
@@ -153,7 +179,7 @@ onMounted(() => {
           </button>
         </div>
 
-        <form class="auth-form" @submit.prevent="handleSubmit">
+        <form v-if="mode !== 'forgot'" class="auth-form" @submit.prevent="handleSubmit">
           <div v-if="errorMsg" class="auth-error font-label">{{ errorMsg }}</div>
 
           <div v-if="mode === 'signup'" class="arcade-field">
@@ -171,6 +197,15 @@ onMounted(() => {
             <input id="auth-password" v-model="password" type="password" required class="arcade-input" />
           </div>
 
+          <button
+            v-if="mode === 'login'"
+            type="button"
+            class="auth-forgot-link font-label"
+            @click="switchMode('forgot')"
+          >
+            QUÊN MẬT KHẨU?
+          </button>
+
           <AppButton type="submit" class="auth-submit-btn" :disabled="isLoading">
             {{
               isLoading
@@ -184,17 +219,53 @@ onMounted(() => {
           </AppButton>
         </form>
 
-        <div class="auth-divider font-label">
-          <span class="auth-divider-line" />
-          <span>HOẶC</span>
-          <span class="auth-divider-line" />
+        <div v-if="mode === 'forgot'" class="auth-forgot">
+          <div v-if="errorMsg" class="auth-error font-label">{{ errorMsg }}</div>
+
+          <template v-if="!forgotSubmitted">
+            <p class="auth-forgot-desc font-body">
+              Nhập email của bạn, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
+            </p>
+            <form class="auth-form" @submit.prevent="handleForgotSubmit">
+              <div class="arcade-field">
+                <label class="arcade-label" for="auth-forgot-email">EMAIL</label>
+                <input
+                  id="auth-forgot-email"
+                  v-model="forgotEmail"
+                  type="email"
+                  required
+                  class="arcade-input"
+                />
+              </div>
+
+              <AppButton type="submit" class="auth-submit-btn" :disabled="isLoading">
+                {{ isLoading ? 'ĐANG GỬI…' : 'GỬI LIÊN KẾT ĐẶT LẠI' }}
+              </AppButton>
+            </form>
+          </template>
+
+          <p v-else class="auth-forgot-desc font-body">
+            Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.
+          </p>
+
+          <button type="button" class="auth-forgot-link font-label" @click="switchMode('login')">
+            QUAY LẠI ĐĂNG NHẬP
+          </button>
         </div>
 
-        <div ref="googleBtnRef" class="auth-google"></div>
+        <template v-if="mode !== 'forgot'">
+          <div class="auth-divider font-label">
+            <span class="auth-divider-line" />
+            <span>HOẶC</span>
+            <span class="auth-divider-line" />
+          </div>
 
-        <AppButton variant="secondary" class="auth-guest-btn" :disabled="isLoading" @click="handleGuestLogin">
-          TIẾP TỤC KHÔNG CẦN TÀI KHOẢN
-        </AppButton>
+          <div ref="googleBtnRef" class="auth-google"></div>
+
+          <AppButton variant="secondary" class="auth-guest-btn" :disabled="isLoading" @click="handleGuestLogin">
+            TIẾP TỤC KHÔNG CẦN TÀI KHOẢN
+          </AppButton>
+        </template>
       </div>
     </PixelFrame>
   </div>
@@ -304,5 +375,29 @@ onMounted(() => {
 .auth-tab:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+.auth-forgot-link {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--tracking-tight);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.auth-forgot-link:hover {
+  color: var(--text-primary);
+}
+.auth-forgot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+.auth-forgot-desc {
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
 }
 </style>
