@@ -17,3 +17,6 @@
 *.njsproj
 *.sln
 *.sw?
+
+# Mock files
+**/mocks/

@@ -1,0 +1,79 @@
+<script setup lang="ts">
+import PixelFrame from '@/shared/components/PixelFrame.vue'
+import { useExamStore } from '../store/examStore'
+
+const store = useExamStore()
+</script>
+
+<template>
+  <div class="hud">
+    <div class="hud-bar">
+      <PixelFrame frame-color="cabinet-light" surface="ink" :ring-width="4">
+        <div class="hud-bar-track" role="timer" :aria-label="`${store.timeDisplay} remaining`">
+          <div
+            class="hud-bar-fill"
+            :class="{ 'hud-bar-fill--low': store.isLowTime }"
+            :style="{ width: `${store.progressPercent}%` }"
+          />
+        </div>
+      </PixelFrame>
+    </div>
+    <div class="hud-time font-label" :class="{ 'hud-time--low': store.isLowTime }">
+      {{ store.timeDisplay }}
+    </div>
+    <div class="hud-lives font-pixel" :aria-label="`${store.lives} of ${store.maxLives} lives remaining`">
+      <span v-for="i in store.maxLives" :key="i">{{ i <= store.lives ? '♥' : '♡' }}</span>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.hud {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.hud-bar {
+  flex: 1;
+}
+.hud-bar-track {
+  height: 20px;
+  background: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+.hud-bar-fill {
+  height: 100%;
+  background:
+    linear-gradient(90deg, var(--amber), var(--amber-light)),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
+  transition: width 0.25s linear, background 0.4s ease;
+}
+.hud-bar-fill--low {
+  background:
+    linear-gradient(90deg, var(--red), var(--red-light)),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
+}
+.hud-time {
+  font-weight: 700;
+  font-size: 20px;
+  min-width: 64px;
+  text-align: right;
+  color: var(--phosphor);
+}
+.hud-time--low {
+  color: var(--red);
+}
+.hud-lives {
+  font-size: 14px;
+  color: var(--red);
+  letter-spacing: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-bar-fill {
+    transition: none;
+  }
+}
+</style>

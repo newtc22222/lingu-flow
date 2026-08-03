@@ -1,0 +1,67 @@
+<script setup lang="ts">
+defineProps<{
+  optionKey: string
+  label: string
+  selected: boolean
+  disabled?: boolean
+}>()
+
+defineEmits<{
+  (e: 'select'): void
+}>()
+</script>
+
+<template>
+  <button
+    type="button"
+    class="opt-btn font-body"
+    :class="{ 'opt-btn--selected': selected }"
+    :disabled="disabled"
+    :aria-pressed="selected"
+    @click="$emit('select')"
+  >
+    <span class="opt-key font-pixel" :class="{ 'opt-key--selected': selected }">{{ optionKey }}</span>
+    <span class="opt-label">{{ label }}</span>
+  </button>
+</template>
+
+<style scoped>
+.opt-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: var(--cabinet-light);
+  border: none;
+  padding: 14px 16px;
+  color: var(--phosphor);
+  font-size: 15px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+.opt-btn:hover:not(:disabled):not(.opt-btn--selected) {
+  background: var(--surface-hover);
+}
+.opt-btn--selected {
+  background: var(--surface-selected);
+  box-shadow: inset 0 0 0 2px var(--amber);
+}
+.opt-btn:disabled {
+  cursor: not-allowed;
+}
+.opt-key {
+  font-size: 10px;
+  color: var(--ink);
+  background: var(--muted);
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.opt-key--selected {
+  background: var(--amber);
+}
+</style>

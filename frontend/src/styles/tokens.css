@@ -1,0 +1,102 @@
+/**
+ * Arcade design tokens.
+ * Canonical source of truth for the arcade exam-practice design system
+ * approved in frontend/mocks/cert-arcade-mockup.html. Do not hardcode these
+ * values inside components — reference the CSS variables or the Tailwind
+ * utilities generated from them in the @theme block below.
+ */
+
+:root {
+  /* ---- Official palette (MUST follow exactly, see design brief) ---- */
+  --ink: #14161f;
+  --cabinet: #1e2230;
+  --cabinet-light: #262b3d;
+  --amber: #f2a93b;
+  --red: #e14b4b;
+  --green: #3fb57e;
+  --phosphor: #ece8dd;
+  --muted: #8b90a6;
+
+  /* ---- Derived shades lifted from the approved mockup ----
+     These are implementation details (gradients, pressed-button shadows,
+     hover/selected tints) required for visual fidelity. They are not part
+     of the 8-token brand contract above and must never replace it. */
+  --amber-dim: #8a6a2c;
+  --amber-light: #ffcf70;
+  --red-light: #ff8a7a;
+  --green-shadow: #256b47;
+  --red-shadow: #8f2f2f;
+  --locked: #4a4e60;
+  --surface-hover: #31374c;
+  --surface-selected: #3a3320;
+  --code-fg: #9fe6b0;
+
+  /* ---- Layout primitives ---- */
+  --pixel-notch: 8px;
+
+  /* ---- Typography ---- */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-label: 'IBM Plex Mono', monospace;
+}
+
+@theme {
+  --color-ink: var(--ink);
+  --color-cabinet: var(--cabinet);
+  --color-cabinet-light: var(--cabinet-light);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-green: var(--green);
+  --color-phosphor: var(--phosphor);
+  --color-muted: var(--muted);
+
+  --color-amber-dim: var(--amber-dim);
+  --color-amber-light: var(--amber-light);
+  --color-red-light: var(--red-light);
+  --color-green-shadow: var(--green-shadow);
+  --color-red-shadow: var(--red-shadow);
+  --color-locked: var(--locked);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-selected: var(--surface-selected);
+  --color-code-fg: var(--code-fg);
+
+  --font-pixel: var(--font-pixel);
+  --font-body: var(--font-body);
+  --font-label: var(--font-label);
+}
+
+/**
+ * Vietnamese font rule: `Press Start 2P` (font-pixel) has no diacritic
+ * glyphs. Any string containing Vietnamese characters/tone marks must use
+ * font-body (long-form text) or font-label (short UI labels/buttons,
+ * uppercase, tracking-wide) instead — never font-pixel.
+ */
+
+/**
+ * Shared form-field treatment used by every arcade-styled form (auth,
+ * deck/card management, …). Kept as global utility classes rather than
+ * duplicated per-component scoped CSS once a 3rd/4th consumer showed up.
+ */
+.arcade-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.arcade-label {
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.arcade-input {
+  background: var(--ink);
+  border: 2px solid var(--cabinet-light);
+  color: var(--phosphor);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+.arcade-input:focus-visible {
+  outline: none;
+  border-color: var(--amber);
+}

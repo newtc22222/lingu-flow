@@ -1,20 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import StudyDashboard from './components/StudyDashboard.vue'
-import CardManagement from './components/CardManagement.vue'
-import DeckManagement from './components/DeckManagement.vue'
-import Login from './components/Login.vue'
-import Signup from './components/Signup.vue'
+import { ref, onMounted, computed } from 'vue'
 import ExamHub from './components/ExamHub.vue'
-import ExamRoom from './components/ExamRoom.vue'
 import ExamResults from './components/ExamResults.vue'
 import ExamCreator from './components/ExamCreator.vue'
+import ExamView from './features/exam/ExamView.vue'
+import FlashcardsView from './features/flashcards/FlashcardsView.vue'
+import DashboardView from './features/dashboard/DashboardView.vue'
+import AuthView from './features/auth/AuthView.vue'
+import DeckManagementView from './features/library/DeckManagementView.vue'
+import CardManagementView from './features/library/CardManagementView.vue'
 
-type AppView = 'study' | 'manageCards' | 'manageDecks' | 'login' | 'signup'
+type AppView = 'dashboard' | 'flashcards' | 'manageCards' | 'manageDecks'
              | 'exams' | 'examRoom' | 'examResults' | 'examCreator'
 
-const currentView = ref<AppView>('login')
+const currentView = ref<AppView>('dashboard')
 const isAuthenticated = ref(false)
+
+/** Which arcade tab reads as active — exam sub-screens (hub/room/results/creator) all light up EXAM MODE. */
+const activeTab = computed<'exams' | 'flashcards' | 'dashboard' | null>(() => {
+  if (['exams', 'examRoom', 'examResults', 'examCreator'].includes(currentView.value)) return 'exams'
+  if (currentView.value === 'flashcards') return 'flashcards'
+  if (currentView.value === 'dashboard') return 'dashboard'
+  return null
+})
 
 // Exam state
 const activeTemplateId = ref<string>('')
@@ -24,19 +32,18 @@ onMounted(() => {
   const token = localStorage.getItem('token')
   if (token) {
     isAuthenticated.value = true
-    currentView.value = 'study'
+    currentView.value = 'dashboard'
   }
 })
 
 const handleAuthSuccess = () => {
   isAuthenticated.value = true
-  currentView.value = 'study'
+  currentView.value = 'dashboard'
 }
 
 const logout = () => {
   localStorage.removeItem('token')
   isAuthenticated.value = false
-  currentView.value = 'login'
 }
 
 // ── Exam Navigation ────────────────────────────────────────────────────────
@@ -67,67 +74,66 @@ const backToExamHub = () => { currentView.value = 'exams' }
 </script>
 
 <template>
-  <div class="h-screen w-screen bg-slate-900 text-slate-100 flex flex-col overflow-hidden">
+  <div class="h-screen w-screen bg-ink text-phosphor flex flex-col overflow-hidden">
     <!-- Global Navigation Bar -->
-    <nav v-if="isAuthenticated" class="bg-slate-800 px-4 py-3 flex justify-between items-center border-b border-slate-700 z-10 shrink-0">
-      <h1 class="text-xl font-bold text-emerald-400 tracking-tight">LinguFlow</h1>
-      <div class="flex gap-2 items-center">
+    <nav v-if="isAuthenticated" class="bg-cabinet px-4 py-3 flex flex-wrap justify-between items-center gap-3 border-b border-cabinet-light z-10 shrink-0">
+      <div class="tabs">
         <button
-          @click="currentView = 'study'"
-          :class="['px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer text-sm', currentView === 'study' ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600']"
-        >
-          📚 Study
-        </button>
-        <button
+          type="button"
+          class="tab font-pixel"
+          :class="{ 'tab--active': activeTab === 'exams' }"
           @click="goToExamHub"
-          :class="[
-            'px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer text-sm flex items-center gap-1',
-            ['exams','examRoom','examResults','examCreator'].includes(currentView) ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
-          ]"
         >
-          🎓 Exams
+          EXAM MODE
         </button>
         <button
-          @click="currentView = 'manageDecks'"
-          :class="['px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer text-sm', currentView === 'manageDecks' ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600']"
+          type="button"
+          class="tab font-pixel"
+          :class="{ 'tab--active': activeTab === 'flashcards' }"
+          @click="currentView = 'flashcards'"
         >
-          Decks
+          FLASHCARDS
         </button>
         <button
-          @click="currentView = 'manageCards'"
-          :class="['px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer text-sm', currentView === 'manageCards' ? 'bg-emerald-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600']"
+          type="button"
+          class="tab font-pixel"
+          :class="{ 'tab--active': activeTab === 'dashboard' }"
+          @click="currentView = 'dashboard'"
         >
-          Cards
+          DASHBOARD
         </button>
-        <button
-          @click="logout"
-          class="ml-2 px-3 py-1.5 rounded-lg font-medium transition-colors cursor-pointer text-sm bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500/20"
-        >
-          Logout
-        </button>
+      </div>
+      <div class="flex gap-4 items-center font-label text-xs">
+        <button type="button" class="util-link" @click="currentView = 'manageDecks'">QUẢN LÝ BỘ THẺ</button>
+        <button type="button" class="util-link" @click="currentView = 'manageCards'">QUẢN LÝ THẺ</button>
+        <button type="button" class="util-link util-link--danger" @click="logout">ĐĂNG XUẤT</button>
       </div>
     </nav>
 
     <!-- Main Content Area -->
-    <div class="flex-1 overflow-hidden relative">
+    <div class="flex-1 overflow-y-auto relative">
       <template v-if="isAuthenticated">
-        <StudyDashboard v-if="currentView === 'study'" />
-        <DeckManagement v-else-if="currentView === 'manageDecks'" />
-        <CardManagement v-else-if="currentView === 'manageCards'" @close="currentView = 'study'" />
+        <div
+          v-if="['exams', 'examRoom', 'flashcards', 'dashboard', 'manageDecks', 'manageCards'].includes(currentView)"
+          class="arcade-app"
+        >
+          <ExamHub
+            v-if="currentView === 'exams'"
+            @start-exam="startExam"
+            @create-exam="goToExamCreator"
+            @view-session="onViewSession"
+          />
+          <ExamView
+            v-else-if="currentView === 'examRoom'"
+            :template-id="activeTemplateId"
+            @done="onExamDone"
+          />
+          <FlashcardsView v-else-if="currentView === 'flashcards'" />
+          <DashboardView v-else-if="currentView === 'dashboard'" />
+          <DeckManagementView v-else-if="currentView === 'manageDecks'" />
+          <CardManagementView v-else-if="currentView === 'manageCards'" @close="currentView = 'dashboard'" />
+        </div>
 
-        <!-- Exam Views -->
-        <ExamHub
-          v-else-if="currentView === 'exams'"
-          @start-exam="startExam"
-          @create-exam="goToExamCreator"
-          @view-session="onViewSession"
-        />
-        <ExamRoom
-          v-else-if="currentView === 'examRoom'"
-          :template-id="activeTemplateId"
-          @done="onExamDone"
-          @back="backToExamHub"
-        />
         <ExamResults
           v-else-if="currentView === 'examResults'"
           :session-id="activeSessionId"
@@ -141,9 +147,50 @@ const backToExamHub = () => { currentView.value = 'exams' }
         />
       </template>
       <template v-else>
-        <Login v-if="currentView === 'login'" @login-success="handleAuthSuccess" @go-to-signup="currentView = 'signup'" />
-        <Signup v-else-if="currentView === 'signup'" @signup-success="handleAuthSuccess" @go-to-login="currentView = 'login'" />
+        <AuthView @auth-success="handleAuthSuccess" />
       </template>
     </div>
   </div>
 </template>
+
+<style scoped>
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+.tab {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  background: var(--cabinet);
+  color: var(--muted);
+  border: none;
+  cursor: pointer;
+}
+.tab--active {
+  background: var(--amber);
+  color: var(--ink);
+}
+.tab:hover:not(.tab--active) {
+  color: var(--phosphor);
+}
+.util-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.util-link:hover {
+  color: var(--phosphor);
+}
+.util-link--danger:hover {
+  color: var(--red);
+}
+.arcade-app {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+}
+</style>
