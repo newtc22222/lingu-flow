@@ -34,19 +34,19 @@ defineProps<{
 
 <style scoped>
 .world-inner {
-  padding: 18px;
+  padding: var(--space-8);
   position: relative;
 }
 .world-title {
-  font-size: 11px;
-  margin-bottom: 14px;
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-7);
   color: var(--text-primary);
 }
 .levels {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-7);
 }
 .level {
   width: 34px;
@@ -55,7 +55,7 @@ defineProps<{
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   background: var(--surface-page);
   color: var(--text-secondary);
 }
@@ -74,14 +74,14 @@ defineProps<{
 .world-progress-track {
   height: 8px;
   background: var(--surface-page);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 .world-progress-fill {
   height: 100%;
   background: var(--color-accent);
 }
 .world-sub {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 </style>

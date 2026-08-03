@@ -61,7 +61,7 @@ const emit = defineEmits<{
 .flip-zone {
   perspective: 1200px;
   max-width: 520px;
-  margin: 0 auto 26px;
+  margin: 0 auto var(--space-11);
   height: 280px;
 }
 .flip-card {
@@ -99,14 +99,14 @@ const emit = defineEmits<{
 }
 .fc-eyebrow {
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-label-accent);
-  margin-bottom: 16px;
+  margin-bottom: var(--space-8);
 }
 .fc-term {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
   font-weight: 600;
   line-height: 1.4;
   color: var(--text-primary);
@@ -117,9 +117,9 @@ const emit = defineEmits<{
   color: var(--text-primary);
 }
 .fc-hint {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  margin-top: 16px;
+  margin-top: var(--space-8);
 }
 
 @media (prefers-reduced-motion: reduce) {

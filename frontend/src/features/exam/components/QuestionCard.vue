@@ -64,12 +64,12 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 
 <style scoped>
 .question-card {
-  padding: 26px 24px;
+  padding: var(--space-11) var(--space-10);
 }
 .q-label {
   font-size: 9px;
   color: var(--text-label-accent);
-  margin-bottom: 14px;
+  margin-bottom: var(--space-7);
   display: block;
 }
 .q-passage {
@@ -77,38 +77,38 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
   line-height: 1.6;
   color: var(--text-secondary);
   background: var(--surface-page);
-  padding: 12px 14px;
-  margin: 0 0 18px;
+  padding: var(--space-6) var(--space-7);
+  margin: 0 0 var(--space-8);
   border-left: 3px solid var(--border-info);
 }
 .q-passage-eyebrow {
   display: block;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
 }
 .q-text {
   font-size: 18px;
   line-height: 1.55;
   font-weight: 500;
-  margin: 0 0 22px;
+  margin: 0 0 var(--space-10);
   color: var(--text-primary);
 }
 .code-snip {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   background: var(--surface-page);
   color: var(--text-code);
-  padding: 12px 14px;
-  margin: 0 0 22px;
+  padding: var(--space-6) var(--space-7);
+  margin: 0 0 var(--space-10);
   overflow-x: auto;
   border-left: 3px solid var(--color-accent);
   white-space: pre-wrap;
 }
 .options {
   display: grid;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-10);
 }
 .submit-row {
   display: flex;
@@ -116,13 +116,13 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 }
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 16px 28px;
+  padding: var(--space-8) 28px;
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }

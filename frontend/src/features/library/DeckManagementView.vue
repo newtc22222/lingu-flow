@@ -154,7 +154,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-9);
 }
 .deck-title {
   font-size: 20px;
@@ -163,25 +163,25 @@ onMounted(() => {
   margin: 0;
 }
 .count-badge {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--color-accent);
   background: var(--surface-page);
-  border: 2px solid var(--color-accent);
-  padding: 4px 10px;
+  border: var(--space-1) solid var(--color-accent);
+  padding: var(--space-2) var(--space-5);
 }
 .deck-form-frame {
-  margin-bottom: 26px;
+  margin-bottom: var(--space-11);
 }
 .deck-form {
-  padding: 22px;
+  padding: var(--space-10);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-7);
 }
 .form-title {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 1px;
   color: var(--text-label-accent);
   margin: 0;
@@ -189,18 +189,18 @@ onMounted(() => {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
+  gap: var(--space-5);
+  margin-top: var(--space-2);
 }
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 12px 22px;
+  padding: var(--space-6) var(--space-10);
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }
@@ -210,10 +210,10 @@ onMounted(() => {
 }
 .btn-guest {
   background: transparent;
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  padding: 10px 18px;
-  font-size: 11px;
+  padding: var(--space-5) var(--space-8);
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   cursor: pointer;
 }
@@ -223,7 +223,7 @@ onMounted(() => {
 }
 .deck-list-status {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   text-align: center;
   padding: 30px 0;
 }
@@ -233,16 +233,16 @@ onMounted(() => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .deck-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-8);
   background: var(--surface-panel);
   border-left: 3px solid var(--surface-panel-border);
-  padding: 14px 16px;
+  padding: var(--space-7) var(--space-8);
   transition: border-color 0.12s, background 0.12s;
 }
 .deck-row:hover {
@@ -258,20 +258,20 @@ onMounted(() => {
   color: var(--text-primary);
 }
 .deck-row-desc {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 .deck-row-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 .btn-edit,
 .btn-delete {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
-  padding: 6px 12px;
+  padding: var(--space-3) var(--space-6);
   border: none;
   cursor: pointer;
   background: var(--surface-panel-border);

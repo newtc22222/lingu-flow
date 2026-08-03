@@ -29,11 +29,11 @@ defineEmits<{
 .opt-btn {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space-7);
   width: 100%;
   background: var(--surface-panel-border);
   border: none;
-  padding: 14px 16px;
+  padding: var(--space-7) var(--space-8);
   color: var(--text-primary);
   font-size: 15px;
   cursor: pointer;
@@ -51,7 +51,7 @@ defineEmits<{
   cursor: not-allowed;
 }
 .opt-key {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-on-accent);
   background: var(--muted);
   width: 26px;

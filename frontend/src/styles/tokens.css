@@ -73,10 +73,49 @@
   /* ---- Layout primitives ---- */
   --pixel-notch: 8px;
 
+  /* ---- Spacing scale ----
+     Derived from a frequency audit of every padding/margin/gap literal in
+     frontend/src (Aug 2026). 18px and 22px usages were rounded onto the
+     nearest step (--space-8, --space-10) rather than getting their own
+     step — see the token-extraction summary for the one usage site
+     (ExamResults.vue review-option-key width) intentionally left
+     unrounded because it's a tight fixed-width alignment column. */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-9: 20px;
+  --space-10: 24px;
+  --space-11: 26px;
+
+  /* ---- Overlays ---- */
+  --overlay-scan-line: rgba(0, 0, 0, 0.15); /* CRT scan-line effect (ExamHud) */
+
   /* ---- Typography ---- */
   --font-pixel: 'Press Start 2P', monospace;
   --font-body: 'IBM Plex Sans', sans-serif;
   --font-label: 'IBM Plex Mono', monospace;
+
+  /* ---- Type scale ----
+     Derived from a frequency audit of every font-size literal in
+     frontend/src (Aug 2026). --font-size-lg and --font-size-xl are
+     TODO: each has two real candidate values in use (15px vs 16px, and
+     18px vs 20px respectively) that are close enough to likely be the
+     same intended step — pick one per pair after a visual check, then
+     replace the literal below and re-run the token-extraction sweep on
+     the remaining call sites. */
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 15px; /* TODO: confirm vs 16px candidate — see summary */
+  --font-size-xl: 18px; /* TODO: confirm vs 20px candidate — see summary */
+  --font-size-2xl: 22px;
+  --font-size-display: 44px;
 }
 
 @theme {
@@ -119,19 +158,19 @@
 .arcade-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-3);
 }
 .arcade-label {
   font-family: var(--font-label);
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   color: var(--text-secondary);
 }
 .arcade-input {
   background: var(--surface-page);
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-primary);
-  padding: 10px 12px;
+  padding: var(--space-5) var(--space-6);
   font-family: var(--font-body);
   font-size: 14px;
 }

@@ -206,16 +206,16 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-10);
   overflow-y: auto;
 }
 .auth-wordmark {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
   color: var(--color-accent);
   letter-spacing: 1px;
 }
 .auth-cursor {
-  margin-left: 4px;
+  margin-left: var(--space-2);
   animation: auth-blink 1s steps(1) infinite;
 }
 @keyframes auth-blink {
@@ -230,9 +230,9 @@ onMounted(() => {
 }
 .auth-tagline {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 0.5px;
-  margin: 8px 0 20px;
+  margin: var(--space-4) 0 var(--space-9);
   text-align: center;
 }
 .auth-cabinet {
@@ -240,17 +240,17 @@ onMounted(() => {
   max-width: 380px;
 }
 .auth-inner {
-  padding: 20px;
+  padding: var(--space-9);
 }
 .auth-tabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-9);
 }
 .auth-tab {
   flex: 1;
-  padding: 10px;
-  font-size: 12px;
+  padding: var(--space-5);
+  font-size: var(--font-size-base);
   letter-spacing: 0.5px;
   background: var(--surface-panel-border);
   color: var(--text-secondary);
@@ -267,27 +267,27 @@ onMounted(() => {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-7);
 }
 .auth-error {
   color: var(--status-danger);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   background: var(--surface-page);
   border-left: 3px solid var(--status-danger);
-  padding: 10px 12px;
+  padding: var(--space-5) var(--space-6);
 }
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 14px;
+  padding: var(--space-7);
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
-  margin-top: 6px;
+  margin-top: var(--space-3);
 }
 .btn-arcade:active:not(:disabled) {
   transform: translateY(4px);
@@ -300,10 +300,10 @@ onMounted(() => {
 .auth-divider {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 18px 0 14px;
+  gap: var(--space-5);
+  margin: var(--space-8) 0 var(--space-7);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--font-size-sm);
 }
 .auth-divider-line {
   flex: 1;
@@ -311,15 +311,15 @@ onMounted(() => {
   background: var(--surface-panel-border);
 }
 .auth-google {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-6);
 }
 .btn-guest {
   width: 100%;
   background: transparent;
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  padding: 12px;
-  font-size: 11px;
+  padding: var(--space-6);
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   cursor: pointer;
 }

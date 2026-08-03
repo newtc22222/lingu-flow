@@ -96,23 +96,23 @@ onUnmounted(() => {
 
 <style scoped>
 .exam-title {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
-  margin: 0 0 18px;
+  margin: 0 0 var(--space-8);
   letter-spacing: 0.5px;
 }
 .exam-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  font-size: 13px;
+  margin-bottom: var(--space-7);
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
 }
 .exam-loading,
 .exam-error {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 .exam-error {
   color: var(--status-danger);

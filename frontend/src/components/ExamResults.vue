@@ -259,11 +259,11 @@ onMounted(fetchResults);
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--space-6);
   color: var(--text-secondary);
 }
 .loading-icon {
-  font-size: 44px;
+  font-size: var(--font-size-display);
   animation: results-spin 1.2s linear infinite;
 }
 @keyframes results-spin {
@@ -279,8 +279,8 @@ onMounted(fetchResults);
 
 .hero {
   background: var(--surface-panel);
-  border-bottom: 2px solid var(--surface-panel-border);
-  padding: 36px 24px;
+  border-bottom: var(--space-1) solid var(--surface-panel-border);
+  padding: 36px var(--space-10);
   display: flex;
   flex-wrap: wrap;
   gap: 32px;
@@ -337,9 +337,9 @@ onMounted(fetchResults);
   color: var(--status-danger);
 }
 .gauge-label {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 
 .hero-summary {
@@ -349,11 +349,11 @@ onMounted(fetchResults);
 .hero-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 .hero-flag {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
 }
 .hero-title {
   font-size: 20px;
@@ -364,12 +364,12 @@ onMounted(fetchResults);
 .pass-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
+  gap: var(--space-4);
+  font-size: var(--font-size-base);
   font-weight: 700;
-  padding: 6px 14px;
-  border: 2px solid;
-  margin-bottom: 16px;
+  padding: var(--space-3) var(--space-7);
+  border: var(--space-1) solid;
+  margin-bottom: var(--space-8);
 }
 .pass-badge--pass {
   color: var(--status-success);
@@ -382,7 +382,7 @@ onMounted(fetchResults);
   background: var(--status-danger-subtle);
 }
 .pass-badge-sub {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 400;
   opacity: 0.8;
 }
@@ -390,14 +390,14 @@ onMounted(fetchResults);
 .hero-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: var(--space-5);
 }
 .hero-stat {
-  padding: 12px;
+  padding: var(--space-6);
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-3);
 }
 .hero-stat-value {
   font-size: 15px;
@@ -413,18 +413,18 @@ onMounted(fetchResults);
 .actions-row {
   display: flex;
   justify-content: flex-end;
-  padding: 16px 24px;
-  border-bottom: 2px solid var(--surface-panel-border);
+  padding: var(--space-8) var(--space-10);
+  border-bottom: var(--space-1) solid var(--surface-panel-border);
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
 }
 .btn-guest {
   background: transparent;
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  padding: 10px 18px;
-  font-size: 11px;
+  padding: var(--space-5) var(--space-8);
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   cursor: pointer;
 }
@@ -437,19 +437,19 @@ onMounted(fetchResults);
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
-  padding: 24px;
+  padding: var(--space-10);
   flex: 1;
 }
 .review-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-8);
 }
 .review-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-5);
 }
 .review-row {
   background: var(--surface-panel);
@@ -465,8 +465,8 @@ onMounted(fetchResults);
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: var(--space-6);
+  padding: var(--space-7) var(--space-8);
   background: none;
   border: none;
   text-align: left;
@@ -483,7 +483,7 @@ onMounted(fetchResults);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 .review-mark--correct {
   background: var(--status-success);
@@ -498,10 +498,10 @@ onMounted(fetchResults);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-3);
 }
 .review-question {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   color: var(--text-primary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -511,8 +511,8 @@ onMounted(fetchResults);
 .review-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  font-size: 10px;
+  gap: var(--space-6);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
 .text-correct {
@@ -524,45 +524,45 @@ onMounted(fetchResults);
 .review-chevron {
   flex-shrink: 0;
   color: var(--text-secondary);
-  font-size: 10px;
-  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-1);
 }
 
 .review-detail {
-  border-top: 2px solid var(--surface-panel-border);
-  padding: 16px 20px;
+  border-top: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-8) var(--space-9);
   background: var(--surface-page);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-6);
 }
 .review-passage {
   background: var(--surface-panel);
-  border: 2px solid var(--surface-panel-border);
-  padding: 12px;
+  border: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-6);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   line-height: 1.6;
 }
 .review-passage-label {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   letter-spacing: 1px;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
 }
 .review-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .review-option {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: 2px solid var(--surface-panel-border);
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-6);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
 }
 .review-option--correct {
   border-color: var(--status-success);
@@ -584,26 +584,26 @@ onMounted(fetchResults);
 }
 .review-option-tag {
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .review-explanation {
   background: var(--amber-dim);
-  border: 2px solid var(--amber);
-  padding: 12px;
+  border: var(--space-1) solid var(--amber);
+  padding: var(--space-6);
 }
 .review-explanation-label {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--text-label-accent);
   letter-spacing: 1px;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
 }
 .review-explanation-text {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   line-height: 1.6;
   margin: 0;
 }

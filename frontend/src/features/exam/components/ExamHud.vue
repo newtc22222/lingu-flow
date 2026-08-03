@@ -31,8 +31,8 @@ const store = useExamStore()
 .hud {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 22px;
+  gap: var(--space-8);
+  margin-bottom: var(--space-10);
 }
 .hud-bar {
   flex: 1;
@@ -47,13 +47,13 @@ const store = useExamStore()
   height: 100%;
   background:
     linear-gradient(90deg, var(--color-accent), var(--amber-light)),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
+    repeating-linear-gradient(90deg, var(--overlay-scan-line) 0 4px, transparent 4px 8px);
   transition: width 0.25s linear, background 0.4s ease;
 }
 .hud-bar-fill--low {
   background:
     linear-gradient(90deg, var(--status-danger), var(--red-light)),
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0 4px, transparent 4px 8px);
+    repeating-linear-gradient(90deg, var(--overlay-scan-line) 0 4px, transparent 4px 8px);
 }
 .hud-time {
   font-weight: 700;

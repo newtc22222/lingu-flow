@@ -349,17 +349,17 @@ const saveExam = async () => {
 .creator-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-10);
   background: var(--cabinet);
-  border-bottom: 2px solid var(--cabinet-light);
+  border-bottom: var(--space-1) solid var(--cabinet-light);
   flex-shrink: 0;
 }
 .header-back {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   cursor: pointer;
 }
@@ -375,7 +375,7 @@ const saveExam = async () => {
 .step-indicator {
   margin-left: auto;
   display: flex;
-  gap: 6px;
+  gap: var(--space-3);
 }
 .step-cell {
   width: 28px;
@@ -383,7 +383,7 @@ const saveExam = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   background: var(--surface-page);
   color: var(--text-secondary);
@@ -403,43 +403,43 @@ const saveExam = async () => {
   max-width: 760px;
   margin: 0 auto;
   width: 100%;
-  padding: 24px;
+  padding: var(--space-10);
 }
 
 .section-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-8);
 }
 .section-count {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   font-weight: 400;
   color: var(--text-secondary);
-  margin-left: 6px;
+  margin-left: var(--space-3);
 }
 
 .step-panel {
-  padding: 24px;
+  padding: var(--space-10);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-8);
 }
 .type-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: var(--space-4);
 }
 .type-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 6px;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-3);
   background: var(--surface-panel-border);
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   font-weight: 700;
   cursor: pointer;
 }
@@ -459,7 +459,7 @@ const saveExam = async () => {
 .step1-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: var(--space-7);
 }
 
 .full-width {
@@ -470,22 +470,22 @@ const saveExam = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: var(--space-8);
 }
 
 .question-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  margin-bottom: 14px;
+  gap: var(--space-7);
+  margin-bottom: var(--space-7);
 }
 .question-card {
   background: var(--surface-panel);
-  border: 2px solid var(--surface-panel-border);
-  padding: 20px;
+  border: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-9);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-7);
 }
 .question-card-top {
   display: flex;
@@ -493,7 +493,7 @@ const saveExam = async () => {
   justify-content: space-between;
 }
 .question-num {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-label-accent);
@@ -502,10 +502,10 @@ const saveExam = async () => {
   background: none;
   border: none;
   color: var(--status-danger);
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 1px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: var(--space-2) var(--space-4);
 }
 .btn-remove:hover {
   background: var(--status-danger-subtle);
@@ -515,12 +515,12 @@ const saveExam = async () => {
 .options-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  gap: var(--space-5);
 }
 .correct-tag {
   color: var(--status-success);
   font-weight: 400;
-  margin-left: 4px;
+  margin-left: var(--space-2);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -528,11 +528,11 @@ const saveExam = async () => {
 .question-row2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  gap: var(--space-8);
 }
 .answer-keys {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .answer-key {
   width: 36px;
@@ -540,7 +540,7 @@ const saveExam = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--font-size-base);
   background: var(--surface-page);
   color: var(--text-secondary);
   border: none;
@@ -557,11 +557,11 @@ const saveExam = async () => {
 
 .btn-add-question {
   width: 100%;
-  padding: 14px;
+  padding: var(--space-7);
   background: transparent;
-  border: 2px dashed var(--surface-panel-border);
+  border: var(--space-1) dashed var(--surface-panel-border);
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 1px;
   cursor: pointer;
 }
@@ -571,15 +571,15 @@ const saveExam = async () => {
 }
 
 .save-block {
-  margin-top: 22px;
+  margin-top: var(--space-10);
 }
 .save-error {
   color: var(--status-danger);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   background: var(--surface-page);
   border-left: 3px solid var(--status-danger);
-  padding: 10px 12px;
-  margin: 0 0 12px;
+  padding: var(--space-5) var(--space-6);
+  margin: 0 0 var(--space-6);
 }
 
 .done-screen {
@@ -592,7 +592,7 @@ const saveExam = async () => {
 }
 .done-icon {
   font-size: 56px;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-7);
   animation: done-bounce 0.6s ease infinite alternate;
 }
 @keyframes done-bounce {
@@ -606,25 +606,25 @@ const saveExam = async () => {
   }
 }
 .done-title {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--status-success);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-4);
 }
 .done-sub {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
 }
 
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 14px;
+  padding: var(--space-7);
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }

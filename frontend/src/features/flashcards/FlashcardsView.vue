@@ -115,22 +115,22 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  font-size: 13px;
+  margin-bottom: var(--space-9);
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
 }
 .fc-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-6);
   justify-content: center;
 }
 .btn-fc {
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 1px;
   text-transform: uppercase;
   border: none;
-  padding: 14px 20px;
+  padding: var(--space-7) var(--space-9);
   cursor: pointer;
 }
 .btn-fc.no {
@@ -149,7 +149,7 @@ onUnmounted(() => {
 }
 .fc-status {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   text-align: center;
   padding: 40px 0;
 }

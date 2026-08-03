@@ -84,8 +84,8 @@ onMounted(() => {
 <style scoped>
 .stats-row {
   display: flex;
-  gap: 14px;
-  margin-bottom: 26px;
+  gap: var(--space-7);
+  margin-bottom: var(--space-11);
   flex-wrap: wrap;
 }
 .stat-wrap {
@@ -95,11 +95,11 @@ onMounted(() => {
 .worlds {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: var(--space-8);
 }
 .dash-status {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-md);
   text-align: center;
   padding: 40px 0;
 }

@@ -204,8 +204,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 12px;
+  margin-bottom: var(--space-9);
+  gap: var(--space-6);
   flex-wrap: wrap;
 }
 .card-title {
@@ -217,25 +217,25 @@ onMounted(() => {
 .card-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-6);
 }
 .count-badge {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--color-accent);
   background: var(--surface-page);
-  border: 2px solid var(--color-accent);
-  padding: 4px 10px;
+  border: var(--space-1) solid var(--color-accent);
+  padding: var(--space-2) var(--space-5);
 }
 .card-form-frame {
-  margin-bottom: 26px;
+  margin-bottom: var(--space-11);
 }
 .card-form-grid {
-  padding: 22px;
+  padding: var(--space-10);
   display: grid;
   grid-template-columns: 1fr;
-  gap: 22px;
+  gap: var(--space-10);
 }
 @media (min-width: 768px) {
   .card-form-grid {
@@ -245,10 +245,10 @@ onMounted(() => {
 .card-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-7);
 }
 .form-title {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 1px;
   color: var(--text-label-accent);
   margin: 0;
@@ -263,18 +263,18 @@ select.arcade-input {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
+  gap: var(--space-5);
+  margin-top: var(--space-2);
 }
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 12px 22px;
+  padding: var(--space-6) var(--space-10);
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }
@@ -284,10 +284,10 @@ select.arcade-input {
 }
 .btn-guest {
   background: transparent;
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   color: var(--text-secondary);
-  padding: 10px 18px;
-  font-size: 11px;
+  padding: var(--space-5) var(--space-8);
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   cursor: pointer;
 }
@@ -298,27 +298,27 @@ select.arcade-input {
 .card-preview {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-5);
 }
 .preview-label {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   color: var(--text-secondary);
 }
 .preview-panel {
   background: var(--surface-page);
-  padding: 16px;
+  padding: var(--space-8);
   flex: 1;
 }
 .preview-eyebrow {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
   color: var(--text-label-accent);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 .preview-eyebrow--back {
   color: var(--green);
-  margin-top: 16px;
+  margin-top: var(--space-8);
 }
 .preview-content {
   color: var(--text-primary);
@@ -332,11 +332,11 @@ select.arcade-input {
 .preview-divider {
   height: 1px;
   background: var(--surface-panel-border);
-  margin-top: 16px;
+  margin-top: var(--space-8);
 }
 .card-list-status {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   text-align: center;
   padding: 30px 0;
 }
@@ -346,16 +346,16 @@ select.arcade-input {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .card-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-8);
   background: var(--surface-panel);
   border-left: 3px solid var(--surface-panel-border);
-  padding: 14px 16px;
+  padding: var(--space-7) var(--space-8);
   transition: border-color 0.12s, background 0.12s;
 }
 .card-row:hover {
@@ -367,14 +367,14 @@ select.arcade-input {
   flex: 1;
 }
 .card-row-eyebrow {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 1px;
   color: var(--text-label-accent);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
 }
 .card-row-eyebrow--back {
   color: var(--green);
-  margin-top: 10px;
+  margin-top: var(--space-5);
 }
 .card-row-text {
   font-size: 14px;
@@ -385,14 +385,14 @@ select.arcade-input {
 }
 .card-row-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 .btn-edit,
 .btn-delete {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1px;
-  padding: 6px 12px;
+  padding: var(--space-3) var(--space-6);
   border: none;
   cursor: pointer;
   background: var(--surface-panel-border);

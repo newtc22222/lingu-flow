@@ -20,7 +20,7 @@ defineProps<{
 <style scoped>
 .fc-dots {
   display: flex;
-  gap: 6px;
+  gap: var(--space-3);
 }
 .dot {
   width: 10px;

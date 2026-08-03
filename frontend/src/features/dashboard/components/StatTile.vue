@@ -22,19 +22,19 @@ withDefaults(
 
 <style scoped>
 .stat-inner {
-  padding: 16px;
+  padding: var(--space-8);
 }
 .stat-label {
   font-weight: 700;
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
   display: block;
 }
 .stat-value {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-accent);
 }

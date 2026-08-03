@@ -230,13 +230,13 @@ onMounted(fetchData);
   flex-direction: column;
 }
 .hub-header {
-  margin-bottom: 26px;
+  margin-bottom: var(--space-11);
 }
 .hub-heading {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-2);
 }
 .hub-icon {
   font-size: 28px;
@@ -248,30 +248,30 @@ onMounted(fetchData);
 }
 .hub-tagline {
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-base);
   letter-spacing: 0.5px;
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-8);
 }
 .hub-create-btn {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-9);
 }
 .hub-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: var(--space-6);
   max-width: 480px;
 }
 .stat-inner {
-  padding: 14px;
+  padding: var(--space-7);
 }
 .stat-label {
   display: block;
   font-weight: 700;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-3);
 }
 .stat-value {
   font-size: 18px;
@@ -284,20 +284,20 @@ onMounted(fetchData);
 
 .hub-filters {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-bottom: 22px;
+  margin-bottom: var(--space-10);
 }
 .filter-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  font-size: 11px;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-7);
+  font-size: var(--font-size-sm);
   letter-spacing: 0.5px;
   background: var(--surface-panel);
   color: var(--text-secondary);
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   cursor: pointer;
 }
 .filter-tab:hover:not(.filter-tab--active) {
@@ -313,12 +313,12 @@ onMounted(fetchData);
 .hub-skeleton-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
+  gap: var(--space-8);
 }
 .hub-skeleton {
   height: 180px;
   background: var(--surface-panel);
-  border: 2px solid var(--surface-panel-border);
+  border: var(--space-1) solid var(--surface-panel-border);
   animation: hub-pulse 1.4s ease-in-out infinite;
 }
 @keyframes hub-pulse {
@@ -335,7 +335,7 @@ onMounted(fetchData);
 .hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  gap: var(--space-8);
   margin-bottom: 32px;
 }
 .exam-card {
@@ -343,13 +343,13 @@ onMounted(fetchData);
   height: 100%;
   background: none;
   border: none;
-  padding: 16px;
+  padding: var(--space-8);
   text-align: left;
   color: inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-5);
   transition: background 0.12s;
 }
 .exam-card:hover {
@@ -359,33 +359,33 @@ onMounted(fetchData);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .exam-card-id {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .exam-card-flag {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
 }
 .exam-card-type {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   letter-spacing: 1px;
   color: var(--text-label-accent);
 }
 .exam-card-level {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 .badge-official {
   font-size: 9px;
   letter-spacing: 1px;
   color: var(--status-success);
-  border: 2px solid var(--status-success);
-  padding: 2px 6px;
+  border: var(--space-1) solid var(--status-success);
+  padding: var(--space-1) var(--space-3);
   white-space: nowrap;
 }
 .exam-card-name {
@@ -395,7 +395,7 @@ onMounted(fetchData);
   margin: 0;
 }
 .exam-card-desc {
-  font-size: 12px;
+  font-size: var(--font-size-base);
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
@@ -408,10 +408,10 @@ onMounted(fetchData);
 .exam-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  font-size: 10px;
+  gap: var(--space-5);
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  padding-top: 8px;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--surface-panel-border);
 }
 
@@ -421,19 +421,19 @@ onMounted(fetchData);
   color: var(--text-secondary);
 }
 .hub-empty-icon {
-  font-size: 44px;
-  margin-bottom: 10px;
+  font-size: var(--font-size-display);
+  margin-bottom: var(--space-5);
 }
 .hub-empty-sub {
-  font-size: 11px;
-  margin-top: 4px;
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-2);
 }
 
 .hub-recent-title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-6);
 }
 .hub-recent-list {
   list-style: none;
@@ -441,16 +441,16 @@ onMounted(fetchData);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
 }
 .hub-recent-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-8);
   background: var(--surface-panel);
   border-left: 3px solid var(--surface-panel-border);
-  padding: 12px 16px;
+  padding: var(--space-6) var(--space-8);
   cursor: pointer;
   transition: border-color 0.12s, background 0.12s;
 }
@@ -461,37 +461,37 @@ onMounted(fetchData);
 .hub-recent-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-5);
   min-width: 0;
 }
 .hub-recent-flag {
   font-size: 16px;
 }
 .hub-recent-name {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--text-primary);
 }
 .hub-recent-date {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: var(--space-1);
 }
 .hub-recent-result {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-5);
   flex-shrink: 0;
 }
 .hub-recent-count {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
 .score-badge {
-  font-size: 11px;
+  font-size: var(--font-size-sm);
   font-weight: 700;
   padding: 3px 9px;
-  border: 2px solid;
+  border: var(--space-1) solid;
 }
 .score-badge--good {
   color: var(--status-success);
@@ -510,18 +510,18 @@ onMounted(fetchData);
 }
 .hub-recent-arrow {
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--font-size-sm);
 }
 
 .btn-arcade {
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   background: var(--status-success);
   color: var(--text-on-accent);
   border: none;
-  padding: 12px 22px;
+  padding: var(--space-6) var(--space-10);
   cursor: pointer;
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }

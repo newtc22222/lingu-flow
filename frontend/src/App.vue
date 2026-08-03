@@ -156,12 +156,12 @@ const backToExamHub = () => { currentView.value = 'exams' }
 <style scoped>
 .tabs {
   display: flex;
-  gap: 8px;
+  gap: var(--space-4);
 }
 .tab {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   letter-spacing: 0.5px;
-  padding: 12px 14px;
+  padding: var(--space-6) var(--space-7);
   background: var(--surface-panel);
   color: var(--text-secondary);
   border: none;
@@ -180,7 +180,7 @@ const backToExamHub = () => { currentView.value = 'exams' }
   color: var(--text-secondary);
   letter-spacing: 0.5px;
   cursor: pointer;
-  padding: 4px 0;
+  padding: var(--space-2) 0;
 }
 .util-link:hover {
   color: var(--text-primary);
@@ -191,6 +191,6 @@ const backToExamHub = () => { currentView.value = 'exams' }
 .arcade-app {
   max-width: 920px;
   margin: 0 auto;
-  padding: 28px 20px 60px;
+  padding: 28px var(--space-9) 60px;
 }
 </style>
