@@ -3,8 +3,9 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.database import engine
-from app.routers import auth, cards, decks, exams, health, media
+from app.database import AsyncSessionLocal, engine
+from app.routers import auth, cards, decks, events, exams, health, media
+from app.seed.exam_seed import seed_builtin_exams
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linguflow")
@@ -16,6 +17,14 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting LinguFlow FastAPI Backend...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Port: {settings.PORT}")
+
+    # Run idempotent built-in exam seeding on startup
+    try:
+        async with AsyncSessionLocal() as session:
+            await seed_builtin_exams(session)
+    except Exception as e:
+        logger.warning(f"⚠️ Built-in exam seed skipped (DB not ready or error): {e}")
+
     yield
     logger.info("🛑 Shutting down LinguFlow FastAPI Backend...")
     await engine.dispose()
@@ -46,6 +55,7 @@ app.include_router(auth.router)
 app.include_router(cards.router)
 app.include_router(decks.router)
 app.include_router(exams.router)
+app.include_router(events.router)
 app.include_router(media.router)
 
 
