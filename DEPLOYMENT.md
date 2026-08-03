@@ -1,56 +1,106 @@
-# Deploying LinguFlow to Vercel
+# LinguFlow Deployment Guide
 
-This guide outlines the steps to successfully deploy LinguFlow—a monorepo containing a Vue/Vite frontend and a Node.js/Express backend—to Vercel.
+This guide describes how to deploy LinguFlow using the modern, decoupled target architecture:
 
-Because the project has been restructured with a root `package.json` and a Serverless Function entry point (`api/index.ts`), Vercel can automatically build and deploy both the frontend and backend simultaneously in a single project.
+- **Frontend**: Vue 3 + Vite static SPA hosted on **Vercel** (`frontend/dist`)
+- **Backend & Database**: Python FastAPI backend + PostgreSQL database hosted on **Railway**
+- **Media Storage**: Cloudflare R2 object storage accessed via `aioboto3` presigned S3 URLs
 
-## Prerequisites
+---
 
-1. **GitHub Account**: Your codebase must be pushed to a repository on GitHub (or GitLab/Bitbucket).
-2. **Vercel Account**: Sign up or log in to [Vercel](https://vercel.com/).
-3. **MongoDB Atlas Database**: Vercel is a serverless platform, which means you cannot run a local MongoDB instance. You will need a cloud-hosted MongoDB cluster (e.g., MongoDB Atlas).
+## 1. Cloudflare R2 Bucket Setup
 
-## Step-by-Step Deployment Guide
+1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com) > **R2**.
+2. Create a bucket named `linguflow-media`.
+3. Go to **R2 > Manage API Tokens** and click **Create API Token**:
+   - Set permission to **Object Read & Write**.
+   - Scope to `linguflow-media` bucket.
+4. Record the following credentials:
+   - **Access Key ID**
+   - **Secret Access Key**
+   - **Endpoint URL** (`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`)
 
-### 1. Push Code to GitHub
-Ensure all your recent changes (specifically the Vercel restructuring) are committed and pushed to your remote repository.
+---
 
-### 2. Import the Project into Vercel
-1. Go to your Vercel Dashboard and click **Add New... > Project**.
-2. Connect your GitHub account (if you haven't already) and select the LinguFlow repository.
-3. Click **Import**.
+## 2. Railway Setup (FastAPI Backend & Postgres)
 
-### 3. Configure Project Settings
-In the configuration screen, Vercel will attempt to auto-detect your project settings. Ensure the following configurations are set:
+1. Log in to [Railway](https://railway.app) and create a **New Project**.
+2. Click **Add Plugin > PostgreSQL**:
+   - Railway automatically sets `${{Postgres.DATABASE_URL}}`.
+3. Click **Add Service > GitHub Repo**:
+   - Select the `lingu-flow` repository.
+   - Set **Root Directory** to `backend`.
+   - Set **Builder** to `Dockerfile`.
+4. Configure **Environment Variables** in Railway service settings:
+   - `ENVIRONMENT`: `production`
+   - `JWT_SECRET`: A secure 64-character hex string (generated via `openssl rand -hex 32`)
+   - `JWT_ALGORITHM`: `HS256`
+   - `CORS_ORIGINS`: `["https://linguflow.vercel.app","http://localhost:5173"]`
+   - `CORS_ORIGIN_REGEX`: `https://linguflow-.*\.vercel\.app`
+   - `R2_ACCOUNT_ID`: Your Cloudflare Account ID
+   - `R2_ACCESS_KEY_ID`: Cloudflare R2 Access Key ID
+   - `R2_SECRET_ACCESS_KEY`: Cloudflare R2 Secret Access Key
+   - `R2_BUCKET_NAME`: `linguflow-media`
+   - `R2_ENDPOINT_URL`: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
+5. Set the **Custom Start Command**:
+   ```bash
+   alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+   ```
+6. Generate a public domain under Railway service **Settings > Networking** (e.g. `https://linguflow-backend-production.up.railway.app`).
 
-- **Framework Preset**: Leave it as `Vite`. Vercel will automatically detect the Vue frontend.
-- **Root Directory**: Leave it as the root directory (`./`). Do **not** set it to `frontend` or `backend`, otherwise the serverless functions will not be detected.
-- **Build Command**: Leave as default or explicitly set to `npm run build`. Since we set up NPM Workspaces in the root `package.json`, this will build both the frontend and backend.
-- **Output Directory**: `frontend/dist` (This is where the compiled Vue SPA lives).
-- **Install Command**: `npm install` (This will install both frontend and backend dependencies via workspaces).
+---
 
-### 4. Setup Environment Variables
-Before clicking Deploy, expand the **Environment Variables** section and add the following required variables:
+## 3. Vercel Setup (Vue 3 SPA Frontend)
 
-| Name | Value | Description |
-|---|---|---|
-| `MONGO_URI` | `mongodb+srv://<username>:<password>@cluster0.mongodb.net/linguflow?retryWrites=true&w=majority` | Your cloud MongoDB connection string. |
-| `JWT_SECRET` | `your_secure_random_string` | A strong, random string used to sign JWT authentication tokens. |
-| `PORT` | `3000` | Optional for serverless, but good practice. |
+1. Log in to [Vercel](https://vercel.com) and click **Add New > Project**.
+2. Import the `lingu-flow` GitHub repository.
+3. Configure Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
+4. Update `frontend/vercel.json` rewrite destination with your Railway public domain:
+   ```json
+   {
+     "rewrites": [
+       {
+         "source": "/api/:path*",
+         "destination": "https://<your-railway-app>.up.railway.app/api/:path*"
+       },
+       {
+         "source": "/(.*)",
+         "destination": "/index.html"
+       }
+     ]
+   }
+   ```
+5. Deploy. All `/api/*` HTTP calls issued by the SPA will be proxied to Railway backend.
 
-*(Note: If you have real Google OAuth credentials, replace `DUMMY_CLIENT_ID` in the frontend code with your real Client ID and configure any backend OAuth secrets if necessary).*
+---
 
-### 5. Deploy
-Click the **Deploy** button. Vercel will:
-1. Run `npm install` at the root, linking workspaces.
-2. Build the Vite frontend into `frontend/dist`.
-3. Detect the `api/index.ts` file and deploy the Express app as a Serverless Function.
-4. Apply the routing rules from `vercel.json` (routing `/api/*` to the backend).
+## 4. Environment Variables Summary
 
-Once the deployment finishes, you will be given a live URL (e.g., `https://linguflow.vercel.app`). 
+| Platform | Variable | Scope / Description |
+| :--- | :--- | :--- |
+| **Vercel** | *(None required)* | Relative API requests proxied via `frontend/vercel.json` |
+| **Railway** | `DATABASE_URL` | PostgreSQL connection string (`${{Postgres.DATABASE_URL}}`) |
+| **Railway** | `ENVIRONMENT` | `production` |
+| **Railway** | `PORT` | Provided by Railway runtime (`${{PORT}}`) |
+| **Railway** | `JWT_SECRET` | Secret 64-char key for signing tokens |
+| **Railway** | `CORS_ORIGINS` | `["https://linguflow.vercel.app","http://localhost:5173"]` |
+| **Railway** | `CORS_ORIGIN_REGEX` | `https://linguflow-.*\.vercel\.app` |
+| **Railway** | `R2_ACCOUNT_ID` | Cloudflare Account ID |
+| **Railway** | `R2_ACCESS_KEY_ID` | Cloudflare R2 Access Key ID |
+| **Railway** | `R2_SECRET_ACCESS_KEY` | Cloudflare R2 Secret Access Key |
+| **Railway** | `R2_BUCKET_NAME` | `linguflow-media` |
+| **Railway** | `R2_ENDPOINT_URL` | `https://<ACCOUNT_ID>.r2.cloudflarestorage.com` |
 
-## Troubleshooting
+---
 
-- **500 Internal Server Error on API calls**: Check the "Logs" tab in your Vercel dashboard. This usually means your serverless function failed to connect to MongoDB. Ensure your `MONGO_URI` is correct and that your MongoDB Atlas network settings allow connections from anywhere (`0.0.0.0/0`).
-- **404 on Page Refreshes**: The `vercel.json` file handles SPA rewrites (sending all non-API traffic to `/index.html`). Ensure this file exists at the root of your repository.
-- **Missing Dependencies**: Ensure you committed the root `package.json` and `package-lock.json`. Vercel needs these to understand the workspace structure.
+## 5. Verification Steps
+
+1. **Frontend Typecheck & Build**: Run `npm run build` inside `frontend/`.
+2. **Backend Startup**: Run `uvicorn app.main:app --port 8000` inside `backend/` (with `.env` set up).
+3. **Health Check**: Call `GET /api/health` on your deployed backend.
+4. **Media Presigned Endpoint**: Test `POST /api/media/presign-upload` with JSON body `{"filename": "test.jpg", "content_type": "image/jpeg"}`.

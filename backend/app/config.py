@@ -22,6 +22,26 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
 
+    # CORS Configuration
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:3000",
+        "https://linguflow.vercel.app",
+    ]
+    CORS_ORIGIN_REGEX: str = r"https://linguflow-.*\.vercel\.app"
+
+    # Cloudflare R2 Storage
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = "linguflow-media"
+    R2_ENDPOINT_URL: str = ""
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

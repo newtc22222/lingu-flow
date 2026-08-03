@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import engine
-from app.routers import auth, cards, health
+from app.routers import auth, cards, health, media
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linguflow")
@@ -31,20 +31,10 @@ app = FastAPI(
 )
 
 # CORS Configuration
-origins = [
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:8080",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:8000",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permissive for MVP / local dev
+    allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,6 +44,8 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(cards.router)
+app.include_router(media.router)
+
 
 
 if __name__ == "__main__":
