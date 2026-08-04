@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import PixelFrame from '@/shared/components/PixelFrame.vue'
+import LevelPath, { type LevelProgress } from './LevelPath.vue'
 
-export interface LevelProgress {
-  id: string
-  index: number
-  status: 'done' | 'current' | 'locked'
-}
+export type { LevelProgress }
 
 defineProps<{
   title: string
@@ -16,71 +12,55 @@ defineProps<{
 </script>
 
 <template>
-  <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
-    <div class="world-inner">
-      <p class="world-title font-pixel">{{ title }}</p>
-      <div class="levels">
-        <div v-for="level in levels" :key="level.id" class="level font-label" :class="level.status">
-          {{ level.index }}
-        </div>
+  <section class="world-zone">
+    <div class="zone-banner">
+      <h3 class="zone-title font-label">{{ title }}</h3>
+      <div class="zone-progress-track">
+        <div class="zone-progress-fill" :style="{ width: `${progressPercent}%` }" />
       </div>
-      <div class="world-progress-track">
-        <div class="world-progress-fill" :style="{ width: `${progressPercent}%` }" />
-      </div>
-      <span class="world-sub font-label">{{ subLabel }}</span>
+      <span class="zone-percent font-label">{{ progressPercent }}%</span>
     </div>
-  </PixelFrame>
+    <LevelPath :levels="levels" />
+    <span class="zone-sub font-label">{{ subLabel }}</span>
+  </section>
 </template>
 
 <style scoped>
-.world-inner {
-  padding: var(--space-8);
-  position: relative;
+.world-zone {
+  margin-bottom: var(--space-11);
 }
-.world-title {
-  font-size: var(--font-size-sm);
-  margin-bottom: var(--space-7);
-  color: var(--text-primary);
-}
-.levels {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-7);
-}
-.level {
-  width: 34px;
-  height: 34px;
+.zone-banner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-weight: 700;
+  gap: var(--space-7);
+  margin-bottom: var(--space-7);
+}
+.zone-title {
   font-size: var(--font-size-md);
-  background: var(--surface-page);
-  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: var(--tracking-normal);
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
 }
-.level.done {
-  background: var(--status-success);
-  color: var(--text-on-accent);
+.zone-progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--surface-panel-border);
 }
-.level.current {
-  background: var(--state-selected-bg);
-  color: var(--text-on-accent);
-  box-shadow: 0 0 0 2px var(--phosphor);
-}
-.level.locked {
-  color: var(--text-disabled);
-}
-.world-progress-track {
-  height: 8px;
-  background: var(--surface-page);
-  margin-bottom: var(--space-4);
-}
-.world-progress-fill {
+.zone-progress-fill {
   height: 100%;
   background: var(--color-accent);
 }
-.world-sub {
+.zone-percent {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  min-width: 32px;
+  text-align: right;
+}
+.zone-sub {
+  display: block;
+  margin-top: var(--space-6);
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }

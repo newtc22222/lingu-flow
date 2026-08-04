@@ -129,7 +129,7 @@ const backToExamHub = () => { currentView.value = 'exams' }
             @done="onExamDone"
           />
           <FlashcardsView v-else-if="currentView === 'flashcards'" />
-          <DashboardView v-else-if="currentView === 'dashboard'" />
+          <DashboardView v-else-if="currentView === 'dashboard'" @navigate="currentView = $event" />
           <DeckManagementView v-else-if="currentView === 'manageDecks'" />
           <CardManagementView v-else-if="currentView === 'manageCards'" @close="currentView = 'dashboard'" />
         </div>
