@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, List, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -17,6 +17,8 @@ class CardCreateRequest(BaseModel):
     front: str
     back: str
     deck_id: Optional[uuid.UUID] = Field(default=None, alias="deckId")
+    image_url: Optional[str] = Field(default=None, alias="imageUrl")
+    notes: Optional[str] = None
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -25,6 +27,16 @@ class CardUpdateRequest(BaseModel):
     front: str
     back: str
     deck_id: Optional[uuid.UUID] = Field(default=None, alias="deckId")
+    image_url: Optional[str] = Field(default=None, alias="imageUrl")
+    notes: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class CardReorderRequest(BaseModel):
+    """New card order for a deck, as a list of card ids in display order."""
+
+    card_ids: List[uuid.UUID] = Field(alias="cardIds")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -41,6 +53,9 @@ class CardResponse(BaseModel):
     deck_id: Optional[uuid.UUID] = Field(default=None, alias="deckId")
     front: str
     back: str
+    position: int = 0
+    image_url: Optional[str] = Field(default=None, alias="imageUrl")
+    notes: Optional[str] = None
     srs_data: CardSRSDataResponse = Field(alias="srsData")
     created_at: datetime = Field(alias="createdAt")
     updated_at: datetime = Field(alias="updatedAt")
@@ -65,6 +80,9 @@ class CardResponse(BaseModel):
                 "deckId": getattr(data, "deck_id", None),
                 "front": getattr(data, "front"),
                 "back": getattr(data, "back"),
+                "position": getattr(data, "position", 0),
+                "imageUrl": getattr(data, "image_url", None),
+                "notes": getattr(data, "notes", None),
                 "srsData": srs,
                 "createdAt": getattr(data, "created_at"),
                 "updatedAt": getattr(data, "updated_at"),

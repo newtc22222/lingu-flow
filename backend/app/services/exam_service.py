@@ -10,7 +10,9 @@ from app.models.session import AnswerRecord, ExamSession
 from app.schemas.exam import (
     ExamSessionCreateRequest,
     ExamTemplateCreateRequest,
+    ExamTemplateUpdateRequest,
     QuestionCreateRequest,
+    QuestionUpdateRequest,
     SubmitAnswerRequest,
 )
 
@@ -55,6 +57,43 @@ class ExamService:
             total_questions=0,
         )
         db.add(template)
+        await db.commit()
+        await db.refresh(template)
+        return template
+
+    async def update_template(
+        self,
+        db: AsyncSession,
+        template_id: uuid.UUID,
+        user_id: uuid.UUID,
+        req: ExamTemplateUpdateRequest,
+    ) -> Optional[ExamTemplate]:
+        """
+        Update a custom template owned by the user.
+
+        Built-in public templates are intentionally not editable — the seed
+        re-runs on every startup and would clobber any edit anyway.
+        """
+        result = await db.execute(
+            select(ExamTemplate).where(
+                ExamTemplate.id == template_id,
+                ExamTemplate.user_id == user_id,
+                ExamTemplate.is_public == False,
+            )
+        )
+        template = result.scalar_one_or_none()
+        if not template:
+            return None
+
+        template.name = req.name
+        template.exam_type = req.exam_type
+        template.description = req.description
+        template.duration_minutes = req.duration_minutes
+        template.passing_score = req.passing_score
+        template.level = req.level
+        if req.tags is not None:
+            template.tags = req.tags
+
         await db.commit()
         await db.refresh(template)
         return template
@@ -125,6 +164,58 @@ class ExamService:
         await db.commit()
         await db.refresh(question)
         return question
+
+    async def update_question(
+        self,
+        db: AsyncSession,
+        question_id: uuid.UUID,
+        user_id: uuid.UUID,
+        req: QuestionUpdateRequest,
+    ) -> Optional[Question]:
+        """Update a question the user owns."""
+        result = await db.execute(
+            select(Question).where(
+                Question.id == question_id, Question.user_id == user_id
+            )
+        )
+        question = result.scalar_one_or_none()
+        if not question:
+            return None
+
+        question.question_text = req.question_text
+        question.passage = req.passage
+        question.type = req.type
+        question.options = req.options
+        question.correct_answer = req.correct_answer
+        question.explanation = req.explanation
+        question.difficulty = req.difficulty
+        if req.tags is not None:
+            question.tags = req.tags
+
+        await db.commit()
+        await db.refresh(question)
+        return question
+
+    async def delete_question(
+        self, db: AsyncSession, question_id: uuid.UUID, user_id: uuid.UUID
+    ) -> bool:
+        """Delete a question the user owns, keeping the template's count in step."""
+        result = await db.execute(
+            select(Question).where(
+                Question.id == question_id, Question.user_id == user_id
+            )
+        )
+        question = result.scalar_one_or_none()
+        if not question:
+            return False
+
+        template = await self.get_template_by_id(db, question.exam_template_id)
+        if template and template.total_questions > 0:
+            template.total_questions -= 1
+
+        await db.delete(question)
+        await db.commit()
+        return True
 
     # ─── SESSIONS ────────────────────────────────────────────────
     async def get_user_sessions(

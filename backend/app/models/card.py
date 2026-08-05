@@ -26,6 +26,13 @@ class Card(Base):
     front: Mapped[str] = mapped_column(Text, nullable=False)
     back: Mapped[str] = mapped_column(Text, nullable=False)
 
+    # Quizlet-style presentation fields. `position` orders cards within their
+    # deck for the deck-detail list, Learn mode, and Match mode; it is
+    # deliberately independent of the SM-2 review order below.
+    position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # SM-2 Spaced Repetition Data
     srs_interval: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     srs_ease_factor: Mapped[float] = mapped_column(Float, default=2.5, nullable=False)

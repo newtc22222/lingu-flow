@@ -11,8 +11,10 @@ from app.schemas.exam import (
     ExamSessionResponse,
     ExamTemplateCreateRequest,
     ExamTemplateResponse,
+    ExamTemplateUpdateRequest,
     QuestionCreateRequest,
     QuestionResponse,
+    QuestionUpdateRequest,
     SessionDetailsResponse,
     SubmitAnswerRequest,
 )
@@ -63,6 +65,25 @@ async def get_template_by_id(
     return ExamTemplateResponse.model_validate(template)
 
 
+@router.put("/templates/{template_id}", response_model=ExamTemplateResponse)
+async def update_template(
+    template_id: uuid.UUID,
+    req: ExamTemplateUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a custom exam template owned by the user."""
+    template = await exam_service.update_template(
+        db, template_id, current_user.id, req
+    )
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Custom template not found or cannot edit public template",
+        )
+    return ExamTemplateResponse.model_validate(template)
+
+
 @router.delete("/templates/{template_id}")
 async def delete_template(
     template_id: uuid.UUID,
@@ -108,6 +129,41 @@ async def add_template_question(
         db, template_id, current_user.id, req
     )
     return QuestionResponse.model_validate(question)
+
+
+@router.put("/questions/{question_id}", response_model=QuestionResponse)
+async def update_question(
+    question_id: uuid.UUID,
+    req: QuestionUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a single question owned by the user."""
+    question = await exam_service.update_question(
+        db, question_id, current_user.id, req
+    )
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found or not authorized",
+        )
+    return QuestionResponse.model_validate(question)
+
+
+@router.delete("/questions/{question_id}")
+async def delete_question(
+    question_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a single question owned by the user."""
+    success = await exam_service.delete_question(db, question_id, current_user.id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found or not authorized",
+        )
+    return {"success": True}
 
 
 # ─── SESSIONS ────────────────────────────────────────────────────

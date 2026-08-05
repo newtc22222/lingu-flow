@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.card import Card
@@ -58,15 +58,71 @@ class CardService:
         )
         return list(result.scalars().all())
 
+    async def get_deck_cards(
+        self, db: AsyncSession, deck_id: uuid.UUID, user_id: uuid.UUID
+    ) -> List[Card]:
+        """Fetch a deck's cards in display order (position, then creation time)."""
+        result = await db.execute(
+            select(Card)
+            .where(Card.deck_id == deck_id, Card.user_id == user_id)
+            .order_by(Card.position.asc(), Card.created_at.asc())
+        )
+        return list(result.scalars().all())
+
+    async def reorder_deck_cards(
+        self,
+        db: AsyncSession,
+        deck_id: uuid.UUID,
+        user_id: uuid.UUID,
+        card_ids: List[uuid.UUID],
+    ) -> Optional[List[Card]]:
+        """
+        Rewrite `position` for a deck's cards to match `card_ids`.
+
+        Returns None when the id list doesn't exactly cover the deck's cards —
+        a partial reorder would silently strand the omitted cards at whatever
+        stale positions they already had, so it's rejected rather than applied.
+        """
+        cards = await self.get_deck_cards(db, deck_id, user_id)
+        if not cards:
+            return None
+
+        by_id = {card.id: card for card in cards}
+        if set(card_ids) != set(by_id) or len(card_ids) != len(cards):
+            return None
+
+        for index, card_id in enumerate(card_ids):
+            by_id[card_id].position = index
+
+        await db.commit()
+        return await self.get_deck_cards(db, deck_id, user_id)
+
+    async def _next_position(
+        self, db: AsyncSession, deck_id: Optional[uuid.UUID], user_id: uuid.UUID
+    ) -> int:
+        """Append position for a new card — max(position) + 1 within its deck."""
+        if deck_id is None:
+            return 0
+        result = await db.execute(
+            select(func.max(Card.position)).where(
+                Card.deck_id == deck_id, Card.user_id == user_id
+            )
+        )
+        current_max = result.scalar()
+        return 0 if current_max is None else current_max + 1
+
     async def create_card(
         self, db: AsyncSession, user_id: uuid.UUID, req: CardCreateRequest
     ) -> Card:
-        """Create a new flashcard for user."""
+        """Create a new flashcard for user, appended to the end of its deck."""
         card = Card(
             user_id=user_id,
             deck_id=req.deck_id,
             front=req.front,
             back=req.back,
+            image_url=req.image_url,
+            notes=req.notes,
+            position=await self._next_position(db, req.deck_id, user_id),
         )
         db.add(card)
         await db.commit()
@@ -88,9 +144,16 @@ class CardService:
         if not card:
             return None
 
+        moved_deck = card.deck_id != req.deck_id
+
         card.front = req.front
         card.back = req.back
         card.deck_id = req.deck_id
+        card.image_url = req.image_url
+        card.notes = req.notes
+        # Moving decks invalidates the old position — append to the new deck.
+        if moved_deck:
+            card.position = await self._next_position(db, req.deck_id, user_id)
 
         await db.commit()
         await db.refresh(card)
