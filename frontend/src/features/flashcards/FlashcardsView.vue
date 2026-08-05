@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { apiFetch } from '@/utils/api'
 import FlashCard from './components/FlashCard.vue'
 import DeckProgress from './components/DeckProgress.vue'
@@ -21,6 +22,8 @@ interface Card {
 const SCORE_DONT_KNOW = 1
 const SCORE_KNOW = 4
 
+const { t } = useI18n()
+
 const cards = ref<Card[]>([])
 const currentIndex = ref(0)
 const flipped = ref(false)
@@ -28,7 +31,7 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 
 const currentCard = computed(() => cards.value[currentIndex.value] ?? null)
-const deckName = computed(() => currentCard.value?.deckName?.toUpperCase() ?? 'ÔN TẬP HÔM NAY')
+const deckName = computed(() => currentCard.value?.deckName?.toUpperCase() ?? '—')
 
 async function fetchCards() {
   isLoading.value = true
@@ -38,14 +41,14 @@ async function fetchCards() {
     if (!res.ok) throw new Error('Request failed')
     const raw = (await res.json()) as Record<string, unknown>[]
     cards.value = raw.map((c) => ({
-      id: (c.id ?? c._id) as string,
+      id: c.id as string,
       front: c.front as string,
       back: c.back as string,
       deckName: c.deckName as string | undefined,
     }))
   } catch (err) {
     console.error('Failed to fetch cards:', err)
-    error.value = 'Không thể tải thẻ. Vui lòng thử lại sau.'
+    error.value = t('dashboard.error')
   } finally {
     isLoading.value = false
   }
@@ -86,7 +89,7 @@ onUnmounted(() => {
 
 <template>
   <div class="flashcards-view">
-    <div v-if="isLoading" class="fc-status font-label">▸ ĐANG TẢI THẺ…</div>
+    <div v-if="isLoading" class="fc-status font-label">{{ t('flashcards.loading') }}</div>
     <div v-else-if="error" class="fc-status fc-status--error font-label">{{ error }}</div>
 
     <template v-else-if="currentCard">
@@ -98,12 +101,16 @@ onUnmounted(() => {
       <FlashCard :front="currentCard.front" :back="currentCard.back" :flipped="flipped" @toggle="flipped = !flipped" />
 
       <div class="fc-actions">
-        <AppButton variant="danger" @click="submitReview(SCORE_DONT_KNOW)">✕ CHƯA THUỘC</AppButton>
-        <AppButton variant="primary" @click="submitReview(SCORE_KNOW)">✓ ĐÃ THUỘC</AppButton>
+        <AppButton variant="danger" @click="submitReview(SCORE_DONT_KNOW)">
+          ✕ {{ t('flashcards.unknown') }}
+        </AppButton>
+        <AppButton variant="primary" @click="submitReview(SCORE_KNOW)">
+          ✓ {{ t('flashcards.known') }}
+        </AppButton>
       </div>
     </template>
 
-    <div v-else class="fc-status font-label">▸ ĐÃ ÔN XONG TẤT CẢ THẺ HÔM NAY</div>
+    <div v-else class="fc-status font-label">{{ t('flashcards.empty') }}</div>
   </div>
 </template>
 

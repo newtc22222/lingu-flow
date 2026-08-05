@@ -37,7 +37,7 @@
       }
     },
     {
-      "files": ["src/components/ExamCreator.vue"],
+      "files": ["src/features/exam/ExamCreatorView.vue"],
       "comment": ".btn-remove/.btn-add-question are previously-documented single-use exceptions (COMPONENTS.md) - not folded into AppButton because they're structurally distinct affordances with exactly one consumer each.",
       "rules": {
         "selector-disallowed-list": null

@@ -58,7 +58,9 @@
     "continue": "▶ CONTINUE — LEVEL {level}",
     "emptyTitle": "NO WORLDS YET",
     "emptySub": "Create your first deck to start your learning journey.",
-    "createDeck": "CREATE DECK"
+    "createDeck": "CREATE DECK",
+    "level": "Level {index}",
+    "levelLocked": "Level {index}, locked"
   },
   "flashcards": {
     "loading": "▸ LOADING CARDS…",
@@ -68,7 +70,8 @@
     "unknown": "DIDN'T KNOW",
     "remaining": "REMAINING",
     "learn": "LEARN",
-    "match": "MATCH"
+    "match": "MATCH",
+    "flipHint": "tap to flip the card"
   },
   "learn": {
     "title": "LEARN MODE",
@@ -105,7 +108,9 @@
     "createTitle": "CREATE NEW DECK",
     "editTitle": "EDIT DECK",
     "name": "DECK NAME",
-    "description": "DESCRIPTION",
+    "namePlaceholder": "e.g. Spanish vocabulary",
+    "description": "DESCRIPTION (OPTIONAL)",
+    "descriptionPlaceholder": "e.g. the 1000 most common words",
     "saveDeck": "SAVE DECK",
     "confirmDelete": "Are you sure you want to delete this deck?",
     "cardCount": "{count} cards",

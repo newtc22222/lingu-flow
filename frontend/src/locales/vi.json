@@ -58,7 +58,9 @@
     "continue": "▶ TIẾP TỤC — CẤP {level}",
     "emptyTitle": "CHƯA CÓ THẾ GIỚI NÀO",
     "emptySub": "Tạo bộ thẻ đầu tiên để bắt đầu hành trình học tập.",
-    "createDeck": "TẠO BỘ THẺ"
+    "createDeck": "TẠO BỘ THẺ",
+    "level": "Cấp độ {index}",
+    "levelLocked": "Cấp độ {index}, chưa mở khóa"
   },
   "flashcards": {
     "loading": "▸ ĐANG TẢI THẺ…",
@@ -68,7 +70,8 @@
     "unknown": "CHƯA THUỘC",
     "remaining": "CÒN LẠI",
     "learn": "HỌC",
-    "match": "GHÉP THẺ"
+    "match": "GHÉP THẺ",
+    "flipHint": "chạm để lật thẻ"
   },
   "learn": {
     "title": "CHẾ ĐỘ HỌC",
@@ -105,7 +108,9 @@
     "createTitle": "TẠO BỘ THẺ MỚI",
     "editTitle": "CHỈNH SỬA BỘ THẺ",
     "name": "TÊN BỘ THẺ",
-    "description": "MÔ TẢ",
+    "namePlaceholder": "VD: Từ vựng tiếng Tây Ban Nha",
+    "description": "MÔ TẢ (TÙY CHỌN)",
+    "descriptionPlaceholder": "VD: 1000 từ thông dụng nhất",
     "saveDeck": "LƯU BỘ THẺ",
     "confirmDelete": "Bạn có chắc muốn xóa bộ thẻ này?",
     "cardCount": "{count} thẻ",

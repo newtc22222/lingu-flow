@@ -31,9 +31,27 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/features/flashcards/FlashcardsView.vue'),
   },
   {
+    path: '/flashcards/learn/:deckId',
+    name: 'learn',
+    component: () => import('@/features/flashcards/LearnView.vue'),
+    props: true,
+  },
+  {
+    path: '/flashcards/match/:deckId',
+    name: 'match',
+    component: () => import('@/features/flashcards/MatchView.vue'),
+    props: true,
+  },
+  {
     path: '/decks',
     name: 'decks',
     component: () => import('@/features/library/DeckManagementView.vue'),
+  },
+  {
+    path: '/decks/:deckId',
+    name: 'deck-detail',
+    component: () => import('@/features/library/DeckDetailView.vue'),
+    props: true,
   },
   {
     path: '/cards',
