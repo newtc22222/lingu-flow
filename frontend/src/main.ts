@@ -12,5 +12,9 @@ import '@fontsource/ibm-plex-mono/700.css'
 import './style.css'
 
 import App from './App.vue'
+import { i18n } from './i18n'
+import { router } from './router'
 
-createApp(App).use(createPinia()).mount('#app')
+// Pinia must be installed before the router: the `beforeEach` auth guard
+// resolves `useAuthStore()`, which needs an active Pinia instance.
+createApp(App).use(createPinia()).use(i18n).use(router).mount('#app')

@@ -1,11 +1,22 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import AppButton from '@/shared/components/AppButton.vue'
+import { useAuthStore } from './store/authStore'
 
-const emit = defineEmits<{
-  (e: 'auth-success', user: unknown): void
-}>()
+const { t } = useI18n()
+const router = useRouter()
+const auth = useAuthStore()
+
+/** Every successful credential exchange lands here: persist, then hand off to
+ * the router. The guard on `/dashboard` re-reads the store, so the token has to
+ * be committed before we navigate. */
+async function completeAuth(token: string, isGuest = false) {
+  auth.setToken(token, isGuest)
+  await router.push({ name: 'dashboard' })
+}
 
 const mode = ref<'login' | 'signup' | 'forgot'>('login')
 const username = ref('')
@@ -48,15 +59,15 @@ async function handleSubmit() {
     const data = await res.json()
 
     if (!res.ok) {
-      errorMsg.value = data.error || (mode.value === 'login' ? 'Đăng nhập thất bại' : 'Đăng ký thất bại')
+      errorMsg.value =
+        data.error ||
+        (mode.value === 'login' ? t('auth.errors.loginFailed') : t('auth.errors.signupFailed'))
       return
     }
 
-    localStorage.setItem('token', data.token)
-    localStorage.removeItem('guest_token')
-    emit('auth-success', data.user)
+    await completeAuth(data.token)
   } catch (err) {
-    errorMsg.value = 'Đã xảy ra lỗi. Vui lòng thử lại.'
+    errorMsg.value = t('auth.errors.generic')
   } finally {
     isLoading.value = false
   }
@@ -75,10 +86,10 @@ async function handleForgotSubmit() {
       forgotSubmitted.value = true
     } else {
       const data = await res.json()
-      errorMsg.value = data.error || 'Không thể gửi yêu cầu. Vui lòng thử lại.'
+      errorMsg.value = data.error || t('auth.errors.forgotFailed')
     }
   } catch (err) {
-    errorMsg.value = 'Đã xảy ra lỗi. Vui lòng thử lại.'
+    errorMsg.value = t('auth.errors.generic')
   } finally {
     isLoading.value = false
   }
@@ -96,14 +107,12 @@ async function handleGuestLogin() {
     })
     const data = await res.json()
     if (res.ok) {
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('guest_token', data.token)
-      emit('auth-success', data.user)
+      await completeAuth(data.token, true)
     } else {
-      errorMsg.value = data.error || 'Không thể vào chế độ khách'
+      errorMsg.value = data.error || t('auth.errors.guestFailed')
     }
   } catch (err) {
-    errorMsg.value = 'Đã xảy ra lỗi khi vào chế độ khách.'
+    errorMsg.value = t('auth.errors.guestGeneric')
   } finally {
     isLoading.value = false
   }
@@ -119,14 +128,12 @@ async function handleGoogleCallback(response: { credential: string }) {
     })
     const data = await res.json()
     if (res.ok) {
-      localStorage.setItem('token', data.token)
-      localStorage.removeItem('guest_token')
-      emit('auth-success', data.user)
+      await completeAuth(data.token)
     } else {
-      errorMsg.value = data.error || 'Đăng nhập Google thất bại'
+      errorMsg.value = data.error || t('auth.errors.googleFailed')
     }
   } catch (err) {
-    errorMsg.value = 'Đã xảy ra lỗi khi đăng nhập Google.'
+    errorMsg.value = t('auth.errors.googleGeneric')
   }
 }
 
@@ -152,7 +159,7 @@ onMounted(() => {
     <div class="auth-wordmark font-pixel" aria-hidden="false">
       LINGUFLOW<span class="auth-cursor" aria-hidden="true">▌</span>
     </div>
-    <p class="auth-tagline font-label">LUYỆN ĐỀ THI THỬ · PHONG CÁCH ARCADE</p>
+    <p class="auth-tagline font-label">{{ t('auth.tagline') }}</p>
 
     <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="auth-cabinet">
       <div class="auth-inner">
@@ -165,7 +172,7 @@ onMounted(() => {
             :class="{ 'auth-tab--active': mode === 'login' }"
             @click="switchMode('login')"
           >
-            ĐĂNG NHẬP
+            {{ t('auth.login') }}
           </button>
           <button
             type="button"
@@ -175,7 +182,7 @@ onMounted(() => {
             :class="{ 'auth-tab--active': mode === 'signup' }"
             @click="switchMode('signup')"
           >
-            ĐĂNG KÝ
+            {{ t('auth.signup') }}
           </button>
         </div>
 
@@ -183,17 +190,17 @@ onMounted(() => {
           <div v-if="errorMsg" class="auth-error font-label">{{ errorMsg }}</div>
 
           <div v-if="mode === 'signup'" class="arcade-field">
-            <label class="arcade-label" for="auth-username">TÊN NGƯỜI DÙNG</label>
+            <label class="arcade-label" for="auth-username">{{ t('auth.username') }}</label>
             <input id="auth-username" v-model="username" type="text" required class="arcade-input" />
           </div>
 
           <div class="arcade-field">
-            <label class="arcade-label" for="auth-email">EMAIL</label>
+            <label class="arcade-label" for="auth-email">{{ t('auth.email') }}</label>
             <input id="auth-email" v-model="email" type="email" required class="arcade-input" />
           </div>
 
           <div class="arcade-field">
-            <label class="arcade-label" for="auth-password">MẬT KHẨU</label>
+            <label class="arcade-label" for="auth-password">{{ t('auth.password') }}</label>
             <input id="auth-password" v-model="password" type="password" required class="arcade-input" />
           </div>
 
@@ -203,18 +210,18 @@ onMounted(() => {
             class="auth-forgot-link font-label"
             @click="switchMode('forgot')"
           >
-            QUÊN MẬT KHẨU?
+            {{ t('auth.forgotLink') }}
           </button>
 
           <AppButton type="submit" class="auth-submit-btn" :disabled="isLoading">
             {{
               isLoading
                 ? mode === 'login'
-                  ? 'ĐANG ĐĂNG NHẬP…'
-                  : 'ĐANG TẠO TÀI KHOẢN…'
+                  ? t('auth.loggingIn')
+                  : t('auth.creatingAccount')
                 : mode === 'login'
-                  ? 'ĐĂNG NHẬP'
-                  : 'TẠO TÀI KHOẢN'
+                  ? t('auth.login')
+                  : t('auth.createAccount')
             }}
           </AppButton>
         </form>
@@ -223,12 +230,10 @@ onMounted(() => {
           <div v-if="errorMsg" class="auth-error font-label">{{ errorMsg }}</div>
 
           <template v-if="!forgotSubmitted">
-            <p class="auth-forgot-desc font-body">
-              Nhập email của bạn, chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
-            </p>
+            <p class="auth-forgot-desc font-body">{{ t('auth.forgotDesc') }}</p>
             <form class="auth-form" @submit.prevent="handleForgotSubmit">
               <div class="arcade-field">
-                <label class="arcade-label" for="auth-forgot-email">EMAIL</label>
+                <label class="arcade-label" for="auth-forgot-email">{{ t('auth.email') }}</label>
                 <input
                   id="auth-forgot-email"
                   v-model="forgotEmail"
@@ -239,31 +244,29 @@ onMounted(() => {
               </div>
 
               <AppButton type="submit" class="auth-submit-btn" :disabled="isLoading">
-                {{ isLoading ? 'ĐANG GỬI…' : 'GỬI LIÊN KẾT ĐẶT LẠI' }}
+                {{ isLoading ? t('auth.sending') : t('auth.sendResetLink') }}
               </AppButton>
             </form>
           </template>
 
-          <p v-else class="auth-forgot-desc font-body">
-            Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.
-          </p>
+          <p v-else class="auth-forgot-desc font-body">{{ t('auth.forgotSent') }}</p>
 
           <button type="button" class="auth-forgot-link font-label" @click="switchMode('login')">
-            QUAY LẠI ĐĂNG NHẬP
+            {{ t('auth.backToLogin') }}
           </button>
         </div>
 
         <template v-if="mode !== 'forgot'">
           <div class="auth-divider font-label">
             <span class="auth-divider-line" />
-            <span>HOẶC</span>
+            <span>{{ t('auth.or') }}</span>
             <span class="auth-divider-line" />
           </div>
 
           <div ref="googleBtnRef" class="auth-google"></div>
 
           <AppButton variant="secondary" class="auth-guest-btn" :disabled="isLoading" @click="handleGuestLogin">
-            TIẾP TỤC KHÔNG CẦN TÀI KHOẢN
+            {{ t('auth.guest') }}
           </AppButton>
         </template>
       </div>

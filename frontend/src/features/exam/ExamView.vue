@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import ExamHud from './components/ExamHud.vue'
 import QuestionCard from './components/QuestionCard.vue'
 import { useExamStore } from './store/examStore'
 
 const props = defineProps<{ templateId: string }>()
-const emit = defineEmits<{
-  (e: 'done', sessionId: string): void
-}>()
 
+const { t } = useI18n()
+const router = useRouter()
 const store = useExamStore()
 
-const domainLabel = computed(() => (store.currentQuestion?.domain ?? store.domain ?? '').toUpperCase())
 const isLastQuestion = computed(() => store.currentIndex === store.questions.length - 1)
 
 function handleSubmit() {
@@ -47,7 +47,12 @@ function onKeyDown(e: KeyboardEvent) {
 watch(
   () => store.phase,
   (phase) => {
-    if (phase === 'finished' && store.finishedSessionId) emit('done', store.finishedSessionId)
+    if (phase === 'finished' && store.finishedSessionId) {
+      void router.replace({
+        name: 'exam-results',
+        params: { sessionId: store.finishedSessionId },
+      })
+    }
   },
 )
 
@@ -65,21 +70,24 @@ onUnmounted(() => {
 <template>
   <div class="exam-view">
     <template v-if="store.phase === 'loading'">
-      <p class="exam-loading font-label">▸ ĐANG TẢI ĐỀ THI…</p>
+      <p class="exam-loading font-label">{{ t('exam.loadingExam') }}</p>
     </template>
 
     <template v-else-if="store.phase === 'error'">
-      <p class="exam-error font-label">{{ store.error ?? 'Không thể tải bài thi.' }}</p>
+      <p class="exam-error font-label">{{ store.error ?? t('exam.loadFailed') }}</p>
     </template>
 
     <template v-else-if="store.currentQuestion">
-      <p class="exam-title font-pixel">{{ store.examTitle.toUpperCase() }}</p>
+      <!-- font-label, not font-pixel: exam names are user-supplied and may
+           carry Vietnamese diacritics Press Start 2P cannot render. -->
+      <p class="exam-title font-label">{{ store.examTitle.toUpperCase() }}</p>
 
       <ExamHud />
 
       <div class="exam-meta font-label">
-        <span>QUESTION {{ store.currentIndex + 1 }} / {{ store.questions.length }}</span>
-        <span v-if="domainLabel">DOMAIN: {{ domainLabel }}</span>
+        <span>
+          {{ t('exam.question', { current: store.currentIndex + 1, total: store.questions.length }) }}
+        </span>
       </div>
 
       <QuestionCard

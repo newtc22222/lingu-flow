@@ -1,41 +1,50 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { apiFetch } from '../utils/api';
-import PixelFrame from '../shared/components/PixelFrame.vue';
-import AppButton from '../shared/components/AppButton.vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
 
+/** Mirrors `ExamTemplateResponse` in `backend/app/schemas/exam.py`. */
 interface ExamTemplate {
-  _id: string;
+  id: string;
   name: string;
   examType: 'toeic' | 'ielts' | 'hsk' | 'jlpt' | 'custom';
   description: string;
-  duration: number;
+  durationMinutes: number;
   totalQuestions: number;
   passingScore: number;
   level: string;
   isPublic: boolean;
 }
 
+/**
+ * Mirrors `ExamSessionResponse`. Note `examTemplateId` is a bare UUID — the
+ * backend does not embed the template, so the exam name/type shown in the
+ * recent-sessions list is joined against `templates` client-side below.
+ */
 interface ExamSession {
-  _id: string;
-  examTemplateId: { name: string; examType: string };
+  id: string;
+  examTemplateId: string;
   score: number;
   status: string;
-  createdAt: string;
+  startedAt: string;
   correctCount: number;
   totalCount: number;
 }
 
-const emit = defineEmits<{
-  (e: 'start-exam', templateId: string): void;
-  (e: 'create-exam'): void;
-  (e: 'view-session', sessionId: string): void;
-}>();
+const { t } = useI18n();
+const router = useRouter();
 
 const templates = ref<ExamTemplate[]>([]);
 const sessions = ref<ExamSession[]>([]);
 const isLoading = ref(true);
 const selectedType = ref<string>('all');
+
+const templatesById = computed(
+  () => new Map(templates.value.map((tpl) => [tpl.id, tpl])),
+);
 
 const EXAM_CONFIG: Record<string, { label: string; flag: string }> = {
   toeic: { label: 'TOEIC', flag: '🇺🇸' },
@@ -45,14 +54,14 @@ const EXAM_CONFIG: Record<string, { label: string; flag: string }> = {
   custom: { label: 'Custom', flag: '⚙️' },
 };
 
-const typeFilters = [
-  { key: 'all', label: 'All Exams', icon: '📚' },
+const typeFilters = computed(() => [
+  { key: 'all', label: t('exam.allExams'), icon: '📚' },
   { key: 'toeic', label: 'TOEIC', icon: '🇺🇸' },
   { key: 'ielts', label: 'IELTS', icon: '🇬🇧' },
   { key: 'hsk', label: 'HSK', icon: '🇨🇳' },
   { key: 'jlpt', label: 'JLPT', icon: '🇯🇵' },
-  { key: 'custom', label: 'Custom', icon: '⚙️' },
-];
+  { key: 'custom', label: t('exam.custom'), icon: '⚙️' },
+]);
 
 const filteredTemplates = computed(() =>
   selectedType.value === 'all'
@@ -87,11 +96,20 @@ const fetchData = async () => {
   }
 };
 
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
+const formatDate = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
 const scoreTier = (score: number) => (score >= 80 ? 'good' : score >= 60 ? 'mid' : 'bad');
+
+const startExam = (templateId: string) =>
+  router.push({ name: 'exam-session', params: { templateId } });
+const createExam = () => router.push({ name: 'exam-create' });
+const viewSession = (sessionId: string) =>
+  router.push({ name: 'exam-results', params: { sessionId } });
 
 onMounted(fetchData);
 </script>
@@ -102,31 +120,33 @@ onMounted(fetchData);
     <div class="hub-header">
       <div class="hub-heading">
         <span class="hub-icon" aria-hidden="true">🎓</span>
-        <h1 class="hub-title font-pixel">EXAM SIMULATOR</h1>
+        <!-- font-label, not font-pixel: the VI title carries diacritics and
+             Press Start 2P has no glyphs for them (see tokens.css). -->
+        <h1 class="hub-title font-label">{{ t('exam.title') }}</h1>
       </div>
-      <p class="hub-tagline font-label">TOEIC · IELTS · HSK · JLPT — REAL CONDITIONS, REAL RESULTS</p>
+      <p class="hub-tagline font-label">{{ t('exam.tagline') }}</p>
 
-      <AppButton class="hub-create-btn" @click="emit('create-exam')">
-        + CREATE CUSTOM EXAM
+      <AppButton class="hub-create-btn" @click="createExam">
+        {{ t('exam.createCustom') }}
       </AppButton>
 
       <!-- Stats Row -->
       <div class="hub-stats">
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
           <div class="stat-inner">
-            <span class="stat-label font-label">EXAMS TAKEN</span>
+            <span class="stat-label font-label">{{ t('exam.taken') }}</span>
             <span class="stat-value font-label">{{ stats.total }}</span>
           </div>
         </PixelFrame>
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
           <div class="stat-inner">
-            <span class="stat-label font-label">AVG SCORE</span>
+            <span class="stat-label font-label">{{ t('exam.avgScore') }}</span>
             <span class="stat-value font-label">{{ stats.avgScore }}%</span>
           </div>
         </PixelFrame>
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
           <div class="stat-inner">
-            <span class="stat-label font-label">BEST SCORE</span>
+            <span class="stat-label font-label">{{ t('exam.bestScore') }}</span>
             <span class="stat-value font-label stat-value--green">{{ stats.bestScore }}%</span>
           </div>
         </PixelFrame>
@@ -157,13 +177,13 @@ onMounted(fetchData);
       <div v-if="filteredTemplates.length" class="hub-grid">
         <PixelFrame
           v-for="template in filteredTemplates"
-          :key="template._id"
+          :key="template.id"
           frame-color="amber"
           surface="cabinet"
           :ring-width="3"
           class="exam-card-frame"
         >
-          <button type="button" class="exam-card" @click="emit('start-exam', template._id)">
+          <button type="button" class="exam-card" @click="startExam(template.id)">
             <div class="exam-card-top">
               <div class="exam-card-id">
                 <span class="exam-card-flag" aria-hidden="true">{{ EXAM_CONFIG[template.examType]?.flag || '📄' }}</span>
@@ -172,16 +192,16 @@ onMounted(fetchData);
                   <div v-if="template.level" class="exam-card-level font-label">{{ template.level }}</div>
                 </div>
               </div>
-              <span v-if="template.isPublic" class="badge-official font-label">OFFICIAL</span>
+              <span v-if="template.isPublic" class="badge-official font-label">{{ t('exam.official') }}</span>
             </div>
 
             <h3 class="exam-card-name font-body">{{ template.name }}</h3>
             <p class="exam-card-desc font-body">{{ template.description }}</p>
 
             <div class="exam-card-meta font-label">
-              <span>⏱ {{ template.duration }} MIN</span>
-              <span>❓ {{ template.totalQuestions }} Qs</span>
-              <span>PASS {{ template.passingScore }}%</span>
+              <span>⏱ {{ template.durationMinutes }} {{ t('common.minutes') }}</span>
+              <span>❓ {{ template.totalQuestions }}</span>
+              <span>{{ t('exam.pass', { score: template.passingScore }) }}</span>
             </div>
           </button>
         </PixelFrame>
@@ -190,25 +210,29 @@ onMounted(fetchData);
       <!-- Empty state -->
       <div v-else class="hub-empty font-label">
         <div class="hub-empty-icon" aria-hidden="true">📭</div>
-        <p>NO EXAMS FOUND FOR THIS CATEGORY.</p>
-        <p class="hub-empty-sub">Try creating a custom exam!</p>
+        <p>{{ t('exam.noExams') }}</p>
+        <p class="hub-empty-sub">{{ t('exam.noExamsSub') }}</p>
       </div>
 
       <!-- Recent History -->
       <div v-if="recentSessions.length" class="hub-recent">
-        <h2 class="hub-recent-title font-body">📋 Recent Sessions</h2>
+        <h2 class="hub-recent-title font-body">{{ t('exam.recentSessions') }}</h2>
         <ul class="hub-recent-list">
           <li
             v-for="session in recentSessions"
-            :key="session._id"
+            :key="session.id"
             class="hub-recent-row"
-            @click="emit('view-session', session._id)"
+            @click="viewSession(session.id)"
           >
             <div class="hub-recent-info">
-              <span class="hub-recent-flag" aria-hidden="true">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📄' }}</span>
+              <span class="hub-recent-flag" aria-hidden="true">
+                {{ EXAM_CONFIG[templatesById.get(session.examTemplateId)?.examType ?? '']?.flag || '📄' }}
+              </span>
               <div>
-                <div class="hub-recent-name font-body">{{ session.examTemplateId?.name || 'Unknown Exam' }}</div>
-                <div class="hub-recent-date font-label">{{ formatDate(session.createdAt) }}</div>
+                <div class="hub-recent-name font-body">
+                  {{ templatesById.get(session.examTemplateId)?.name || t('exam.unknownExam') }}
+                </div>
+                <div class="hub-recent-date font-label">{{ formatDate(session.startedAt) }}</div>
               </div>
             </div>
             <div class="hub-recent-result">

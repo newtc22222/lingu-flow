@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { apiFetch } from '../utils/api';
-import PixelFrame from '../shared/components/PixelFrame.vue';
-import AppButton from '../shared/components/AppButton.vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
 
+/**
+ * `GET /api/exams/sessions/:id/details` returns four sibling keys — it does NOT
+ * return a flat session carrying `answers`/`questionsMap`/an embedded template,
+ * which is what this view previously (incorrectly) assumed. See
+ * `SessionDetailsResponse` in `backend/app/schemas/exam.py`.
+ */
 interface QuestionData {
-  _id: string;
+  id: string;
   questionText: string;
   passage?: string;
   options: string[];
@@ -14,40 +22,57 @@ interface QuestionData {
   difficulty: string;
 }
 
-interface AnswerRecord {
-  questionId: string;
+interface UserAnswer {
   userAnswer: string;
   isCorrect: boolean;
-  timeTaken: number;
+  timeTakenSeconds: number;
 }
 
 interface SessionDetails {
-  _id: string;
-  score: number;
-  correctCount: number;
-  totalCount: number;
-  timeLimit: number;
-  startedAt: string;
-  finishedAt?: string;
-  status: string;
-  answers: AnswerRecord[];
-  questionsMap: Record<string, QuestionData>;
-  examTemplateId: {
+  session: {
+    id: string;
+    score: number;
+    correctCount: number;
+    totalCount: number;
+    timeLimitMinutes: number;
+    startedAt: string;
+    finishedAt?: string;
+    status: string;
+  };
+  template: {
+    id: string;
     name: string;
     examType: string;
     passingScore: number;
   };
+  questions: QuestionData[];
+  userAnswers: Record<string, UserAnswer>;
 }
 
 const props = defineProps<{ sessionId: string }>();
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'retake', templateId: string): void;
-}>();
 
-const session = ref<SessionDetails | null>(null);
+const { t } = useI18n();
+const router = useRouter();
+
+const details = ref<SessionDetails | null>(null);
 const isLoading = ref(true);
 const expandedIdx = ref<number | null>(null);
+
+/**
+ * The review list is driven by the question list (so unanswered questions still
+ * appear, in exam order) with each question's answer record joined in.
+ */
+const reviewRows = computed(() =>
+  (details.value?.questions ?? []).map((question) => {
+    const answer = details.value?.userAnswers[question.id];
+    return {
+      question,
+      userAnswer: answer?.userAnswer ?? '',
+      isCorrect: answer?.isCorrect ?? false,
+      timeTakenSeconds: answer?.timeTakenSeconds ?? 0,
+    };
+  }),
+);
 
 const EXAM_CONFIG: Record<string, { flag: string }> = {
   toeic: { flag: '🇺🇸' },
@@ -60,19 +85,22 @@ const EXAM_CONFIG: Record<string, { flag: string }> = {
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
 const passed = computed(() =>
-  session.value ? session.value.score >= (session.value.examTemplateId?.passingScore ?? 60) : false,
+  details.value
+    ? details.value.session.score >= (details.value.template?.passingScore ?? 60)
+    : false,
 );
 
 const timeTaken = computed(() => {
-  if (!session.value?.startedAt || !session.value?.finishedAt) return '—';
-  const ms = new Date(session.value.finishedAt).getTime() - new Date(session.value.startedAt).getTime();
+  const s = details.value?.session;
+  if (!s?.startedAt || !s?.finishedAt) return '—';
+  const ms = new Date(s.finishedAt).getTime() - new Date(s.startedAt).getTime();
   const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  return `${m}m ${s}s`;
+  const sec = Math.floor((ms % 60000) / 1000);
+  return `${m}m ${sec}s`;
 });
 
 const scoreTier = computed(() => {
-  const s = session.value?.score ?? 0;
+  const s = details.value?.session.score ?? 0;
   if (s >= 80) return 'good';
   if (s >= 60) return 'mid';
   return 'bad';
@@ -81,7 +109,7 @@ const scoreTier = computed(() => {
 const circumference = 2 * Math.PI * 52; // radius 52 SVG circle
 
 const strokeDashoffset = computed(() => {
-  const score = session.value?.score ?? 0;
+  const score = details.value?.session.score ?? 0;
   return circumference - (score / 100) * circumference;
 });
 
@@ -89,12 +117,19 @@ const fetchResults = async () => {
   isLoading.value = true;
   try {
     const res = await apiFetch(`/api/exams/sessions/${props.sessionId}/details`);
-    session.value = await res.json();
+    if (!res.ok) throw new Error('Request failed');
+    details.value = (await res.json()) as SessionDetails;
   } catch (err) {
     console.error('Failed to load results:', err);
   } finally {
     isLoading.value = false;
   }
+};
+
+const backToExams = () => router.push({ name: 'exams' });
+const retake = () => {
+  const templateId = details.value?.template.id;
+  if (templateId) router.push({ name: 'exam-session', params: { templateId } });
 };
 
 onMounted(fetchResults);
@@ -106,10 +141,10 @@ onMounted(fetchResults);
     <!-- Loading -->
     <div v-if="isLoading" class="results-loading">
       <div class="loading-icon" aria-hidden="true">⏳</div>
-      <p class="font-label">LOADING RESULTS…</p>
+      <p class="font-label">{{ t('results.loading') }}</p>
     </div>
 
-    <template v-else-if="session">
+    <template v-else-if="details">
       <!-- ── Hero Score Section ──────────────────────────────────────────────── -->
       <div class="hero">
         <!-- Circular Score Gauge -->
@@ -126,38 +161,46 @@ onMounted(fetchResults);
             />
           </svg>
           <div class="gauge-center">
-            <span class="gauge-score font-label" :class="`gauge-score--${scoreTier}`">{{ session.score }}%</span>
-            <span class="gauge-label font-label">SCORE</span>
+            <span class="gauge-score font-label" :class="`gauge-score--${scoreTier}`">
+              {{ Math.round(details.session.score) }}%
+            </span>
+            <span class="gauge-label font-label">{{ t('results.score') }}</span>
           </div>
         </div>
 
         <!-- Summary Text -->
         <div class="hero-summary">
           <div class="hero-title-row">
-            <span class="hero-flag" aria-hidden="true">{{ EXAM_CONFIG[session.examTemplateId?.examType]?.flag || '📝' }}</span>
-            <h1 class="hero-title font-body">{{ session.examTemplateId?.name }}</h1>
+            <span class="hero-flag" aria-hidden="true">{{ EXAM_CONFIG[details.template?.examType]?.flag || '📝' }}</span>
+            <h1 class="hero-title font-body">{{ details.template?.name }}</h1>
           </div>
           <div class="pass-badge font-label" :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'">
-            {{ passed ? '🎉 PASSED' : '❌ NOT PASSED' }}
-            <span class="pass-badge-sub">(PASS: {{ session.examTemplateId?.passingScore }}%)</span>
+            {{ passed ? t('results.passed') : t('results.notPassed') }}
+            <span class="pass-badge-sub">
+              {{ t('results.passThreshold', { score: details.template?.passingScore }) }}
+            </span>
           </div>
           <div class="hero-stats">
             <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
               <div class="hero-stat">
-                <span class="hero-stat-value font-label">{{ session.correctCount }}/{{ session.totalCount }}</span>
-                <span class="hero-stat-label font-label">CORRECT</span>
+                <span class="hero-stat-value font-label">
+                  {{ details.session.correctCount }}/{{ details.session.totalCount }}
+                </span>
+                <span class="hero-stat-label font-label">{{ t('results.correct') }}</span>
               </div>
             </PixelFrame>
             <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
               <div class="hero-stat">
                 <span class="hero-stat-value font-label">{{ timeTaken }}</span>
-                <span class="hero-stat-label font-label">TIME TAKEN</span>
+                <span class="hero-stat-label font-label">{{ t('results.timeTaken') }}</span>
               </div>
             </PixelFrame>
             <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
               <div class="hero-stat">
-                <span class="hero-stat-value font-label">{{ session.timeLimit }} MIN</span>
-                <span class="hero-stat-label font-label">TIME LIMIT</span>
+                <span class="hero-stat-value font-label">
+                  {{ details.session.timeLimitMinutes }} {{ t('common.minutes') }}
+                </span>
+                <span class="hero-stat-label font-label">{{ t('results.timeLimit') }}</span>
               </div>
             </PixelFrame>
           </div>
@@ -166,33 +209,40 @@ onMounted(fetchResults);
 
       <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
       <div class="actions-row">
-        <AppButton variant="secondary" @click="emit('back')">← BACK TO EXAMS</AppButton>
+        <AppButton variant="secondary" @click="backToExams">{{ t('results.backToExams') }}</AppButton>
+        <AppButton variant="primary" @click="retake">{{ t('results.retake') }}</AppButton>
       </div>
 
       <!-- ── Question Review ─────────────────────────────────────────────────── -->
       <div class="review">
-        <h2 class="review-title font-body">🔍 Question Review</h2>
+        <h2 class="review-title font-body">{{ t('results.review') }}</h2>
 
         <div class="review-list">
           <div
-            v-for="(record, idx) in session.answers"
-            :key="record.questionId"
+            v-for="(row, idx) in reviewRows"
+            :key="row.question.id"
             class="review-row"
-            :class="record.isCorrect ? 'review-row--correct' : 'review-row--incorrect'"
+            :class="row.isCorrect ? 'review-row--correct' : 'review-row--incorrect'"
           >
             <!-- Question Header (always visible) -->
             <button type="button" class="review-header" @click="expandedIdx = expandedIdx === idx ? null : idx">
-              <span class="review-mark font-pixel" :class="record.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'">
-                {{ record.isCorrect ? '✓' : '✗' }}
+              <span class="review-mark font-pixel" :class="row.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'">
+                {{ row.isCorrect ? '✓' : '✗' }}
               </span>
               <span class="review-body">
                 <span class="review-question font-body">
-                  Q{{ idx + 1 }}. {{ session.questionsMap[record.questionId]?.questionText || 'Question not found' }}
+                  Q{{ idx + 1 }}. {{ row.question.questionText || t('results.questionNotFound') }}
                 </span>
                 <span class="review-meta font-label">
-                  <span>YOUR ANSWER: <strong :class="record.isCorrect ? 'text-correct' : 'text-incorrect'">{{ record.userAnswer || '—' }}</strong></span>
-                  <span v-if="!record.isCorrect">CORRECT: <strong class="text-correct">{{ session.questionsMap[record.questionId]?.correctAnswer }}</strong></span>
-                  <span>⏱ {{ record.timeTaken }}S</span>
+                  <span>
+                    {{ t('results.yourAnswer') }}
+                    <strong :class="row.isCorrect ? 'text-correct' : 'text-incorrect'">{{ row.userAnswer || '—' }}</strong>
+                  </span>
+                  <span v-if="!row.isCorrect">
+                    {{ t('results.correctAnswer') }}
+                    <strong class="text-correct">{{ row.question.correctAnswer }}</strong>
+                  </span>
+                  <span>⏱ {{ row.timeTakenSeconds }}S</span>
                 </span>
               </span>
               <span class="review-chevron font-label" aria-hidden="true">{{ expandedIdx === idx ? '▲' : '▼' }}</span>
@@ -202,41 +252,39 @@ onMounted(fetchResults);
             <Transition name="slide">
               <div v-if="expandedIdx === idx" class="review-detail">
                 <!-- Passage if present -->
-                <div v-if="session.questionsMap[record.questionId]?.passage" class="review-passage font-body">
-                  <div class="review-passage-label font-label">PASSAGE</div>
-                  {{ session.questionsMap[record.questionId].passage }}
+                <div v-if="row.question.passage" class="review-passage font-body">
+                  <div class="review-passage-label font-label">{{ t('results.passage') }}</div>
+                  {{ row.question.passage }}
                 </div>
 
                 <!-- Options -->
                 <div class="review-options">
                   <div
-                    v-for="(option, oi) in session.questionsMap[record.questionId]?.options"
+                    v-for="(option, oi) in row.question.options"
                     :key="oi"
                     class="review-option font-body"
                     :class="{
-                      'review-option--correct': OPTION_KEYS[oi] === session.questionsMap[record.questionId]?.correctAnswer,
-                      'review-option--wrong': OPTION_KEYS[oi] === record.userAnswer && !record.isCorrect,
+                      'review-option--correct': OPTION_KEYS[oi] === row.question.correctAnswer,
+                      'review-option--wrong': OPTION_KEYS[oi] === row.userAnswer && !row.isCorrect,
                     }"
                   >
                     <span class="review-option-key font-label">{{ OPTION_KEYS[oi] }}</span>
                     <span class="review-option-text">{{ option }}</span>
                     <span
-                      v-if="OPTION_KEYS[oi] === session.questionsMap[record.questionId]?.correctAnswer"
+                      v-if="OPTION_KEYS[oi] === row.question.correctAnswer"
                       class="review-option-tag text-correct font-label"
-                    >✓ CORRECT</span>
+                    >{{ t('results.correctTag') }}</span>
                     <span
-                      v-else-if="OPTION_KEYS[oi] === record.userAnswer && !record.isCorrect"
+                      v-else-if="OPTION_KEYS[oi] === row.userAnswer && !row.isCorrect"
                       class="review-option-tag text-incorrect font-label"
-                    >YOUR ANSWER</span>
+                    >{{ t('results.yourAnswerTag') }}</span>
                   </div>
                 </div>
 
                 <!-- Explanation -->
-                <div v-if="session.questionsMap[record.questionId]?.explanation" class="review-explanation">
-                  <div class="review-explanation-label font-label">💡 EXPLANATION</div>
-                  <p class="review-explanation-text font-body">
-                    {{ session.questionsMap[record.questionId].explanation }}
-                  </p>
+                <div v-if="row.question.explanation" class="review-explanation">
+                  <div class="review-explanation-label font-label">{{ t('results.explanation') }}</div>
+                  <p class="review-explanation-text font-body">{{ row.question.explanation }}</p>
                 </div>
               </div>
             </Transition>
@@ -417,6 +465,7 @@ onMounted(fetchResults);
 .actions-row {
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-6);
   padding: var(--space-8) var(--space-10);
   border-bottom: var(--space-1) solid var(--surface-panel-border);
   max-width: 900px;

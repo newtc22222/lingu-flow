@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AnswerOption from './AnswerOption.vue'
@@ -17,6 +18,8 @@ defineEmits<{
   (e: 'submit'): void
 }>()
 
+const { t } = useI18n()
+
 const questionLabel = () => (props.question.type ? props.question.type.toUpperCase() : 'MULTIPLE CHOICE')
 </script>
 
@@ -29,13 +32,11 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
       </span>
 
       <div v-if="question.passage" class="q-passage font-body">
-        <span class="q-passage-eyebrow font-label">▸ ĐOẠN VĂN</span>
+        <span class="q-passage-eyebrow font-label">▸ {{ t('results.passage') }}</span>
         {{ question.passage }}
       </div>
 
       <p class="q-text font-body">{{ question.questionText }}</p>
-
-      <pre v-if="question.codeSnippet" class="code-snip font-label"><code>{{ question.codeSnippet }}</code></pre>
 
       <div class="options">
         <AnswerOption
@@ -51,7 +52,7 @@ const questionLabel = () => (props.question.type ? props.question.type.toUpperCa
 
       <div class="submit-row">
         <AppButton :disabled="disabled || !selectedAnswer" @click="$emit('submit')">
-          {{ isLastQuestion ? 'HOÀN THÀNH BÀI THI' : 'NỘP CÂU TRẢ LỜI' }}
+          {{ isLastQuestion ? t('exam.submit') : t('exam.next') }}
         </AppButton>
       </div>
     </div>

@@ -1,7 +1,7 @@
 export const apiFetch = async (url: string, options: RequestInit = {}) => {
   const token = localStorage.getItem('token');
   const headers = new Headers(options.headers || {});
-  
+
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
@@ -12,9 +12,13 @@ export const apiFetch = async (url: string, options: RequestInit = {}) => {
   });
 
   if (response.status === 401) {
-    // Optionally handle token expiration by logging out
+    // Expired/invalid token. Drop it and hard-navigate to the auth screen — a
+    // full document load (rather than a router push) guarantees every store,
+    // including any in-flight exam session state, is discarded with it.
     localStorage.removeItem('token');
-    window.location.reload();
+    if (window.location.pathname !== '/auth') {
+      window.location.assign('/auth');
+    }
   }
 
   return response;
