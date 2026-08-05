@@ -113,14 +113,22 @@ Reference usage (`DeckManagementView.vue` — the simpler of the two real consum
 
 ---
 
-## Legacy `components/` vs. `features/<domain>/`
+## File layout (migration complete as of Phase 1.5)
 
-The frontend is mid-migration (see root `CLAUDE.md` for the full picture). Two conventions coexist:
+The flat `src/components/` folder no longer exists — the migration it represented is finished. There is exactly one convention now:
 
-- **`features/<domain>/{<Name>View.vue, components/, store/}`** — the current convention. New work goes here. Top-level route components use a `...View.vue` suffix (`AuthView.vue`, `DashboardView.vue`, `ExamView.vue`, `FlashcardsView.vue`, `CardManagementView.vue`, `DeckManagementView.vue`).
-- **Legacy flat `components/`** — `ExamHub.vue`, `ExamResults.vue`, `ExamCreator.vue` are still live and actively wired into `App.vue`, not yet migrated to `features/exam/`. They don't follow the `...View.vue` naming convention. Don't add new files here; if you're touching one of these three for a feature change, migrating it to `features/exam/` first is worth raising, but isn't required for a small fix.
+- **`features/<domain>/{<Name>View.vue, components/, store/, types.ts}`** — every top-level route component uses a `...View.vue` suffix (`AuthView`, `DashboardView`, `ExamView`, `ExamHubView`, `ExamCreatorView`, `ExamResultsView`, `FlashcardsView`, `LearnView`, `MatchView`, `CardManagementView`, `DeckManagementView`, `DeckDetailView`). Domain-private components live in that feature's `components/` subfolder.
+- **`shared/components/`** — only for primitives with consumers in more than one feature (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`).
 
-Both conventions already consume `AppButton`/`ManageListShell`/other `shared/components/*` identically — the shared-component layer is convention-agnostic, so this split doesn't change how you use any of the [MUST] rules above.
+Don't reintroduce a top-level `components/` folder. If a feature-private component gains a second feature's consumer, promote it to `shared/components/` rather than importing across feature boundaries.
+
+**When you move or rename a component, check the path-scoped lint overrides.** `.stylelintrc.json` exempts specific files by path; those globs do not follow renames, and a stale one silently turns a documented exception back into a CI failure (this happened to `ExamCreatorView.vue` during the Phase 1.5 move).
+
+## Localization
+
+All user-facing copy goes through `vue-i18n` — `t('namespace.key')`, with strings in `src/locales/{vi,en}.json`. Never hardcode a display string in a component, **including prop defaults**: `FlashCard`'s eyebrow/hint defaults had to move from `withDefaults` literals to `computed` + `t()` for exactly this reason.
+
+This interacts with the font rule above: `font-pixel` (Press Start 2P) has no Vietnamese diacritic glyphs, so **any element rendering a `t()` result must use `font-body`/`font-label`**, since the same key renders Vietnamese in the default locale. The same applies to user-supplied content (deck names, exam titles). Reserve `font-pixel` for fixed ASCII — the `LINGUFLOW` wordmark, digits, and glyph-only labels.
 
 ---
 

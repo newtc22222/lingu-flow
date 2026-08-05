@@ -6,26 +6,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 LinguFlow is a keyboard-driven flashcard app with Spaced Repetition (SM-2 algorithm) and a certification exam simulator (TOEIC, IELTS, HSK, JLPT). Frontend: Vue 3 + Vite + TailwindCSS v4. Backend: Python/FastAPI + PostgreSQL.
 
-## Critical context: mid-migration backend
+## Backend status
 
-The backend was fully rewritten from Node.js/Express/MongoDB to Python/FastAPI/PostgreSQL (see commit `a9fec74`). This rewrite is **only scaffolding** — `backend/app/{models,schemas,services,core}/` are empty packages, and `backend/app/main.py` registers only `GET /api/health` (`backend/app/routers/health.py`). No auth, decks, cards, or exams endpoints exist in the Python backend yet.
+The backend was rewritten from Node.js/Express/MongoDB to Python/FastAPI/PostgreSQL (commit `a9fec74`). That migration is **done** — `backend/app/{models,schemas,services,routers}/` are fully populated and `main.py` registers auth, cards, dashboard, decks, exams, events, media, and health routers.
 
-The Vue frontend, however, is fully built against the **old** Node.js API contract and was not touched by the rewrite. Its components call REST endpoints that don't exist server-side yet:
+The API is the source of truth for request/response shapes; the Pydantic schemas in `backend/app/schemas/` use camelCase aliases to match the frontend. Note that `ExamTemplateResponse`/`QuestionResponse`/`ExamSessionResponse` still emit a computed `_id` alongside `id` — a Mongo-era holdover. **Prefer `id` in new frontend code**; the `_id` reads were removed from the frontend during Phase 1.5.
 
-- `features/auth/AuthView.vue` (formerly `Login.vue` / `Signup.vue`) → `/api/auth/{login,register,guest,google}`
-- `features/library/DeckManagementView.vue` (formerly `DeckManagement.vue`) → `/api/decks[/:id]`
-- `features/library/CardManagementView.vue` (formerly `CardManagement.vue`) / `features/dashboard/DashboardView.vue` (formerly `StudyDashboard.vue`) → `/api/cards[/:id]`, `/api/cards/study`, `/api/cards/review/:id`
-- `components/ExamHub.vue` / `features/exam/ExamView.vue` (formerly `ExamRoom.vue`) / `components/ExamResults.vue` / `components/ExamCreator.vue` / `features/exam/store/examStore.ts` → `/api/exams/templates[/:id[/questions]]`, `/api/exams/sessions[/:id[/answer|finish|details]]`
+When adding an endpoint a component already calls, check the call site for the shape it expects, and mind the field names: several frontend/backend mismatches (`duration` vs `durationMinutes`, `timeLimit` vs `timeLimitMinutes`, a flat vs. nested session-details response) went unnoticed for a long time because they failed silently into fallback values rather than erroring.
 
-When implementing backend features, treat these call sites as the de facto API spec unless told otherwise, and check the actual component/store for the exact request/response shape each one expects (many still reference Mongo-style `_id` fields — decide per-endpoint whether to keep that shape or migrate the frontend to `id`). See the "Frontend restructure" note below for where these files actually live now.
+Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 46 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
+
+Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`).
 
 **Stale docs — do not trust without cross-checking code:**
 
 - `DEPLOYMENT.md` and `api/index.ts` describe deploying `backend/src/app` (Express) via a Vercel serverless function — `backend/src` no longer exists (it's `backend/app`, FastAPI, not designed as a single Vercel function handler). This deployment path is broken until reworked for the Python backend.
 - Root `.env.example` still lists `MONGO_URI` (Node-era). The real backend env vars are in `backend/.env.example` (`DATABASE_URL`, `JWT_SECRET`, etc.).
 - `README.md` and `docker-compose.yml` reflect the current (Python/Postgres) reality and are trustworthy.
-
-No test suite exists yet for either frontend or backend (no pytest/vitest/jest configured).
 
 ## Commands
 
@@ -79,15 +76,18 @@ There is no root-level install/build step beyond the `dev:*`/`build:frontend` sc
 
 ### Frontend (`frontend/src/`)
 
-- No router library — `App.vue` holds a single `currentView` ref (a string union type `AppView`) and conditionally renders the top-level view components. Auth state (`isAuthenticated`) is derived from presence of a `token` in `localStorage`.
-- `utils/api.ts` (`apiFetch`) wraps `fetch`, attaching `Authorization: Bearer <token>` from `localStorage` and clearing the token + reloading on `401`. Use it (or a Pinia store action that wraps it, e.g. `features/exam/store/examStore.ts`) for all authenticated calls instead of raw `fetch`.
+- **Routing**: `vue-router` (`src/router/index.ts`). `App.vue` is a `RouterView` shell holding the nav bar and language switcher. Every route is lazy-loaded; a `beforeEach` guard redirects to `/auth` unless the route sets `meta.public`. Routes that own their full-bleed layout set `meta.fullBleed` to opt out of the centered `.arcade-app` column. Auth state lives in `features/auth/store/authStore.ts` (a reactive token, so the guard re-evaluates per navigation) — don't read `localStorage` directly for auth.
+- **i18n**: `vue-i18n` (`src/i18n/index.ts`, locales in `src/locales/{vi,en}.json`, VI default). All user-facing copy must go through `t()`, including prop defaults. See `.context/ui-guidelines.md` for how this interacts with the `font-pixel` diacritic limitation.
+- `utils/api.ts` (`apiFetch`) wraps `fetch`, attaching `Authorization: Bearer <token>` from `localStorage` and clearing the token + redirecting to `/auth` on `401`. Use it (or a Pinia store action that wraps it, e.g. `features/exam/store/examStore.ts`) for all authenticated calls instead of raw `fetch`.
 - All Vue components use `<script setup lang="ts">` (Composition API) exclusively — follow this convention for new components.
 - **State**: Pinia (`createPinia()` in `main.ts`) is available for state shared across components/views (see `features/exam/store/examStore.ts`). Local/single-view state still just uses `ref`/`computed` directly in the component.
 - **Path alias**: `@` → `frontend/src` (configured in both `vite.config.ts` and `tsconfig.app.json`) — prefer `@/utils/api` style imports in new code under `features/`.
 - Styling is Tailwind v4, but **not** a dark slate/emerald theme — it's a retro-arcade pixel design system. Design tokens (8 brand colors: `ink`, `cabinet`, `cabinet-light`, `amber`, `red`, `green`, `phosphor`, `muted`, plus derived shades) live as CSS custom properties in `frontend/src/styles/tokens.css` and are re-exposed as Tailwind utilities via a `@theme` block (e.g. `bg-ink`, `text-phosphor`, `bg-amber`). Never hardcode hex values in components — use the token utilities/classes. Fonts: `font-pixel` (Press Start 2P, headers/labels only) and `font-body`/`font-label` (IBM Plex Sans/Mono); **`font-pixel` has no Vietnamese diacritic glyphs**, so any Vietnamese-language string must use `font-body`/`font-label` instead.
 - `vite.config.ts` proxies `/api/*` to `localhost:8000` in dev, so frontend code should always call relative `/api/...` paths, never an absolute backend URL.
 
-**Frontend restructure (undocumented until now — verify against code, not this list, before relying on it):** the flat `frontend/src/components/` layout is being migrated to a feature-folder layout, `frontend/src/features/<domain>/{<Name>View.vue, components/, store/}`, with cross-feature reusable primitives in `frontend/src/shared/components/` (e.g. `PixelFrame.vue`). Migrated so far: `features/auth`, `features/dashboard`, `features/exam` (incl. `store/examStore.ts`), `features/flashcards`, `features/library`. Still living in the legacy `components/` folder and **not yet migrated**: `ExamHub.vue`, `ExamResults.vue`, `ExamCreator.vue`, `MarkdownRenderer.vue` (actively used by `features/library/CardManagementView.vue` and `features/flashcards/components/FlashCard.vue` — do not delete). `components/StudyDashboard.vue` and `components/HelloWorld.vue` are orphaned (no longer imported anywhere, superseded by `features/dashboard/DashboardView.vue`) — don't treat grep hits on them as live call sites, and feel free to flag for deletion if asked to clean up.
+**Frontend layout (restructure completed in Phase 1.5):** the flat `frontend/src/components/` folder is gone. Everything lives in `frontend/src/features/<domain>/{<Name>View.vue, components/, store/, types.ts}` — `auth`, `dashboard`, `exam`, `flashcards`, `library` — with cross-feature primitives in `frontend/src/shared/components/` (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`). Don't reintroduce a top-level `components/` folder; promote a component to `shared/` rather than importing across feature boundaries.
+
+Note that `.stylelintrc.json` exempts specific files by path and those globs **do not follow renames** — check them whenever you move a component.
 
 ### Deployment
 

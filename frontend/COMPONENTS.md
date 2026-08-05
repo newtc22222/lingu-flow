@@ -7,6 +7,22 @@ and the accompanying token additions (`--focus-ring-width`,
 Modal/Dialog, the manage-list pattern, ExamHud, FlashCard, PixelFrame,
 MarkdownRenderer.
 
+**Phase 1.5 update.** The flat `src/components/` folder is gone — every
+component now lives under `features/<domain>/` or `shared/components/`. The
+exam trio moved and was renamed (`ExamHub.vue` → `features/exam/ExamHubView.vue`,
+`ExamResults.vue` → `ExamResultsView.vue`, `ExamCreator.vue` →
+`ExamCreatorView.vue`), and the orphaned `HelloWorld.vue`/`StudyDashboard.vue`
+were deleted. Older file paths in the sections below refer to those pre-move
+locations; the components themselves are unchanged unless noted. Five new
+components landed this phase — `CardRow`, `McqPrompt`, `WrittenRecallPrompt`
+(documented below), plus the `DeckDetailView`/`LearnView`/`MatchView` route
+views that own them.
+
+All user-facing copy is now routed through `vue-i18n` (`src/locales/{vi,en}.json`).
+A component that renders text must take it from `t()` rather than hardcoding a
+string — this includes prop defaults, which is why `FlashCard`'s eyebrow/hint
+defaults became computed values instead of `withDefaults` literals.
+
 ---
 
 ## AppButton
@@ -49,8 +65,10 @@ Fully tokenized — every variant uses `var(--space-*)`, `var(--font-size-*)`, `
 ### Not folded into AppButton (deliberately left as local one-offs)
 `ExamCreator.vue`'s `.btn-remove` (small text-only "remove question" link) and `.btn-add-question` (full-width dashed "add question" affordance), and `QuestionCard.vue`'s `.answer-key` toggle chips are structurally distinct, single-use affordances — extracting them would add variant surface area nobody else needs. Not touched.
 
-### Consumers (8 files)
-`ExamCreator.vue` (×2), `ExamHub.vue`, `ExamResults.vue`, `AuthView.vue` (×2), `QuestionCard.vue`, `FlashcardsView.vue` (×2, `primary`/`danger`), `CardManagementView.vue` (via itself + `ManageListShell`), `DeckManagementView.vue` (via itself + `ManageListShell`).
+### Consumers
+`features/exam/ExamCreatorView.vue` (×2), `ExamHubView.vue`, `ExamResultsView.vue` (×2 — a retake button was added alongside back-to-exams), `features/exam/components/QuestionCard.vue`, `features/auth/AuthView.vue` (×2), `features/dashboard/DashboardView.vue` (×2), `features/flashcards/FlashcardsView.vue` (×2, `primary`/`danger`), `features/library/CardManagementView.vue` and `DeckManagementView.vue` (via themselves + `ManageListShell`).
+
+Phase 1.5 additions: `features/library/DeckDetailView.vue`, `features/flashcards/LearnView.vue`, `MatchView.vue`, and `components/McqPrompt.vue` (which renders one `AppButton` per option).
 
 ---
 
@@ -69,12 +87,12 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 **Status: still does not exist** — no component was built, per your explicit instruction. Confirmed `confirm()` call sites for the `ui-guidelines.md` backlog note:
 
-| File:Line | Message |
+| File | Message |
 |---|---|
-| `frontend/src/features/library/CardManagementView.vue:90` | `Bạn có chắc muốn xóa thẻ này?` (delete card) |
-| `frontend/src/features/library/DeckManagementView.vue:73` | `Bạn có chắc muốn xóa bộ thẻ này?` (delete deck) |
+| `frontend/src/features/library/CardManagementView.vue` | `t('cards.confirmDelete')` (delete card) |
+| `frontend/src/features/library/DeckManagementView.vue` | `t('decks.confirmDelete')` (delete deck) |
 
-Both are the only native-`confirm()` usages in the entire frontend. Neither was touched by the `ManageListShell` extraction — the shell only emits `delete(id)` up to the parent; the `confirm()` gate and its per-entity message stay in each view's own `deleteCard`/`deleteDeck` handler.
+Both are the only native-`confirm()` usages in the entire frontend. Phase 1.5 localized their messages but did **not** add a third call site — the new destructive-ish actions (reorder, Learn restart, Match replay) are all non-destructive or trivially repeatable, so none needed a confirmation gate. Neither was touched by the `ManageListShell` extraction — the shell only emits `delete(id)` up to the parent; the `confirm()` gate and its per-entity message stay in each view's own `deleteCard`/`deleteDeck` handler.
 
 ---
 
@@ -131,15 +149,45 @@ Fully tokenized — carries forward every `var(--space-*)`/`var(--font-size-*)`/
 
 ---
 
+## CardRow
+
+`frontend/src/features/library/components/CardRow.vue` — one draggable term/definition row in `DeckDetailView`'s reorder list. Renders the card's index, front/back text, and an optional thumbnail when `imageUrl` is set.
+
+### Props
+| Prop | Type | Purpose |
+|---|---|---|
+| `card` | `DeckCard` | the card to render (see `features/library/types.ts`) |
+| `index` | `number` | zero-based position, displayed as `index + 1` |
+| `isDragging` | `boolean` | dims the row while it's the one being dragged |
+
+### Emits
+`dragstart`, `dragenter`, `dragend` — forwarded straight up. **The component deliberately does not reorder anything itself**: the parent owns the card array, so it is the only place that can mutate order. Keep it that way if you extend this.
+
+---
+
+## McqPrompt / WrittenRecallPrompt
+
+`frontend/src/features/flashcards/components/` — the two question types in Learn mode.
+
+`McqPrompt` renders the card front plus four `AppButton` options, recolouring them to `primary` (correct) / `danger` (the user's wrong pick) once `selected` is non-null. Distractors are chosen by the parent, not here.
+
+`WrittenRecallPrompt` renders a single text input that auto-focuses and clears on each new prompt, so a round is fully keyboard-playable. Its submit button doubles as "check" then "next", driven by the `verdict` prop.
+
+Both are presentational — neither calls the API, and neither knows about SM-2. Grading lives in `LearnView`.
+
+---
+
 ## ExamHud
 
-Unchanged structurally from the pre-extraction audit. Token updates from this round: `.hud-lives`'s `font-size: 14px` → `var(--font-size-md-plus)`, `letter-spacing: 3px` → `var(--tracking-wider)`. No longer any untokenized literals in this file's `<style>` block except the still-intentionally-local `.hud-bar-track { height: 20px }` and `.hud-time { min-width: 64px }` (one-off layout constants, correctly out of scope).
+Structurally unchanged from the pre-extraction audit, with one **Phase 1.5 removal**: the lives/hearts counter is gone. It was bound to `session.maxLives`, a field the API never returned, so it rendered a constant 3/3 that no answer could decrement — a HUD element with no backend concept behind it. It was replaced by an answered/total counter (`.hud-progress`) rather than being faked. The old `--font-size-md-plus`/`--tracking-wider` usages moved onto that replacement element.
 
 ---
 
 ## FlashCard
 
-Unchanged — not touched by Step 3.5 (it doesn't use any button pattern; its flip-toggle is a `role="button"` div, not a `<button>`, so it was never a candidate for `AppButton`). Still the best-tokenized, best-documented component in the inventory alongside `PixelFrame`.
+Not touched by Step 3.5 (it doesn't use any button pattern; its flip-toggle is a `role="button"` div, not a `<button>`, so it was never a candidate for `AppButton`). Still among the best-tokenized components alongside `PixelFrame`.
+
+**Phase 1.5 change:** `frontEyebrow`/`backEyebrow`/`hint` were `withDefaults` literals holding hardcoded Vietnamese. They are now plain optional props resolved through `computed` + `t()`, so the defaults follow the active locale while callers can still override them.
 
 ---
 
@@ -165,6 +213,8 @@ Unchanged. Still at `shared/components/MarkdownRenderer.vue` (relocated in the e
 
 ## Verification
 `vue-tsc -b --noEmit` and `vite build` both run clean after every stage of this round (token additions, `AppButton` extraction + 8-file migration, `ManageListShell` extraction + 2-file migration).
+
+**Phase 1.5 re-verification:** `npm run build` (vue-tsc + vite), `npm run lint:style`, and `npm run lint:js` all pass, and the backend suite is 46 green (`pytest`). One lint fix was needed as a direct result of the file moves: `.stylelintrc.json`'s override exempting `ExamCreator.vue`'s two documented `.btn-*` selectors still pointed at `src/components/ExamCreator.vue`, so those selectors started failing `selector-disallowed-list` once the file moved. The override now targets `src/features/exam/ExamCreatorView.vue`. Worth remembering: **path-scoped lint overrides do not follow renames**, so check `.stylelintrc.json` and `eslint.config.js` whenever a component moves.
 
 ## Cross-cutting flags resolved this round
 The 3 flags raised at the end of the previous `COMPONENTS.md` pass are now closed:
