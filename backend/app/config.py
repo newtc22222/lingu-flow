@@ -53,11 +53,17 @@ class Settings(BaseSettings):
     @classmethod
     def validate_jwt_secret(cls, v: str, info) -> str:
         secret = (v or "").strip()
-        if not secret or secret == "change_this_to_a_long_secure_random_string_in_production":
-            # For development convenience if no secret provided, generate fallback with warning
-            env = os.getenv("ENVIRONMENT", "development")
-            if env == "production":
-                raise ValueError("JWT_SECRET environment variable MUST be explicitly set in production!")
+        dev_fallbacks = {
+            "lingu_dev_jwt_secret_key_change_in_production_99",
+            "change_this_to_a_long_secure_random_string_in_production",
+            "your_jwt_secret_key_here",
+            "change-me",
+            "secret",
+        }
+        env = os.getenv("ENVIRONMENT", "development")
+        if env == "production" and (not secret or secret in dev_fallbacks):
+            raise ValueError("JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!")
+        if not secret:
             return "lingu_dev_jwt_secret_key_change_in_production_99"
         return secret
 
