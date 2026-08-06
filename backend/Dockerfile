@@ -15,10 +15,15 @@ COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install -r requirements.txt
 
-# Copy app code
-COPY . .
+# Create non-root user
+RUN useradd -m -u 1000 appuser
+
+# Copy app code with appuser ownership
+COPY --chown=appuser:appuser . .
 
 RUN chmod +x entrypoint.sh
+
+USER appuser
 
 EXPOSE 8000
 
