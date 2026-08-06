@@ -70,7 +70,7 @@ export const useExamStore = defineStore('exam', () => {
     const remainingMs = deadlineAt.value - Date.now()
     secondsRemaining.value = Math.max(0, Math.ceil(remainingMs / 1000))
     if (remainingMs <= 0) {
-      void finish('timeout')
+      void finish()
     }
   }
 
@@ -154,16 +154,25 @@ export const useExamStore = defineStore('exam', () => {
     goToQuestion(currentIndex.value - 1)
   }
 
-  async function finish(reason: 'submitted' | 'timeout' = 'submitted') {
+  /**
+   * Submitting takes no arguments: the finish endpoint declares no request
+   * body, so the `{status, autoSubmitted}` payload this used to send was
+   * silently discarded by FastAPI. The old `reason` parameter existed only to
+   * populate that dropped field, so timeout and manual submit are now
+   * indistinguishable server-side. Tracking that again needs a backend column
+   * first — see issue #32.
+   */
+  async function finish() {
     if (!sessionId.value || phase.value === 'submitting' || phase.value === 'finished') return
     phase.value = 'submitting'
     stopClock()
     try {
-      await apiFetch(`/api/exams/sessions/${sessionId.value}/finish`, {
+      const res = await apiFetch(`/api/exams/sessions/${sessionId.value}/finish`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed', autoSubmitted: reason === 'timeout' }),
       })
+      // Without this check a failed scoring call still advanced to 'finished',
+      // sending the user to a results page for a session that was never scored.
+      if (!res.ok) throw new Error(`Failed to submit exam (${res.status})`)
       finishedSessionId.value = sessionId.value
       phase.value = 'finished'
     } catch (err) {

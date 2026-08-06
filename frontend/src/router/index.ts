@@ -59,6 +59,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/features/library/CardManagementView.vue'),
   },
   {
+    path: '/questions',
+    name: 'question-bank',
+    component: () => import('@/features/question-bank/QuestionBankView.vue'),
+  },
+  {
     path: '/exams',
     name: 'exams',
     component: () => import('@/features/exam/ExamHubView.vue'),
@@ -66,13 +71,13 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/exams/create',
     name: 'exam-create',
-    component: () => import('@/features/exam/ExamCreatorView.vue'),
+    component: () => import('@/features/exam/ExamComposerView.vue'),
     meta: { fullBleed: true },
   },
   {
     path: '/exams/:templateId/edit',
     name: 'exam-edit',
-    component: () => import('@/features/exam/ExamCreatorView.vue'),
+    component: () => import('@/features/exam/ExamComposerView.vue'),
     props: true,
     meta: { fullBleed: true },
   },

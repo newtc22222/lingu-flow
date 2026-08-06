@@ -6,7 +6,8 @@
     "manageDecks": "QUẢN LÝ BỘ THẺ",
     "manageCards": "QUẢN LÝ THẺ",
     "logout": "ĐĂNG XUẤT",
-    "language": "NGÔN NGỮ"
+    "language": "NGÔN NGỮ",
+    "questionBank": "NGÂN HÀNG CÂU HỎI"
   },
   "common": {
     "loading": "ĐANG TẢI…",
@@ -192,7 +193,8 @@
     "passage": "ĐOẠN VĂN",
     "correctTag": "✓ ĐÚNG",
     "yourAnswerTag": "BẠN CHỌN",
-    "explanation": "💡 GIẢI THÍCH"
+    "explanation": "💡 GIẢI THÍCH",
+    "byCategory": "KẾT QUẢ THEO CHUYÊN ĐỀ"
   },
   "examCreator": {
     "createTitle": "TẠO ĐỀ THI RIÊNG",
@@ -216,5 +218,59 @@
     "saveChanges": "LƯU THAY ĐỔI",
     "needQuestion": "Cần ít nhất một câu hỏi.",
     "saveFailed": "Không thể lưu đề thi. Vui lòng thử lại."
+  },
+  "questionBank": {
+    "title": "NGÂN HÀNG CÂU HỎI",
+    "countLabel": "CÂU",
+    "loading": "▸ ĐANG TẢI CÂU HỎI…",
+    "empty": "CHƯA CÓ CÂU HỎI NÀO. TẠO CÂU HỎI ĐẦU TIÊN Ở TRÊN.",
+    "emptyFiltered": "KHÔNG CÓ CÂU HỎI NÀO KHỚP BỘ LỌC.",
+    "createTitle": "TẠO CÂU HỎI MỚI",
+    "editTitle": "CHỈNH SỬA CÂU HỎI",
+    "examType": "LOẠI ĐỀ",
+    "anyExamType": "Tất cả loại đề",
+    "part": "PHẦN",
+    "partOptional": "PHẦN (TÙY CHỌN)",
+    "partPlaceholder": "VD: part5",
+    "anyPart": "Tất cả các phần",
+    "difficulty": "ĐỘ KHÓ",
+    "anyDifficulty": "Mọi độ khó",
+    "difficulties": {
+      "easy": "Dễ",
+      "medium": "Trung bình",
+      "hard": "Khó"
+    },
+    "search": "TÌM KIẾM",
+    "tags": "THẺ:",
+    "tagsField": "THẺ (CÁCH NHAU BỞI DẤU PHẨY)",
+    "tagsPlaceholder": "VD: grammar, prepositions",
+    "clearFilters": "XÓA BỘ LỌC",
+    "questionText": "NỘI DUNG CÂU HỎI",
+    "passage": "ĐOẠN VĂN (TÙY CHỌN)",
+    "passageGroup": "NHÓM ĐOẠN VĂN (TÙY CHỌN)",
+    "passageGroupPlaceholder": "VD: toeic-p7-email",
+    "passageGroupHint": "Các câu hỏi cùng nhóm dùng chung một đoạn văn.",
+    "correctAnswer": "ĐÁP ÁN ĐÚNG",
+    "explanation": "GIẢI THÍCH (TÙY CHỌN)",
+    "inSet": "THUỘC BỘ",
+    "builtIn": "CÓ SẴN",
+    "confirmDelete": "Xóa câu hỏi này khỏi ngân hàng?",
+    "saveFailed": "Không thể lưu câu hỏi.",
+    "deleteFailed": "Không thể xóa câu hỏi."
+  },
+  "composer": {
+    "inThisExam": "TRONG ĐỀ THI NÀY",
+    "fromBank": "TỪ NGÂN HÀNG CÂU HỎI",
+    "emptyComposition": "CHƯA CÓ CÂU HỎI NÀO. THÊM TỪ NGÂN HÀNG HOẶC TẠO MỚI.",
+    "noBankResults": "KHÔNG CÒN CÂU HỎI NÀO ĐỂ THÊM.",
+    "attachSelected": "THÊM {count} CÂU ĐÃ CHỌN",
+    "removeFromExam": "BỎ KHỎI ĐỀ",
+    "partOfSet": "THUỘC BỘ",
+    "next": "TIẾP THEO →",
+    "finish": "HOÀN TẤT",
+    "discardDraft": "HỦY BỎ BẢN NHÁP",
+    "attachFailed": "Không thể thêm câu hỏi.",
+    "detachFailed": "Không thể bỏ câu hỏi khỏi đề.",
+    "reorderFailed": "Không thể lưu thứ tự."
   }
 }

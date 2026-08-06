@@ -69,13 +69,14 @@ async def test_exam_question_management(client: AsyncClient):
 
     # Add question
     q_payload = {
+        "examType": "hsk",
+        "part": "reading",
         "questionText": "这本 书 _____ 很好看。",
         "type": "multiple-choice",
         "options": ["A. 吧", "B. 呢", "C. 真", "D. 的"],
         "correctAnswer": "C",
         "explanation": "真 (zhēn) means really/truly.",
         "difficulty": "easy",
-        "orderIndex": 0,
     }
     q_res = await client.post(
         f"/api/exams/templates/{t_id}/questions", json=q_payload, headers=headers
@@ -83,7 +84,11 @@ async def test_exam_question_management(client: AsyncClient):
     assert q_res.status_code == 201
     q_data = q_res.json()
     assert q_data["correctAnswer"] == "C"
-    assert q_data["examTemplateId"] == t_id
+    # A question is no longer owned by one template, so it carries bank
+    # taxonomy instead of an examTemplateId.
+    assert q_data["examType"] == "hsk"
+    assert q_data["part"] == "reading"
+    assert "examTemplateId" not in q_data
 
     # Get questions for template
     q_list_res = await client.get(f"/api/exams/templates/{t_id}/questions")
@@ -91,6 +96,8 @@ async def test_exam_question_management(client: AsyncClient):
     questions = q_list_res.json()
     assert len(questions) == 1
     assert questions[0]["questionText"] == "这本 书 _____ 很好看。"
+    # Position comes from the composition, not from the question.
+    assert questions[0]["orderIndex"] == 0
 
 
 @pytest.mark.asyncio
@@ -114,6 +121,7 @@ async def test_full_exam_session_flow(client: AsyncClient):
     q_res = await client.post(
         f"/api/exams/templates/{t_id}/questions",
         json={
+            "examType": "ielts",
             "questionText": "What is the primary conclusion of the passage?",
             "passage": "Sample academic passage about renewable energy...",
             "options": ["A. Option 1", "B. Option 2", "C. Option 3", "D. Option 4"],

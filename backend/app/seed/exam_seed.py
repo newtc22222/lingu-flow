@@ -1,110 +1,25 @@
 import logging
-from sqlalchemy import select
+from datetime import datetime, timezone
+from typing import List
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
-from app.models.exam import ExamTemplate, Question
+from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
+from app.seed.data.toeic_reading import TOEIC_READING_TEMPLATE
 
 logger = logging.getLogger("linguflow")
 
 BUILTIN_SEED_DATA = [
-    # ─── TOEIC PART 5 ──────────────────────────────────────────────────────────
-    {
-        "name": "TOEIC Part 5 — Incomplete Sentences Practice",
-        "examType": "toeic",
-        "description": "Authentic TOEIC Part 5 multiple-choice questions testing grammar, vocabulary, collocations, and business English usage.",
-        "duration": 25,
-        "passingScore": 60,
-        "level": "Intermediate",
-        "questions": [
-            {
-                "questionText": "The project manager asked that all quarterly reports _____ submitted to the steering committee by Friday afternoon.",
-                "options": ["A. are", "B. be", "C. were", "D. being"],
-                "correctAnswer": "B",
-                "explanation": "The verb 'asked' introduces a subjunctive clause (demand/request), requiring the base form of the verb: 'be submitted'.",
-                "difficulty": "medium",
-                "tags": ["grammar", "subjunctive"],
-            },
-            {
-                "questionText": "Despite several technical delays during testing, the software update was launched _____ schedule.",
-                "options": ["A. on", "B. at", "C. in", "D. to"],
-                "correctAnswer": "A",
-                "explanation": "'On schedule' is a fixed business prepositional phrase meaning happening at the expected time.",
-                "difficulty": "easy",
-                "tags": ["prepositions", "collocation"],
-            },
-            {
-                "questionText": "Ms. Lawson has proved to be _____ of the two candidates interviewed for the senior marketing officer role.",
-                "options": ["A. the most qualified", "B. more qualified", "C. the more qualified", "D. qualified"],
-                "correctAnswer": "C",
-                "explanation": "When comparing exactly two items or people, the comparative form with 'the' ('the more qualified') is grammatically required.",
-                "difficulty": "hard",
-                "tags": ["grammar", "comparatives"],
-            },
-            {
-                "questionText": "Please inform the Human Resources manager _____ you intend to take extended leave during the third quarter.",
-                "options": ["A. should", "B. whether", "C. unless", "D. provided"],
-                "correctAnswer": "A",
-                "explanation": "Inverted conditional: 'Should you intend' is formal for 'If you intend'.",
-                "difficulty": "hard",
-                "tags": ["conditionals", "inversion"],
-            },
-            {
-                "questionText": "All attendees at the annual shareholder summit are required to display their badges _____ at all times.",
-                "options": ["A. prominent", "B. prominence", "C. prominently", "D. most prominent"],
-                "correctAnswer": "C",
-                "explanation": "The adverb 'prominently' is needed to modify the verb 'display'.",
-                "difficulty": "easy",
-                "tags": ["parts-of-speech", "adverbs"],
-            },
-            {
-                "questionText": "Neither the chief executive officer nor the company directors _____ available to comment on the merger rumor.",
-                "options": ["A. was", "B. were", "C. is", "D. has been"],
-                "correctAnswer": "B",
-                "explanation": "With 'neither... nor...', the verb agrees with the closer subject. 'Directors' is plural, so 'were' is correct.",
-                "difficulty": "medium",
-                "tags": ["grammar", "subject-verb-agreement"],
-            },
-            {
-                "questionText": "The newly installed solar panel grid is expected to reduce factory energy expenditures _____ nearly 30 percent.",
-                "options": ["A. by", "B. with", "C. for", "D. from"],
-                "correctAnswer": "A",
-                "explanation": "The preposition 'by' indicates the margin or amount of increase/decrease.",
-                "difficulty": "easy",
-                "tags": ["prepositions", "business-vocabulary"],
-            },
-            {
-                "questionText": "Had the client submitted the requested documentation sooner, the loan application _____ processed earlier.",
-                "options": ["A. will be", "B. would have been", "C. had been", "D. is being"],
-                "correctAnswer": "B",
-                "explanation": "Inverted third conditional ('Had + past participle... would have + past participle') used for hypothetical past situations.",
-                "difficulty": "hard",
-                "tags": ["conditionals", "third-conditional"],
-            },
-            {
-                "questionText": "The board of directors reached a _____ decision regarding the acquisition of the regional logistics firm.",
-                "options": ["A. unanimous", "B. unanimousness", "C. unanimously", "D. unanimity"],
-                "correctAnswer": "A",
-                "explanation": "The adjective 'unanimous' is required to modify the noun 'decision'.",
-                "difficulty": "medium",
-                "tags": ["vocabulary", "word-family"],
-            },
-            {
-                "questionText": "The factory manager insisted that all safety procedures be strictly _____ to avoid industrial accidents.",
-                "options": ["A. adhered", "B. followed", "C. observed", "D. compiled"],
-                "correctAnswer": "A",
-                "explanation": "'Adhered to' is the correct prepositional verb idiom. Note that while 'followed' and 'observed' are synonyms, only 'adhered' pairs with 'to'.",
-                "difficulty": "medium",
-                "tags": ["collocation", "phrasal-verbs"],
-            },
-        ],
-    },
+    TOEIC_READING_TEMPLATE,
     # ─── IELTS READING ────────────────────────────────────────────────────────
     {
+        "seedKey": "ielts-academic-reading-1",
+        "seedVersion": "1",
         "name": "IELTS Academic Reading — Practice Set 1",
         "examType": "ielts",
         "description": "Short IELTS Academic reading comprehension set featuring an academic passage on urban rewilding.",
-        "duration": 20,
+        "durationMinutes": 20,
         "passingScore": 60,
         "level": "Advanced",
         "questions": [
@@ -182,10 +97,12 @@ BUILTIN_SEED_DATA = [
     },
     # ─── HSK LEVEL 2 ──────────────────────────────────────────────────────────
     {
+        "seedKey": "hsk2-vocab-grammar",
+        "seedVersion": "1",
         "name": "HSK Level 2 — Vocabulary & Grammar",
         "examType": "hsk",
         "description": "Standard HSK 2 practice test covering everyday Chinese vocabulary, basic sentence patterns, time words, and pinyin.",
-        "duration": 22,
+        "durationMinutes": 22,
         "passingScore": 60,
         "level": "Elementary",
         "questions": [
@@ -257,10 +174,12 @@ BUILTIN_SEED_DATA = [
     },
     # ─── JLPT N5 ──────────────────────────────────────────────────────────────
     {
+        "seedKey": "jlpt-n5-language-knowledge",
+        "seedVersion": "1",
         "name": "JLPT N5 — Language Knowledge",
         "examType": "jlpt",
         "description": "JLPT N5 practice test covering hiragana/katakana vocabulary, basic particles (は, が, を, に, で), and polite sentence forms.",
-        "duration": 25,
+        "durationMinutes": 25,
         "passingScore": 60,
         "level": "N5",
         "questions": [
@@ -349,57 +268,139 @@ BUILTIN_SEED_DATA = [
 ]
 
 
+def _build_questions(seed: dict) -> list[Question]:
+    """Materialize a seed template's questions as unsaved bank rows."""
+    return [
+        Question(
+            user_id=None,
+            # Questions inherit the template's exam type unless they override
+            # it, so a mixed-type built-in exam stays expressible.
+            exam_type=q.get("examType", seed["examType"]),
+            part=q.get("part"),
+            passage_group=q.get("passageGroup"),
+            question_text=q["questionText"],
+            passage=q.get("passage"),
+            type=q.get("type", "multiple-choice"),
+            options=q["options"],
+            correct_answer=q["correctAnswer"],
+            explanation=q.get("explanation"),
+            difficulty=q.get("difficulty", "medium"),
+            tags=q.get("tags", []),
+        )
+        for q in seed["questions"]
+    ]
+
+
+async def _link_questions(
+    db: AsyncSession, template: ExamTemplate, questions: List[Question]
+) -> None:
+    """Attach freshly created questions to a template in declaration order."""
+    db.add_all(questions)
+    await db.flush()
+    for index, question in enumerate(questions):
+        db.add(
+            ExamTemplateQuestion(
+                exam_template_id=template.id,
+                question_id=question.id,
+                order_index=index,
+            )
+        )
+    template.total_questions = len(questions)
+
+
 async def seed_builtin_exams(db: AsyncSession) -> None:
-    """Idempotently seed the 33 built-in exam questions across TOEIC, IELTS, HSK, and JLPT."""
+    """
+    Idempotently seed the built-in exams, keyed on `seed_key`.
+
+    Matching on `seed_key` rather than `name` is what makes content updates
+    possible: the previous name-based check meant rewriting a template's
+    questions under the same name silently did nothing, while renaming it
+    inserted a second copy and left the stale one visible forever.
+
+    When `seed_version` changes the template row is updated **in place** so its
+    id survives - past ExamSessions point at it, and those sessions resolve
+    their own questions from their answer records, so re-seeding cannot rewrite
+    anyone's finished results.
+    """
     logger.info("Checking built-in exam seed data...")
 
     for seed in BUILTIN_SEED_DATA:
-        # Idempotent check: skip if public template with exact name exists
-        result = await db.execute(
-            select(ExamTemplate).where(
-                ExamTemplate.name == seed["name"],
-                ExamTemplate.is_public == True,
+        seed_key = seed["seedKey"]
+        seed_version = seed["seedVersion"]
+
+        existing = (
+            await db.execute(
+                select(ExamTemplate).where(ExamTemplate.seed_key == seed_key)
             )
-        )
-        existing = result.scalar_one_or_none()
-        if existing:
-            logger.info(f"  ✓ [SKIP] '{seed['name']}' already seeded.")
+        ).scalar_one_or_none()
+
+        if existing and existing.seed_version == seed_version:
+            logger.info(f"  [SKIP] '{seed['name']}' already at v{seed_version}.")
             continue
 
-        template = ExamTemplate(
-            user_id=None,
-            name=seed["name"],
-            exam_type=seed["examType"],
-            description=seed["description"],
-            duration_minutes=seed["duration"],
-            total_questions=len(seed["questions"]),
-            passing_score=seed["passingScore"],
-            level=seed["level"],
-            is_public=True,
-            tags=[seed["examType"], seed["level"]],
-        )
-        db.add(template)
-        await db.commit()
-        await db.refresh(template)
-
-        questions = [
-            Question(
-                exam_template_id=template.id,
-                user_id=None,
-                question_text=q["questionText"],
-                passage=q.get("passage"),
-                type="multiple-choice",
-                options=q["options"],
-                correct_answer=q["correctAnswer"],
-                explanation=q.get("explanation"),
-                difficulty=q.get("difficulty", "medium"),
-                tags=q.get("tags", []),
-                order_index=idx,
+        if existing:
+            logger.info(
+                f"  [UPDATE] '{seed['name']}' "
+                f"v{existing.seed_version} -> v{seed_version}"
             )
-            for idx, q in enumerate(seed["questions"])
-        ]
-        db.add_all(questions)
+            template = existing
+            template.name = seed["name"]
+            template.exam_type = seed["examType"]
+            template.description = seed["description"]
+            template.duration_minutes = seed["durationMinutes"]
+            template.passing_score = seed["passingScore"]
+            template.level = seed["level"]
+            template.tags = [seed["examType"], seed["level"]]
+            template.seed_version = seed_version
+
+            # Archive the questions this template previously held rather than
+            # deleting them: past sessions' answer records still reference them.
+            previous_ids = list(
+                (
+                    await db.execute(
+                        select(ExamTemplateQuestion.question_id).where(
+                            ExamTemplateQuestion.exam_template_id == template.id
+                        )
+                    )
+                ).scalars().all()
+            )
+            await db.execute(
+                delete(ExamTemplateQuestion).where(
+                    ExamTemplateQuestion.exam_template_id == template.id
+                )
+            )
+            if previous_ids:
+                await db.execute(
+                    update(Question)
+                    .where(
+                        Question.id.in_(previous_ids),
+                        Question.user_id.is_(None),
+                        Question.archived_at.is_(None),
+                    )
+                    .values(archived_at=datetime.now(timezone.utc))
+                )
+        else:
+            template = ExamTemplate(
+                user_id=None,
+                name=seed["name"],
+                exam_type=seed["examType"],
+                description=seed["description"],
+                duration_minutes=seed["durationMinutes"],
+                total_questions=len(seed["questions"]),
+                passing_score=seed["passingScore"],
+                level=seed["level"],
+                is_public=True,
+                tags=[seed["examType"], seed["level"]],
+                seed_key=seed_key,
+                seed_version=seed_version,
+            )
+            db.add(template)
+            await db.flush()
+
+        await _link_questions(db, template, _build_questions(seed))
         await db.commit()
-        logger.info(f"  ✅ Seeded '{seed['name']}' with {len(questions)} questions.")
+        logger.info(
+            f"  Seeded '{seed['name']}' with {len(seed['questions'])} questions."
+        )
 
     logger.info("Exam seeding complete.")

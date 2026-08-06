@@ -23,6 +23,14 @@ defineProps<{
   loadingText: string
   emptyText: string
   rows: T[]
+  /**
+   * Optional per-row guard. Return false to disable that row's edit/delete
+   * buttons — needed where some rows aren't the viewer's to change (the
+   * question bank shows built-in content nobody owns, and offering actions
+   * that can only 404 is worse than not offering them). Omitted means every
+   * row is editable, which is what the deck and card lists want.
+   */
+  canModify?: (item: T) => boolean
 }>()
 
 const emit = defineEmits<{
@@ -52,8 +60,18 @@ const emit = defineEmits<{
           <slot name="row" :item="item" />
         </div>
         <div class="manage-row-actions">
-          <AppButton variant="edit" @click="emit('edit', item)">{{ t('common.edit') }}</AppButton>
-          <AppButton variant="delete" @click="emit('delete', item.id)">
+          <AppButton
+            variant="edit"
+            :disabled="canModify ? !canModify(item) : false"
+            @click="emit('edit', item)"
+          >
+            {{ t('common.edit') }}
+          </AppButton>
+          <AppButton
+            variant="delete"
+            :disabled="canModify ? !canModify(item) : false"
+            @click="emit('delete', item.id)"
+          >
             {{ t('common.delete') }}
           </AppButton>
         </div>

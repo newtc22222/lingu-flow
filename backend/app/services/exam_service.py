@@ -1,12 +1,17 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException, status
-from sqlalchemy import or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.exam import ExamTemplate, Question
+from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
 from app.models.session import AnswerRecord, ExamSession
+from app.services.question_service import (
+    QuestionService,
+    normalize_options,
+    sync_total_questions,
+)
 from app.schemas.exam import (
     ExamSessionCreateRequest,
     ExamTemplateCreateRequest,
@@ -15,6 +20,9 @@ from app.schemas.exam import (
     QuestionUpdateRequest,
     SubmitAnswerRequest,
 )
+
+
+question_service = QuestionService()
 
 
 class ExamService:
@@ -30,6 +38,35 @@ class ExamService:
         stmt = select(ExamTemplate).where(or_(*conditions)).order_by(ExamTemplate.created_at.desc())
         result = await db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_parts_by_template(
+        self, db: AsyncSession, template_ids: List[uuid.UUID]
+    ) -> Dict[uuid.UUID, List[str]]:
+        """
+        Distinct question parts per template, in one query.
+
+        Parts are a property of questions, but the exam hub filters templates by
+        them — so they have to be rolled up here rather than stored.
+        """
+        if not template_ids:
+            return {}
+
+        rows = (
+            await db.execute(
+                select(ExamTemplateQuestion.exam_template_id, Question.part)
+                .join(Question, Question.id == ExamTemplateQuestion.question_id)
+                .where(
+                    ExamTemplateQuestion.exam_template_id.in_(template_ids),
+                    Question.part.is_not(None),
+                )
+                .distinct()
+            )
+        ).all()
+
+        grouped: Dict[uuid.UUID, List[str]] = {}
+        for template_id, part in rows:
+            grouped.setdefault(template_id, []).append(part)
+        return {key: sorted(value) for key, value in grouped.items()}
 
     async def get_template_by_id(
         self, db: AsyncSession, template_id: uuid.UUID
@@ -117,18 +154,82 @@ class ExamService:
         await db.commit()
         return True
 
-    # ─── QUESTIONS ───────────────────────────────────────────────
+    # ─── COMPOSITION ─────────────────────────────────────────────
+    async def _sync_total_questions(
+        self, db: AsyncSession, template_id: uuid.UUID
+    ) -> None:
+        """Delegates to the shared helper (see question_service)."""
+        await sync_total_questions(db, template_id)
+
     async def get_questions(
         self, db: AsyncSession, template_id: uuid.UUID
     ) -> List[Question]:
-        """Fetch all questions for a template ordered by order_index."""
+        """Fetch a template's questions in composition order."""
         stmt = (
             select(Question)
-            .where(Question.exam_template_id == template_id)
-            .order_by(Question.order_index.asc())
+            .join(
+                ExamTemplateQuestion,
+                ExamTemplateQuestion.question_id == Question.id,
+            )
+            .where(ExamTemplateQuestion.exam_template_id == template_id)
+            # Secondary sort on id keeps output stable when two links somehow
+            # share an order_index.
+            .order_by(ExamTemplateQuestion.order_index.asc(), Question.id.asc())
         )
         result = await db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_questions_with_order(
+        self, db: AsyncSession, template_id: uuid.UUID
+    ) -> List[Tuple[Question, int]]:
+        """As `get_questions`, but pairs each question with its order_index."""
+        stmt = (
+            select(Question, ExamTemplateQuestion.order_index)
+            .join(
+                ExamTemplateQuestion,
+                ExamTemplateQuestion.question_id == Question.id,
+            )
+            .where(ExamTemplateQuestion.exam_template_id == template_id)
+            .order_by(ExamTemplateQuestion.order_index.asc(), Question.id.asc())
+        )
+        result = await db.execute(stmt)
+        return [(row[0], row[1]) for row in result.all()]
+
+    async def _owned_template_or_404(
+        self, db: AsyncSession, template_id: uuid.UUID, user_id: uuid.UUID
+    ) -> ExamTemplate:
+        """
+        Resolve a template the user may compose, or raise 404.
+
+        Built-in public templates are excluded: the startup seed owns them and
+        would overwrite any edit. (`add_question` previously had no ownership
+        check at all, so any authenticated user could add questions to any
+        built-in exam.)
+        """
+        result = await db.execute(
+            select(ExamTemplate).where(
+                ExamTemplate.id == template_id,
+                ExamTemplate.user_id == user_id,
+                ExamTemplate.is_public == False,  # noqa: E712
+            )
+        )
+        template = result.scalar_one_or_none()
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Template not found or not editable",
+            )
+        return template
+
+    async def _next_order_index(
+        self, db: AsyncSession, template_id: uuid.UUID
+    ) -> int:
+        current_max = await db.scalar(
+            select(func.max(ExamTemplateQuestion.order_index)).where(
+                ExamTemplateQuestion.exam_template_id == template_id
+            )
+        )
+        return 0 if current_max is None else current_max + 1
 
     async def add_question(
         self,
@@ -137,34 +238,163 @@ class ExamService:
         user_id: uuid.UUID,
         req: QuestionCreateRequest,
     ) -> Question:
-        """Add a question to a template."""
-        template = await self.get_template_by_id(db, template_id)
-        if not template:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-            )
+        """Create a new bank question and attach it to the end of a template."""
+        await self._owned_template_or_404(db, template_id, user_id)
 
         question = Question(
-            exam_template_id=template_id,
             user_id=user_id,
+            exam_type=req.exam_type,
+            part=req.part,
+            passage_group=req.passage_group,
             question_text=req.question_text,
             passage=req.passage,
             type=req.type,
-            options=req.options,
+            options=normalize_options(req.options),
             correct_answer=req.correct_answer,
             explanation=req.explanation,
             tags=req.tags or [],
             difficulty=req.difficulty,
-            order_index=req.order_index,
         )
         db.add(question)
+        await db.flush()
 
-        # Update total questions count on template
-        template.total_questions += 1
+        db.add(
+            ExamTemplateQuestion(
+                exam_template_id=template_id,
+                question_id=question.id,
+                order_index=await self._next_order_index(db, template_id),
+            )
+        )
+        await db.flush()
+        await self._sync_total_questions(db, template_id)
+
         await db.commit()
         await db.refresh(question)
         return question
 
+    async def attach_questions(
+        self,
+        db: AsyncSession,
+        template_id: uuid.UUID,
+        user_id: uuid.UUID,
+        question_ids: List[uuid.UUID],
+    ) -> List[Tuple[Question, int]]:
+        """Append existing bank questions to a template's composition."""
+        await self._owned_template_or_404(db, template_id, user_id)
+
+        found = (
+            await db.execute(
+                select(Question.id).where(
+                    Question.id.in_(question_ids),
+                    Question.archived_at.is_(None),
+                )
+            )
+        ).scalars().all()
+        missing = set(question_ids) - set(found)
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Unknown or archived question ids: {sorted(str(m) for m in missing)}",
+            )
+
+        already = set(
+            (
+                await db.execute(
+                    select(ExamTemplateQuestion.question_id).where(
+                        ExamTemplateQuestion.exam_template_id == template_id
+                    )
+                )
+            ).scalars().all()
+        )
+
+        # Silently skip duplicates rather than 409ing: the caller is a
+        # multi-select UI where re-picking an attached question is routine.
+        next_index = await self._next_order_index(db, template_id)
+        for question_id in question_ids:
+            if question_id in already:
+                continue
+            db.add(
+                ExamTemplateQuestion(
+                    exam_template_id=template_id,
+                    question_id=question_id,
+                    order_index=next_index,
+                )
+            )
+            already.add(question_id)
+            next_index += 1
+
+        await db.flush()
+        await self._sync_total_questions(db, template_id)
+        await db.commit()
+        return await self.get_questions_with_order(db, template_id)
+
+    async def reorder_questions(
+        self,
+        db: AsyncSession,
+        template_id: uuid.UUID,
+        user_id: uuid.UUID,
+        question_ids: List[uuid.UUID],
+    ) -> List[Tuple[Question, int]]:
+        """
+        Rewrite order_index across a template's whole composition.
+
+        Rejects a partial list rather than applying it — omitted questions
+        would otherwise keep stale indices and interleave unpredictably.
+        """
+        await self._owned_template_or_404(db, template_id, user_id)
+
+        links = list(
+            (
+                await db.execute(
+                    select(ExamTemplateQuestion).where(
+                        ExamTemplateQuestion.exam_template_id == template_id
+                    )
+                )
+            ).scalars().all()
+        )
+        by_question = {link.question_id: link for link in links}
+        if set(question_ids) != set(by_question) or len(question_ids) != len(links):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="questionIds must contain exactly the questions in this exam",
+            )
+
+        for index, question_id in enumerate(question_ids):
+            by_question[question_id].order_index = index
+
+        await db.commit()
+        return await self.get_questions_with_order(db, template_id)
+
+    async def detach_question(
+        self,
+        db: AsyncSession,
+        template_id: uuid.UUID,
+        question_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> bool:
+        """Remove a question from one exam. The question itself survives."""
+        await self._owned_template_or_404(db, template_id, user_id)
+
+        link = (
+            await db.execute(
+                select(ExamTemplateQuestion).where(
+                    ExamTemplateQuestion.exam_template_id == template_id,
+                    ExamTemplateQuestion.question_id == question_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not link:
+            return False
+
+        await db.delete(link)
+        await db.flush()
+        await self._sync_total_questions(db, template_id)
+        await db.commit()
+        return True
+
+    # ─── QUESTIONS ───────────────────────────────────────────────
+    # Question CRUD lives in QuestionService; these thin wrappers keep the
+    # legacy /api/exams/questions/{id} routes working against one implementation.
     async def update_question(
         self,
         db: AsyncSession,
@@ -172,50 +402,18 @@ class ExamService:
         user_id: uuid.UUID,
         req: QuestionUpdateRequest,
     ) -> Optional[Question]:
-        """Update a question the user owns."""
-        result = await db.execute(
-            select(Question).where(
-                Question.id == question_id, Question.user_id == user_id
-            )
-        )
-        question = result.scalar_one_or_none()
-        if not question:
-            return None
-
-        question.question_text = req.question_text
-        question.passage = req.passage
-        question.type = req.type
-        question.options = req.options
-        question.correct_answer = req.correct_answer
-        question.explanation = req.explanation
-        question.difficulty = req.difficulty
-        if req.tags is not None:
-            question.tags = req.tags
-
-        await db.commit()
-        await db.refresh(question)
-        return question
+        return await question_service.update_question(db, question_id, user_id, req)
 
     async def delete_question(
-        self, db: AsyncSession, question_id: uuid.UUID, user_id: uuid.UUID
+        self,
+        db: AsyncSession,
+        question_id: uuid.UUID,
+        user_id: uuid.UUID,
+        hard: bool = False,
     ) -> bool:
-        """Delete a question the user owns, keeping the template's count in step."""
-        result = await db.execute(
-            select(Question).where(
-                Question.id == question_id, Question.user_id == user_id
-            )
+        return await question_service.delete_question(
+            db, question_id, user_id, hard=hard
         )
-        question = result.scalar_one_or_none()
-        if not question:
-            return False
-
-        template = await self.get_template_by_id(db, question.exam_template_id)
-        if template and template.total_questions > 0:
-            template.total_questions -= 1
-
-        await db.delete(question)
-        await db.commit()
-        return True
 
     # ─── SESSIONS ────────────────────────────────────────────────
     async def get_user_sessions(
@@ -256,16 +454,19 @@ class ExamService:
         await db.commit()
         await db.refresh(session)
 
-        # Pre-create empty answer records for questions
+        # Pre-create one empty answer record per question. This set doubles as
+        # the composition snapshot for this sitting — `order_index` freezes the
+        # order so later edits to the template can't rewrite it.
         answer_records = [
             AnswerRecord(
                 session_id=session.id,
                 question_id=q.id,
+                order_index=index,
                 user_answer="",
                 is_correct=False,
                 time_taken_seconds=0,
             )
-            for q in questions
+            for index, q in enumerate(questions)
         ]
         db.add_all(answer_records)
         await db.commit()
@@ -294,7 +495,23 @@ class ExamService:
             )
 
         template = await self.get_template_by_id(db, session.exam_template_id)
-        questions = await self.get_questions(db, session.exam_template_id)
+
+        # Resolve the questions through this session's own answer records, NOT
+        # through the template's current composition. Reading the template
+        # would mean attaching/detaching/reordering an exam — or re-seeding it
+        # — retroactively changed what a finished session "was". Archived
+        # questions are intentionally still resolved here so past results stay
+        # readable after a bank deletion.
+        questions = list(
+            (
+                await db.execute(
+                    select(Question)
+                    .join(AnswerRecord, AnswerRecord.question_id == Question.id)
+                    .where(AnswerRecord.session_id == session_id)
+                    .order_by(AnswerRecord.order_index.asc(), Question.id.asc())
+                )
+            ).scalars().all()
+        )
 
         # Fetch answer records
         ans_stmt = select(AnswerRecord).where(AnswerRecord.session_id == session_id)
@@ -331,7 +548,24 @@ class ExamService:
                 detail="Active exam session not found or already completed",
             )
 
-        # Fetch question to check correct answer
+        # The answer record must already exist — `create_session` pre-creates
+        # exactly one per question in the exam. Creating one on demand here
+        # (the previous behaviour) let a client PUT answers for arbitrary
+        # question ids that were never part of the session, inflating
+        # `correctCount` past `totalCount` when `finish_session` summed them.
+        ans_res = await db.execute(
+            select(AnswerRecord).where(
+                AnswerRecord.session_id == session_id,
+                AnswerRecord.question_id == req.question_id,
+            )
+        )
+        record = ans_res.scalar_one_or_none()
+        if not record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Question is not part of this exam session",
+            )
+
         q_res = await db.execute(
             select(Question).where(Question.id == req.question_id)
         )
@@ -345,28 +579,9 @@ class ExamService:
             req.user_answer.strip().upper() == q.correct_answer.strip().upper()
         )
 
-        # Find existing AnswerRecord or create new
-        ans_res = await db.execute(
-            select(AnswerRecord).where(
-                AnswerRecord.session_id == session_id,
-                AnswerRecord.question_id == req.question_id,
-            )
-        )
-        record = ans_res.scalar_one_or_none()
-
-        if not record:
-            record = AnswerRecord(
-                session_id=session_id,
-                question_id=req.question_id,
-                user_answer=req.user_answer,
-                is_correct=is_correct,
-                time_taken_seconds=req.time_taken_seconds,
-            )
-            db.add(record)
-        else:
-            record.user_answer = req.user_answer
-            record.is_correct = is_correct
-            record.time_taken_seconds = req.time_taken_seconds
+        record.user_answer = req.user_answer
+        record.is_correct = is_correct
+        record.time_taken_seconds = req.time_taken_seconds
 
         await db.commit()
         await db.refresh(record)
