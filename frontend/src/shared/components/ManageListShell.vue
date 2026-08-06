@@ -10,7 +10,10 @@
  * name/description row content) that those stay slotted rather than baked
  * in here.
  */
+import { useI18n } from 'vue-i18n'
 import AppButton from './AppButton.vue'
+
+const { t } = useI18n()
 
 defineProps<{
   title: string
@@ -49,8 +52,10 @@ const emit = defineEmits<{
           <slot name="row" :item="item" />
         </div>
         <div class="manage-row-actions">
-          <AppButton variant="edit" @click="emit('edit', item)">SỬA</AppButton>
-          <AppButton variant="delete" @click="emit('delete', item.id)">XÓA</AppButton>
+          <AppButton variant="edit" @click="emit('edit', item)">{{ t('common.edit') }}</AppButton>
+          <AppButton variant="delete" @click="emit('delete', item.id)">
+            {{ t('common.delete') }}
+          </AppButton>
         </div>
       </li>
     </ul>

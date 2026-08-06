@@ -5,6 +5,10 @@
  * nodes are non-interactive (aria-disabled) and show a lock glyph instead
  * of their number.
  */
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
 export interface LevelProgress {
   id: string
   index: number
@@ -32,7 +36,11 @@ function connectorStatus(levels: LevelProgress[], i: number): 'done' | 'current'
         class="node font-label"
         :class="`node--${level.status}`"
         role="listitem"
-        :aria-label="level.status === 'locked' ? `Cấp độ ${level.index}, chưa mở khóa` : `Cấp độ ${level.index}`"
+        :aria-label="
+          level.status === 'locked'
+            ? t('dashboard.levelLocked', { index: level.index })
+            : t('dashboard.level', { index: level.index })
+        "
         :aria-disabled="level.status === 'locked'"
       >
         <span v-if="level.status === 'locked'" aria-hidden="true">&#128274;</span>

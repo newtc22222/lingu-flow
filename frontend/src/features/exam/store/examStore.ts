@@ -2,13 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { apiFetch } from '@/utils/api'
 
+/**
+ * Mirrors `QuestionResponse` in `backend/app/schemas/exam.py`. Earlier versions
+ * of this interface also carried `domain` and `codeSnippet`; neither exists on
+ * the API and both always read back `undefined`, so they're gone.
+ */
 export interface ExamQuestion {
   id: string
-  domain?: string
   type?: string
   passage?: string
   questionText: string
-  codeSnippet?: string
   options: string[]
 }
 
@@ -28,12 +31,9 @@ export const useExamStore = defineStore('exam', () => {
   const phase = ref<ExamPhase>('idle')
   const sessionId = ref<string | null>(null)
   const examTitle = ref('')
-  const domain = ref('')
   const questions = ref<ExamQuestion[]>([])
   const currentIndex = ref(0)
   const answers = ref<Record<string, string>>({})
-  const lives = ref(3)
-  const maxLives = ref(3)
   const totalSeconds = ref(0)
   const secondsRemaining = ref(0)
   const deadlineAt = ref<number | null>(null)
@@ -107,21 +107,20 @@ export const useExamStore = defineStore('exam', () => {
       const template = await templateRes.json()
 
       questions.value = (rawQuestions as Record<string, unknown>[]).map((q) => ({
-        id: (q.id ?? q._id) as string,
-        domain: q.domain as string | undefined,
+        id: q.id as string,
         type: q.type as string | undefined,
         passage: q.passage as string | undefined,
         questionText: q.questionText as string,
-        codeSnippet: q.codeSnippet as string | undefined,
         options: (q.options as string[]) ?? [],
       }))
 
-      sessionId.value = (sessionData.id ?? sessionData._id) as string
+      sessionId.value = sessionData.id as string
       examTitle.value = template.name
-      domain.value = template.domain ?? ''
-      maxLives.value = sessionData.maxLives ?? 3
-      lives.value = maxLives.value
-      totalSeconds.value = (sessionData.timeLimit ?? template.duration ?? 60) * 60
+      // `timeLimitMinutes` / `durationMinutes` are the real API field names —
+      // the old `timeLimit` / `duration` reads were always undefined, so every
+      // exam silently got the 60-minute fallback.
+      totalSeconds.value =
+        (sessionData.timeLimitMinutes ?? template.durationMinutes ?? 60) * 60
       secondsRemaining.value = totalSeconds.value
       deadlineAt.value = Date.now() + totalSeconds.value * 1000
 
@@ -182,12 +181,9 @@ export const useExamStore = defineStore('exam', () => {
     phase,
     sessionId,
     examTitle,
-    domain,
     questions,
     currentIndex,
     answers,
-    lives,
-    maxLives,
     totalSeconds,
     secondsRemaining,
     finishedSessionId,

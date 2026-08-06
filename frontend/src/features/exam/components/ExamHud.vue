@@ -21,8 +21,12 @@ const store = useExamStore()
     <div class="hud-time font-label" :class="{ 'hud-time--low': store.isLowTime }">
       {{ store.timeDisplay }}
     </div>
-    <div class="hud-lives font-pixel" :aria-label="`${store.lives} of ${store.maxLives} lives remaining`">
-      <span v-for="i in store.maxLives" :key="i">{{ i <= store.lives ? '♥' : '♡' }}</span>
+    <!-- The lives/hearts counter lived here until Phase 1.5: it was driven by
+         `session.maxLives`, a field the API never returned, so it rendered a
+         constant 3/3 that no answer could ever decrement. Removed rather than
+         faked — there is no lives concept in the exam scoring model. -->
+    <div class="hud-progress font-label">
+      {{ store.answeredCount }}/{{ store.questions.length }}
     </div>
   </div>
 </template>
@@ -65,10 +69,10 @@ const store = useExamStore()
 .hud-time--low {
   color: var(--status-danger);
 }
-.hud-lives {
+.hud-progress {
   font-size: var(--font-size-md-plus);
-  color: var(--status-danger);
-  letter-spacing: var(--tracking-wider);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-normal);
 }
 
 @media (prefers-reduced-motion: reduce) {

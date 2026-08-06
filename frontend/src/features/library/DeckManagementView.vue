@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { apiFetch } from '@/utils/api'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import AppButton from '@/shared/components/AppButton.vue'
@@ -10,6 +11,8 @@ interface Deck {
   name: string
   description: string
 }
+
+const { t } = useI18n()
 
 const decks = ref<Deck[]>([])
 const isLoading = ref(true)
@@ -70,7 +73,7 @@ const editDeck = (deck: Deck) => {
 }
 
 const deleteDeck = async (id: string) => {
-  if (!confirm('Bạn có chắc muốn xóa bộ thẻ này?')) return
+  if (!confirm(t('decks.confirmDelete'))) return
   try {
     await apiFetch(`/api/decks/${id}`, { method: 'DELETE' })
     await fetchDecks()
@@ -92,12 +95,12 @@ onMounted(() => {
 
 <template>
   <ManageListShell
-    title="QUẢN LÝ BỘ THẺ"
-    count-label="BỘ"
+    :title="t('decks.title')"
+    :count-label="t('decks.countLabel')"
     :count="decks.length"
     :is-loading="isLoading"
-    loading-text="▸ ĐANG TẢI BỘ THẺ…"
-    empty-text="CHƯA CÓ BỘ THẺ NÀO. TẠO BỘ THẺ ĐẦU TIÊN Ở TRÊN."
+    :loading-text="t('decks.loading')"
+    :empty-text="t('decks.empty')"
     :rows="decks"
     @edit="editDeck"
     @delete="deleteDeck"
@@ -105,42 +108,51 @@ onMounted(() => {
     <template #form>
       <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="deck-form-frame">
         <form class="deck-form" @submit.prevent="saveDeck">
-          <h3 class="form-title font-label">{{ isEditing ? 'CHỈNH SỬA BỘ THẺ' : 'TẠO BỘ THẺ MỚI' }}</h3>
+          <h3 class="form-title font-label">
+            {{ isEditing ? t('decks.editTitle') : t('decks.createTitle') }}
+          </h3>
 
           <div class="arcade-field">
-            <label class="arcade-label" for="deck-name">TÊN BỘ THẺ</label>
+            <label class="arcade-label" for="deck-name">{{ t('decks.name') }}</label>
             <input
               id="deck-name"
               v-model="form.name"
               required
               type="text"
               class="arcade-input"
-              placeholder="VD: Từ vựng tiếng Tây Ban Nha"
+              :placeholder="t('decks.namePlaceholder')"
             />
           </div>
 
           <div class="arcade-field">
-            <label class="arcade-label" for="deck-desc">MÔ TẢ (TÙY CHỌN)</label>
+            <label class="arcade-label" for="deck-desc">{{ t('decks.description') }}</label>
             <input
               id="deck-desc"
               v-model="form.description"
               type="text"
               class="arcade-input"
-              placeholder="VD: 1000 từ thông dụng nhất"
+              :placeholder="t('decks.descriptionPlaceholder')"
             />
           </div>
 
           <div class="form-actions">
-            <AppButton v-if="isEditing" variant="secondary" type="button" @click="cancelEdit">HỦY</AppButton>
-            <AppButton type="submit">{{ isEditing ? 'CẬP NHẬT' : 'LƯU BỘ THẺ' }}</AppButton>
+            <AppButton v-if="isEditing" variant="secondary" type="button" @click="cancelEdit">
+              {{ t('common.cancel') }}
+            </AppButton>
+            <AppButton type="submit">
+              {{ isEditing ? t('common.update') : t('decks.saveDeck') }}
+            </AppButton>
           </div>
         </form>
       </PixelFrame>
     </template>
 
     <template #row="{ item }">
-      <div class="deck-row-name font-body">{{ item.name }}</div>
-      <div class="deck-row-desc font-body">{{ item.description }}</div>
+      <RouterLink :to="{ name: 'deck-detail', params: { deckId: item.id } }" class="deck-row-link">
+        <div class="deck-row-name font-body">{{ item.name }}</div>
+        <div class="deck-row-desc font-body">{{ item.description }}</div>
+        <span class="deck-row-open font-label">{{ t('decks.open') }} →</span>
+      </RouterLink>
     </template>
   </ManageListShell>
 </template>
@@ -166,6 +178,22 @@ onMounted(() => {
   justify-content: flex-end;
   gap: var(--space-5);
   margin-top: var(--space-2);
+}
+.deck-row-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+.deck-row-open {
+  display: inline-block;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-normal);
+  color: var(--text-label-accent);
+}
+.deck-row-link:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 .deck-row-name {
   font-size: var(--font-size-lg);

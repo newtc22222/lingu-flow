@@ -39,6 +39,20 @@ class ExamTemplateResponse(BaseModel):
         return str(self.id)
 
 
+class ExamTemplateUpdateRequest(BaseModel):
+    """Full replacement of a custom template's metadata (PUT semantics)."""
+
+    name: str
+    exam_type: str = Field(alias="examType")
+    description: Optional[str] = None
+    duration_minutes: int = Field(alias="durationMinutes")
+    passing_score: int = Field(default=60, alias="passingScore")
+    level: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class QuestionCreateRequest(BaseModel):
     question_text: str = Field(alias="questionText")
     passage: Optional[str] = None
@@ -49,6 +63,21 @@ class QuestionCreateRequest(BaseModel):
     tags: Optional[List[str]] = None
     difficulty: str = "medium"
     order_index: int = Field(default=0, alias="orderIndex")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class QuestionUpdateRequest(BaseModel):
+    """Full replacement of a question's content (PUT semantics)."""
+
+    question_text: str = Field(alias="questionText")
+    passage: Optional[str] = None
+    type: str = "multiple-choice"
+    options: List[str]
+    correct_answer: str = Field(alias="correctAnswer")
+    explanation: Optional[str] = None
+    tags: Optional[List[str]] = None
+    difficulty: str = "medium"
 
     model_config = ConfigDict(populate_by_name=True)
 

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { apiFetch } from '@/utils/api'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import AppButton from '@/shared/components/AppButton.vue'
@@ -21,9 +23,8 @@ interface DashboardProgress {
   worlds: WorldProgress[]
 }
 
-const emit = defineEmits<{
-  navigate: [view: 'flashcards' | 'manageDecks']
-}>()
+const { t } = useI18n()
+const router = useRouter()
 
 const isLoading = ref(true)
 const error = ref<string | null>(null)
@@ -53,7 +54,7 @@ async function fetchProgress() {
     progress.value = (await res.json()) as DashboardProgress
   } catch (err) {
     console.error('Failed to fetch dashboard progress:', err)
-    error.value = 'Không thể tải dữ liệu tiến trình. Vui lòng thử lại sau.'
+    error.value = t('dashboard.error')
   } finally {
     isLoading.value = false
   }
@@ -67,22 +68,22 @@ onMounted(() => {
 <template>
   <div class="dashboard-view">
     <PixelFrame v-if="isLoading" surface="cabinet" :ring-width="3">
-      <div class="dash-status font-label">▸ ĐANG TẢI TIẾN TRÌNH…</div>
+      <div class="dash-status font-label">{{ t('dashboard.loading') }}</div>
     </PixelFrame>
 
     <div v-else-if="error" class="dash-error">
       <p class="dash-status dash-status--error font-label">{{ error }}</p>
-      <AppButton variant="secondary" @click="fetchProgress">THỬ LẠI</AppButton>
+      <AppButton variant="secondary" @click="fetchProgress">{{ t('common.retry') }}</AppButton>
     </div>
 
     <template v-else-if="progress">
       <PixelFrame surface="cabinet" :ring-width="3" class="hud-frame">
         <div class="hud-inner">
           <div class="hud-stats">
-            <StatTile label="CHUỖI NGÀY" :value="progress.streakDays" icon="🔥" />
-            <StatTile label="TỔNG XP" :value="progress.totalXp.toLocaleString('vi-VN')" />
+            <StatTile :label="t('dashboard.streak')" :value="progress.streakDays" icon="🔥" />
+            <StatTile :label="t('dashboard.totalXp')" :value="progress.totalXp.toLocaleString()" />
             <div class="hud-meter">
-              <span class="stat-label font-label">SẴN SÀNG THI</span>
+              <span class="stat-label font-label">{{ t('dashboard.examReadiness') }}</span>
               <div class="hud-meter-row">
                 <div class="hud-meter-track">
                   <div class="hud-meter-fill" :style="{ width: `${progress.examReadiness}%` }" />
@@ -93,8 +94,8 @@ onMounted(() => {
           </div>
 
           <div v-if="currentLevel" class="hud-cta">
-            <AppButton variant="primary" @click="emit('navigate', 'flashcards')">
-              ▶ TIẾP TỤC — CẤP {{ currentLevel.index }}
+            <AppButton variant="primary" @click="router.push({ name: 'flashcards' })">
+              {{ t('dashboard.continue', { level: currentLevel.index }) }}
             </AppButton>
             <span class="hud-cta-hint font-label">[ENTER]</span>
           </div>
@@ -102,9 +103,11 @@ onMounted(() => {
       </PixelFrame>
 
       <div v-if="progress.worlds.length === 0" class="dash-empty">
-        <p class="font-label">CHƯA CÓ THẾ GIỚI NÀO</p>
-        <p class="dash-empty-sub font-body">Tạo bộ thẻ đầu tiên để bắt đầu hành trình học tập.</p>
-        <AppButton variant="primary" @click="emit('navigate', 'manageDecks')">TẠO BỘ THẺ</AppButton>
+        <p class="font-label">{{ t('dashboard.emptyTitle') }}</p>
+        <p class="dash-empty-sub font-body">{{ t('dashboard.emptySub') }}</p>
+        <AppButton variant="primary" @click="router.push({ name: 'decks' })">
+          {{ t('dashboard.createDeck') }}
+        </AppButton>
       </div>
 
       <div v-else class="worlds">

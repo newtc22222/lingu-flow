@@ -1,26 +1,29 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue'
 
-withDefaults(
-  defineProps<{
-    front: string
-    back: string
-    flipped: boolean
-    frontEyebrow?: string
-    backEyebrow?: string
-    hint?: string
-  }>(),
-  {
-    frontEyebrow: '▸ THUẬT NGỮ',
-    backEyebrow: '▸ ĐỊNH NGHĨA',
-    hint: 'chạm để lật thẻ',
-  },
-)
+const props = defineProps<{
+  front: string
+  back: string
+  flipped: boolean
+  frontEyebrow?: string
+  backEyebrow?: string
+  hint?: string
+}>()
 
 const emit = defineEmits<{
   (e: 'toggle'): void
 }>()
+
+const { t } = useI18n()
+
+// Labels default to the active locale rather than hardcoded Vietnamese, but
+// stay overridable so Learn/Match can relabel the faces.
+const resolvedFrontEyebrow = computed(() => props.frontEyebrow ?? `▸ ${t('deckDetail.term')}`)
+const resolvedBackEyebrow = computed(() => props.backEyebrow ?? `▸ ${t('deckDetail.definition')}`)
+const resolvedHint = computed(() => props.hint ?? t('flashcards.flipHint'))
 </script>
 
 <template>
@@ -39,16 +42,16 @@ const emit = defineEmits<{
       <div class="fc-face fc-front">
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="h-full w-full">
           <div class="fc-face-inner">
-            <span class="fc-eyebrow font-label">{{ frontEyebrow }}</span>
+            <span class="fc-eyebrow font-label">{{ resolvedFrontEyebrow }}</span>
             <div class="fc-term font-body"><MarkdownRenderer :content="front" /></div>
-            <p class="fc-hint font-label">{{ hint }}</p>
+            <p class="fc-hint font-label">{{ resolvedHint }}</p>
           </div>
         </PixelFrame>
       </div>
       <div class="fc-face fc-back">
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="h-full w-full">
           <div class="fc-face-inner">
-            <span class="fc-eyebrow font-label">{{ backEyebrow }}</span>
+            <span class="fc-eyebrow font-label">{{ resolvedBackEyebrow }}</span>
             <div class="fc-def font-body"><MarkdownRenderer :content="back" /></div>
           </div>
         </PixelFrame>

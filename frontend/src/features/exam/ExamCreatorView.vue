@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { apiFetch } from '../utils/api';
-import PixelFrame from '../shared/components/PixelFrame.vue';
-import AppButton from '../shared/components/AppButton.vue';
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
 
-const emit = defineEmits<{
-  (e: 'back'): void;
-  (e: 'created', templateId: string): void;
-}>();
+/** Present only on the `/exams/:templateId/edit` route — its absence is what
+ * puts this view in create mode. */
+const props = defineProps<{ templateId?: string }>();
+
+const { t } = useI18n();
+const router = useRouter();
+
+const isEditMode = computed(() => Boolean(props.templateId));
 
 type ExamType = 'toeic' | 'ielts' | 'hsk' | 'jlpt' | 'custom';
 
 interface QuestionDraft {
+  /** Set for questions loaded from the server in edit mode; absent for new
+   * drafts, which is how `saveExam` decides POST vs. PUT. */
+  id?: string;
   questionText: string;
   options: [string, string, string, string]; // exactly 4
   correctAnswer: 'A' | 'B' | 'C' | 'D';
@@ -21,15 +30,21 @@ interface QuestionDraft {
 
 const step = ref<1 | 2 | 3>(1);
 
-// Step 1: Template info
+// Step 1: Template info. `durationMinutes` matches the backend alias — it was
+// previously sent as `duration`, which the API silently ignored.
 const templateForm = ref({
   name: '',
   examType: 'custom' as ExamType,
   description: '',
-  duration: 30,
+  durationMinutes: 30,
   passingScore: 70,
   level: '',
 });
+
+/** Question ids present when the form loaded, so edit-mode saves can delete the
+ * ones the user removed. */
+const originalQuestionIds = ref<string[]>([]);
+const isLoading = ref(false);
 
 // Step 2: Questions
 const questions = ref<QuestionDraft[]>([]);
@@ -60,7 +75,7 @@ const EXAM_TYPES: { value: ExamType; label: string; icon: string }[] = [
 const OPTION_KEYS = ['A', 'B', 'C', 'D'] as const;
 
 const step1Valid = () => {
-  return templateForm.value.name.trim().length >= 3 && templateForm.value.duration > 0;
+  return templateForm.value.name.trim().length >= 3 && templateForm.value.durationMinutes > 0;
 };
 
 const step2Valid = () => {
@@ -75,54 +90,144 @@ const goToStep2 = () => {
   step.value = 2;
 };
 
+/** Options are stored server-side already prefixed ("A. Paris"); the form edits
+ * the bare text, so the prefix is stripped on load and re-applied on save. */
+const OPTION_PREFIX = /^[A-D]\.\s*/;
+
+async function loadTemplate(templateId: string) {
+  isLoading.value = true;
+  try {
+    const [templateRes, questionsRes] = await Promise.all([
+      apiFetch(`/api/exams/templates/${templateId}`),
+      apiFetch(`/api/exams/templates/${templateId}/questions`),
+    ]);
+    if (!templateRes.ok || !questionsRes.ok) throw new Error('Failed to load exam');
+
+    const template = await templateRes.json();
+    const rawQuestions = (await questionsRes.json()) as Record<string, unknown>[];
+
+    templateForm.value = {
+      name: template.name ?? '',
+      examType: (template.examType ?? 'custom') as ExamType,
+      description: template.description ?? '',
+      durationMinutes: template.durationMinutes ?? 30,
+      passingScore: template.passingScore ?? 70,
+      level: template.level ?? '',
+    };
+
+    questions.value = rawQuestions.map((q) => {
+      const options = ((q.options as string[]) ?? []).map((o) => o.replace(OPTION_PREFIX, ''));
+      while (options.length < 4) options.push('');
+      return {
+        id: q.id as string,
+        questionText: (q.questionText as string) ?? '',
+        options: options.slice(0, 4) as [string, string, string, string],
+        correctAnswer: ((q.correctAnswer as string) ?? 'A') as 'A' | 'B' | 'C' | 'D',
+        explanation: (q.explanation as string) ?? '',
+        difficulty: ((q.difficulty as string) ?? 'medium') as 'easy' | 'medium' | 'hard',
+      };
+    });
+    originalQuestionIds.value = questions.value.map((q) => q.id!).filter(Boolean);
+  } catch (err) {
+    saveError.value = t('examCreator.saveFailed');
+    console.error('Failed to load exam for editing:', err);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function questionPayload(q: QuestionDraft) {
+  return {
+    questionText: q.questionText,
+    options: q.options.map((o, i) => `${OPTION_KEYS[i]}. ${o}`),
+    correctAnswer: q.correctAnswer,
+    explanation: q.explanation,
+    difficulty: q.difficulty,
+    type: 'multiple-choice',
+  };
+}
+
 const saveExam = async () => {
   if (!step2Valid()) return;
   isSaving.value = true;
   saveError.value = '';
 
   try {
-    // 1. Create template
-    const templateRes = await apiFetch('/api/exams/templates', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...templateForm.value,
-        totalQuestions: questions.value.length,
-      }),
+    const templateBody = JSON.stringify({
+      ...templateForm.value,
+      totalQuestions: questions.value.length,
     });
-    if (!templateRes.ok) throw new Error('Failed to create template');
-    const template = await templateRes.json();
 
-    // 2. Create questions
-    for (const q of questions.value) {
-      const res = await apiFetch(`/api/exams/templates/${template._id}/questions`, {
-        method: 'POST',
+    // 1. Create or update the template
+    const templateRes = await apiFetch(
+      isEditMode.value ? `/api/exams/templates/${props.templateId}` : '/api/exams/templates',
+      {
+        method: isEditMode.value ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...q,
-          options: q.options.map((o, i) => `${OPTION_KEYS[i]}. ${o}`),
-          type: 'multiple-choice',
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to create question');
+        body: templateBody,
+      },
+    );
+    if (!templateRes.ok) throw new Error('Failed to save template');
+    const template = await templateRes.json();
+    const templateId: string = template.id;
+
+    // 2. Upsert questions, then delete any the user removed while editing.
+    for (const q of questions.value) {
+      const res = q.id
+        ? await apiFetch(`/api/exams/questions/${q.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(questionPayload(q)),
+          })
+        : await apiFetch(`/api/exams/templates/${templateId}/questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(questionPayload(q)),
+          });
+      if (!res.ok) throw new Error('Failed to save question');
+    }
+
+    const keptIds = new Set(questions.value.map((q) => q.id).filter(Boolean));
+    for (const removedId of originalQuestionIds.value.filter((id) => !keptIds.has(id))) {
+      await apiFetch(`/api/exams/questions/${removedId}`, { method: 'DELETE' });
+    }
+
+    if (isEditMode.value) {
+      await router.push({ name: 'exams' });
+      return;
     }
 
     step.value = 3;
-    setTimeout(() => emit('created', template._id), 1500);
-  } catch (err: any) {
-    saveError.value = err.message || 'Something went wrong.';
+    setTimeout(() => {
+      void router.push({ name: 'exam-session', params: { templateId } });
+    }, 1500);
+  } catch (err) {
+    saveError.value = err instanceof Error ? err.message : t('examCreator.saveFailed');
   } finally {
     isSaving.value = false;
   }
 };
+
+const goBack = () => router.push({ name: 'exams' });
+
+onMounted(() => {
+  if (props.templateId) {
+    void loadTemplate(props.templateId).then(() => {
+      // Editing starts on the questions step — the metadata is already filled in.
+      if (questions.value.length) step.value = 2;
+    });
+  }
+});
 </script>
 
 <template>
   <div class="creator-screen">
     <!-- Header -->
     <div class="creator-header">
-      <button type="button" class="header-back font-label" @click="emit('back')">← BACK</button>
-      <h1 class="creator-title font-body">Create Custom Exam</h1>
+      <button type="button" class="header-back font-label" @click="goBack">{{ t('common.back') }}</button>
+      <h1 class="creator-title font-body">
+        {{ isEditMode ? t('examCreator.editTitle') : t('examCreator.createTitle') }}
+      </h1>
       <!-- Step indicator -->
       <div class="step-indicator" aria-hidden="true">
         <span
@@ -137,16 +242,18 @@ const saveExam = async () => {
 
     <div class="creator-body">
 
+      <p v-if="isLoading" class="creator-loading font-label">{{ t('common.loading') }}</p>
+
       <!-- ── Step 1: Exam Info ──────────────────────────────────────────────── -->
-      <div v-if="step === 1">
-        <h2 class="section-title font-body">Step 1 — Exam Details</h2>
+      <div v-else-if="step === 1">
+        <h2 class="section-title font-body">{{ t('examCreator.createTitle') }}</h2>
 
         <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
           <div class="step-panel">
 
             <!-- Exam Type Picker -->
             <div class="arcade-field">
-              <span class="arcade-label">EXAM TYPE</span>
+              <span class="arcade-label">{{ t('examCreator.examType') }}</span>
               <div class="type-grid">
                 <button
                   v-for="et in EXAM_TYPES" :key="et.value"
@@ -163,7 +270,7 @@ const saveExam = async () => {
 
             <!-- Name -->
             <div class="arcade-field">
-              <label class="arcade-label" for="exam-name">EXAM NAME *</label>
+              <label class="arcade-label" for="exam-name">{{ t('examCreator.name') }} *</label>
               <input
                 id="exam-name"
                 v-model="templateForm.name"
@@ -175,7 +282,7 @@ const saveExam = async () => {
 
             <!-- Description -->
             <div class="arcade-field">
-              <label class="arcade-label" for="exam-desc">DESCRIPTION (OPTIONAL)</label>
+              <label class="arcade-label" for="exam-desc">{{ t('examCreator.description') }}</label>
               <textarea
                 id="exam-desc"
                 v-model="templateForm.description"
@@ -188,10 +295,10 @@ const saveExam = async () => {
             <!-- Duration & Passing Score & Level -->
             <div class="step1-grid">
               <div class="arcade-field">
-                <label class="arcade-label" for="exam-duration">DURATION (MIN) *</label>
+                <label class="arcade-label" for="exam-duration">{{ t('examCreator.duration') }} *</label>
                 <input
                   id="exam-duration"
-                  v-model.number="templateForm.duration"
+                  v-model.number="templateForm.durationMinutes"
                   type="number"
                   min="1"
                   max="300"
@@ -199,7 +306,7 @@ const saveExam = async () => {
                 />
               </div>
               <div class="arcade-field">
-                <label class="arcade-label" for="exam-pass">PASS SCORE (%)</label>
+                <label class="arcade-label" for="exam-pass">{{ t('examCreator.passingScore') }}</label>
                 <input
                   id="exam-pass"
                   v-model.number="templateForm.passingScore"
@@ -210,7 +317,7 @@ const saveExam = async () => {
                 />
               </div>
               <div class="arcade-field">
-                <label class="arcade-label" for="exam-level">LEVEL / PART</label>
+                <label class="arcade-label" for="exam-level">{{ t('examCreator.level') }}</label>
                 <input
                   id="exam-level"
                   v-model="templateForm.level"
@@ -222,7 +329,7 @@ const saveExam = async () => {
             </div>
 
             <AppButton class="full-width" :disabled="!step1Valid()" @click="goToStep2">
-              NEXT: ADD QUESTIONS →
+              {{ t('examCreator.questions') }} →
             </AppButton>
           </div>
         </PixelFrame>
@@ -232,22 +339,26 @@ const saveExam = async () => {
       <div v-else-if="step === 2">
         <div class="step2-header">
           <h2 class="section-title font-body">
-            Step 2 — Add Questions
-            <span class="section-count font-label">({{ questions.length }} SO FAR)</span>
+            {{ t('examCreator.questions') }}
+            <span class="section-count font-label">({{ questions.length }})</span>
           </h2>
-          <button type="button" class="header-back font-label" @click="step = 1">← BACK</button>
+          <button type="button" class="header-back font-label" @click="step = 1">
+            {{ t('common.back') }}
+          </button>
         </div>
 
         <div class="question-list">
           <div v-for="(q, qi) in questions" :key="qi" class="question-card">
             <div class="question-card-top">
-              <span class="question-num font-label">QUESTION {{ qi + 1 }}</span>
-              <button type="button" class="btn-remove font-label" @click="removeQuestion(qi)">REMOVE</button>
+              <span class="question-num font-label">{{ qi + 1 }}</span>
+              <button type="button" class="btn-remove font-label" @click="removeQuestion(qi)">
+                {{ t('examCreator.removeQuestion') }}
+              </button>
             </div>
 
             <!-- Question text -->
             <div class="arcade-field">
-              <label class="arcade-label">QUESTION TEXT *</label>
+              <label class="arcade-label">{{ t('examCreator.questionText') }} *</label>
               <textarea
                 v-model="q.questionText"
                 rows="2"
@@ -260,8 +371,10 @@ const saveExam = async () => {
             <div class="options-grid">
               <div v-for="(_, oi) in q.options" :key="oi" class="arcade-field">
                 <label class="arcade-label">
-                  OPTION {{ OPTION_KEYS[oi] }}
-                  <span v-if="q.correctAnswer === OPTION_KEYS[oi]" class="correct-tag">(CORRECT)</span>
+                  {{ t('examCreator.option', { key: OPTION_KEYS[oi] }) }}
+                  <span v-if="q.correctAnswer === OPTION_KEYS[oi]" class="correct-tag">
+                    {{ t('results.correctTag') }}
+                  </span>
                 </label>
                 <input
                   v-model="q.options[oi]"
@@ -275,7 +388,7 @@ const saveExam = async () => {
             <!-- Correct Answer + Difficulty -->
             <div class="question-row2">
               <div class="arcade-field">
-                <span class="arcade-label">CORRECT ANSWER</span>
+                <span class="arcade-label">{{ t('examCreator.correctAnswer') }}</span>
                 <div class="answer-keys">
                   <button
                     v-for="k in OPTION_KEYS" :key="k"
@@ -300,7 +413,7 @@ const saveExam = async () => {
 
             <!-- Explanation -->
             <div class="arcade-field">
-              <label class="arcade-label">EXPLANATION (OPTIONAL)</label>
+              <label class="arcade-label">{{ t('examCreator.explanation') }}</label>
               <input
                 v-model="q.explanation"
                 type="text"
@@ -313,14 +426,20 @@ const saveExam = async () => {
 
         <!-- Add Question Button -->
         <button type="button" class="btn-add-question font-label" @click="addQuestion">
-          + ADD QUESTION
+          {{ t('examCreator.addQuestion') }}
         </button>
 
         <!-- Save Button -->
         <div class="save-block">
           <p v-if="saveError" class="save-error font-label">{{ saveError }}</p>
           <AppButton class="full-width" :disabled="!step2Valid() || isSaving" @click="saveExam">
-            {{ isSaving ? 'SAVING…' : `CREATE EXAM (${questions.length} QUESTIONS)` }}
+            {{
+              isSaving
+                ? t('examCreator.saving')
+                : isEditMode
+                  ? t('examCreator.saveChanges')
+                  : t('examCreator.createAndStart')
+            }}
           </AppButton>
         </div>
       </div>
@@ -328,8 +447,8 @@ const saveExam = async () => {
       <!-- ── Step 3: Done ───────────────────────────────────────────────────── -->
       <div v-else class="done-screen">
         <div class="done-icon" aria-hidden="true">🎉</div>
-        <h2 class="done-title font-body">Exam Created!</h2>
-        <p class="done-sub font-label">REDIRECTING YOU TO THE EXAM ROOM…</p>
+        <h2 class="done-title font-body">{{ t('examCreator.createAndStart') }}</h2>
+        <p class="done-sub font-label">{{ t('exam.loadingExam') }}</p>
       </div>
     </div>
   </div>
@@ -402,6 +521,12 @@ const saveExam = async () => {
   padding: var(--space-10);
 }
 
+.creator-loading {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  text-align: center;
+  padding: var(--space-11) 0;
+}
 .section-title {
   font-size: var(--font-size-lg);
   font-weight: 600;

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { apiFetch } from '@/utils/api'
 import PixelFrame from '@/shared/components/PixelFrame.vue'
 import AppButton from '@/shared/components/AppButton.vue'
@@ -11,6 +13,8 @@ interface Card {
   front: string
   back: string
   deckId?: string
+  imageUrl?: string | null
+  notes?: string | null
 }
 
 interface Deck {
@@ -18,21 +22,24 @@ interface Deck {
   name: string
 }
 
+const { t } = useI18n()
+const router = useRouter()
+
 const cards = ref<Card[]>([])
 const decks = ref<Deck[]>([])
 const isLoading = ref(true)
 const isEditing = ref(false)
 const editingCardId = ref<string | null>(null)
 
-const form = ref({
+const blankForm = () => ({
   front: '',
   back: '',
   deckId: '',
+  imageUrl: '',
+  notes: '',
 })
 
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
+const form = ref(blankForm())
 
 const fetchCardsAndDecks = async () => {
   isLoading.value = true
@@ -41,12 +48,14 @@ const fetchCardsAndDecks = async () => {
     const rawCards = (await cardsRes.json()) as Record<string, unknown>[]
     const rawDecks = (await decksRes.json()) as Record<string, unknown>[]
     cards.value = rawCards.map((c) => ({
-      id: (c.id ?? c._id) as string,
+      id: c.id as string,
       front: c.front as string,
       back: c.back as string,
       deckId: c.deckId as string | undefined,
+      imageUrl: c.imageUrl as string | null | undefined,
+      notes: c.notes as string | null | undefined,
     }))
-    decks.value = rawDecks.map((d) => ({ id: (d.id ?? d._id) as string, name: d.name as string }))
+    decks.value = rawDecks.map((d) => ({ id: d.id as string, name: d.name as string }))
   } catch (error) {
     console.error('Failed to fetch data:', error)
   } finally {
@@ -56,21 +65,30 @@ const fetchCardsAndDecks = async () => {
 
 const saveCard = async () => {
   try {
+    // Empty optional inputs are sent as null, not "", so the column stays NULL.
+    const payload = {
+      front: form.value.front,
+      back: form.value.back,
+      deckId: form.value.deckId || null,
+      imageUrl: form.value.imageUrl.trim() || null,
+      notes: form.value.notes.trim() || null,
+    }
+
     if (isEditing.value && editingCardId.value) {
       await apiFetch(`/api/cards/${editingCardId.value}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value),
+        body: JSON.stringify(payload),
       })
     } else {
       await apiFetch('/api/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form.value),
+        body: JSON.stringify(payload),
       })
     }
 
-    form.value = { front: '', back: '', deckId: '' }
+    form.value = blankForm()
     isEditing.value = false
     editingCardId.value = null
 
@@ -81,13 +99,19 @@ const saveCard = async () => {
 }
 
 const editCard = (card: Card) => {
-  form.value = { front: card.front, back: card.back, deckId: card.deckId || '' }
+  form.value = {
+    front: card.front,
+    back: card.back,
+    deckId: card.deckId || '',
+    imageUrl: card.imageUrl ?? '',
+    notes: card.notes ?? '',
+  }
   isEditing.value = true
   editingCardId.value = card.id
 }
 
 const deleteCard = async (id: string) => {
-  if (!confirm('Bạn có chắc muốn xóa thẻ này?')) return
+  if (!confirm(t('cards.confirmDelete'))) return
   try {
     await apiFetch(`/api/cards/${id}`, { method: 'DELETE' })
     await fetchCardsAndDecks()
@@ -97,7 +121,7 @@ const deleteCard = async (id: string) => {
 }
 
 const cancelEdit = () => {
-  form.value = { front: '', back: '', deckId: '' }
+  form.value = blankForm()
   isEditing.value = false
   editingCardId.value = null
 }
@@ -109,77 +133,102 @@ onMounted(() => {
 
 <template>
   <ManageListShell
-    title="QUẢN LÝ THẺ"
-    count-label="THẺ"
+    :title="t('cards.title')"
+    :count-label="t('cards.countLabel')"
     :count="cards.length"
     :is-loading="isLoading"
-    loading-text="▸ ĐANG TẢI THẺ…"
-    empty-text="CHƯA CÓ THẺ NÀO. TẠO THẺ ĐẦU TIÊN Ở TRÊN."
+    :loading-text="t('cards.loading')"
+    :empty-text="t('cards.empty')"
     :rows="cards"
     @edit="editCard"
     @delete="deleteCard"
   >
     <template #header-extra>
-      <AppButton variant="secondary" @click="emit('close')">← QUAY LẠI</AppButton>
+      <AppButton variant="secondary" @click="router.push({ name: 'dashboard' })">
+        {{ t('common.back') }}
+      </AppButton>
     </template>
 
     <template #form>
       <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="card-form-frame">
         <div class="card-form-grid">
           <form class="card-form" @submit.prevent="saveCard">
-            <h3 class="form-title font-label">{{ isEditing ? 'CHỈNH SỬA THẺ' : 'TẠO THẺ MỚI' }}</h3>
+            <h3 class="form-title font-label">
+              {{ isEditing ? t('cards.editTitle') : t('cards.createTitle') }}
+            </h3>
 
             <div class="arcade-field">
-              <label class="arcade-label" for="card-deck">BỘ THẺ (TÙY CHỌN)</label>
+              <label class="arcade-label" for="card-deck">{{ t('cards.deckOptional') }}</label>
               <select id="card-deck" v-model="form.deckId" class="arcade-input">
-                <option value="">Không thuộc bộ nào</option>
+                <option value="">{{ t('cards.noDeck') }}</option>
                 <option v-for="deck in decks" :key="deck.id" :value="deck.id">{{ deck.name }}</option>
               </select>
             </div>
 
             <div class="arcade-field">
-              <label class="arcade-label" for="card-front">MẶT TRƯỚC (HỖ TRỢ MARKDOWN)</label>
+              <label class="arcade-label" for="card-front">{{ t('cards.front') }}</label>
               <textarea
                 id="card-front"
                 v-model="form.front"
                 required
                 rows="4"
                 class="arcade-input"
-                placeholder="VD: Thủ đô của Pháp là gì?"
+                :placeholder="t('cards.frontPlaceholder')"
               ></textarea>
             </div>
 
             <div class="arcade-field">
-              <label class="arcade-label" for="card-back">MẶT SAU (HỖ TRỢ MARKDOWN)</label>
+              <label class="arcade-label" for="card-back">{{ t('cards.back') }}</label>
               <textarea
                 id="card-back"
                 v-model="form.back"
                 required
                 rows="4"
                 class="arcade-input"
-                placeholder="VD: **Paris**"
+                :placeholder="t('cards.backPlaceholder')"
+              ></textarea>
+            </div>
+
+            <div class="arcade-field">
+              <label class="arcade-label" for="card-image">{{ t('cards.imageUrl') }}</label>
+              <input id="card-image" v-model="form.imageUrl" type="url" class="arcade-input" />
+            </div>
+
+            <div class="arcade-field">
+              <label class="arcade-label" for="card-notes">{{ t('cards.notes') }}</label>
+              <textarea
+                id="card-notes"
+                v-model="form.notes"
+                rows="2"
+                class="arcade-input"
               ></textarea>
             </div>
 
             <div class="form-actions">
-              <AppButton v-if="isEditing" variant="secondary" type="button" @click="cancelEdit">HỦY</AppButton>
-              <AppButton type="submit">{{ isEditing ? 'CẬP NHẬT' : 'LƯU THẺ' }}</AppButton>
+              <AppButton v-if="isEditing" variant="secondary" type="button" @click="cancelEdit">
+                {{ t('common.cancel') }}
+              </AppButton>
+              <AppButton type="submit">
+                {{ isEditing ? t('common.update') : t('cards.saveCard') }}
+              </AppButton>
             </div>
           </form>
 
           <div class="card-preview">
-            <span class="preview-label font-label">▸ XEM TRƯỚC</span>
+            <span class="preview-label font-label">{{ t('cards.preview') }}</span>
             <div class="preview-panel">
-              <div class="preview-eyebrow font-label">MẶT TRƯỚC</div>
+              <div class="preview-eyebrow font-label">{{ t('cards.frontShort') }}</div>
               <div class="preview-content font-body">
                 <MarkdownRenderer v-if="form.front" :content="form.front" />
-                <span v-else class="preview-placeholder">Xem trước mặt trước…</span>
+                <span v-else class="preview-placeholder">{{ t('cards.previewFront') }}</span>
               </div>
               <div class="preview-divider" />
-              <div class="preview-eyebrow preview-eyebrow--back font-label">MẶT SAU</div>
+              <div class="preview-eyebrow preview-eyebrow--back font-label">
+                {{ t('cards.backShort') }}
+              </div>
               <div class="preview-content font-body">
                 <MarkdownRenderer v-if="form.back" :content="form.back" />
-                <span v-else class="preview-placeholder">Xem trước mặt sau…</span>
+                <span v-else class="preview-placeholder">{{ t('cards.previewBack') }}</span>
               </div>
             </div>
           </div>
@@ -188,9 +237,9 @@ onMounted(() => {
     </template>
 
     <template #row="{ item }">
-      <div class="card-row-eyebrow font-label">MẶT TRƯỚC</div>
+      <div class="card-row-eyebrow font-label">{{ t('cards.frontShort') }}</div>
       <div class="card-row-text font-body">{{ item.front }}</div>
-      <div class="card-row-eyebrow card-row-eyebrow--back font-label">MẶT SAU</div>
+      <div class="card-row-eyebrow card-row-eyebrow--back font-label">{{ t('cards.backShort') }}</div>
       <div class="card-row-text font-body">{{ item.back }}</div>
     </template>
   </ManageListShell>
