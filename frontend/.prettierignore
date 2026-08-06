@@ -1,0 +1,14 @@
+# Build output & deps
+dist/
+node_modules/
+*.log
+
+# Generated / vendored
+public/
+mocks/
+
+# Config that other tooling owns the formatting of
+package-lock.json
+
+# Nginx config is not a Prettier-supported language
+nginx.conf

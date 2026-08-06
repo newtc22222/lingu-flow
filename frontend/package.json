@@ -8,7 +8,9 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint:style": "stylelint \"src/**/*.vue\" \"src/**/*.css\"",
-    "lint:js": "eslint \"src/**/*.vue\""
+    "lint:js": "eslint \"src/**/*.vue\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
@@ -35,6 +37,7 @@
     "eslint-plugin-vue": "^10.10.0",
     "postcss": "^8.5.17",
     "postcss-html": "^2.0.0",
+    "prettier": "^3.9.6",
     "stylelint": "^17.14.1",
     "stylelint-declaration-strict-value": "^1.11.1",
     "tailwindcss": "^4.3.2",
