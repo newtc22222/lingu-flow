@@ -42,6 +42,13 @@
     "forgotSent": "Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.",
     "sending": "ĐANG GỬI…",
     "sendResetLink": "GỬI LIÊN KẾT ĐẶT LẠI",
+    "emailPlaceholder": "user@example.com",
+    "passwordPlaceholder": "••••••••",
+    "google": "TIẾP TỤC VỚI GOOGLE",
+    "footerBrand": "LINGU FLOW - 1.0.0",
+    "footerProtocol": "GIAO THỨC",
+    "footerDocs": "TÀI LIỆU",
+    "footerSupport": "HỖ TRỢ",
     "errors": {
       "loginFailed": "Đăng nhập thất bại",
       "signupFailed": "Đăng ký thất bại",
