@@ -59,6 +59,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/features/library/CardManagementView.vue'),
   },
   {
+    path: '/questions',
+    name: 'question-bank',
+    component: () => import('@/features/question-bank/QuestionBankView.vue'),
+  },
+  {
     path: '/exams',
     name: 'exams',
     component: () => import('@/features/exam/ExamHubView.vue'),
