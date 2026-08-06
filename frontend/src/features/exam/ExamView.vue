@@ -16,7 +16,7 @@ const isLastQuestion = computed(() => store.currentIndex === store.questions.len
 
 function handleSubmit() {
   if (isLastQuestion.value) {
-    void store.finish('submitted')
+    void store.finish()
   } else {
     store.next()
   }

@@ -4,7 +4,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.database import AsyncSessionLocal, engine
-from app.routers import auth, cards, dashboard, decks, events, exams, health, media
+from app.routers import (
+    auth,
+    cards,
+    dashboard,
+    decks,
+    events,
+    exams,
+    health,
+    media,
+    questions,
+)
 from app.seed.exam_seed import seed_builtin_exams
 
 logging.basicConfig(level=logging.INFO)
@@ -56,6 +66,7 @@ app.include_router(cards.router)
 app.include_router(dashboard.router)
 app.include_router(decks.router)
 app.include_router(exams.router)
+app.include_router(questions.router)
 app.include_router(events.router)
 app.include_router(media.router)
 

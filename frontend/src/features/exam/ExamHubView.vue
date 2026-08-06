@@ -17,6 +17,9 @@ interface ExamTemplate {
   passingScore: number;
   level: string;
   isPublic: boolean;
+  /** Rolled up server-side from the template's questions — parts live on
+   *  questions, but the hub filters templates by them. */
+  parts: string[];
 }
 
 /**
@@ -63,11 +66,30 @@ const typeFilters = computed(() => [
   { key: 'custom', label: t('exam.custom'), icon: '⚙️' },
 ]);
 
+const selectedPart = ref<string>('all');
+
+/** Parts offered by whatever the exam-type filter currently leaves visible. */
+const availableParts = computed(() => {
+  const scoped =
+    selectedType.value === 'all'
+      ? templates.value
+      : templates.value.filter((t) => t.examType === selectedType.value);
+  return [...new Set(scoped.flatMap((t) => t.parts ?? []))].sort();
+});
+
 const filteredTemplates = computed(() =>
-  selectedType.value === 'all'
-    ? templates.value
-    : templates.value.filter((t) => t.examType === selectedType.value),
+  templates.value.filter((t) => {
+    if (selectedType.value !== 'all' && t.examType !== selectedType.value) return false;
+    if (selectedPart.value !== 'all' && !(t.parts ?? []).includes(selectedPart.value)) return false;
+    return true;
+  }),
 );
+
+/** Changing exam type can strip the chosen part from the options. */
+function selectType(key: string) {
+  selectedType.value = key;
+  if (!availableParts.value.includes(selectedPart.value)) selectedPart.value = 'all';
+}
 
 const stats = computed(() => {
   const completed = sessions.value.filter((s) => s.status === 'completed');
@@ -161,9 +183,31 @@ onMounted(fetchData);
         type="button"
         class="filter-tab font-label"
         :class="{ 'filter-tab--active': selectedType === f.key }"
-        @click="selectedType = f.key"
+        @click="selectType(f.key)"
       >
         <span aria-hidden="true">{{ f.icon }}</span> {{ f.label }}
+      </button>
+    </div>
+
+    <div v-if="availableParts.length" class="hub-filters hub-filters--parts">
+      <span class="hub-parts-label font-label">{{ t('questionBank.part') }}</span>
+      <button
+        type="button"
+        class="filter-tab font-label"
+        :class="{ 'filter-tab--active': selectedPart === 'all' }"
+        @click="selectedPart = 'all'"
+      >
+        {{ t('questionBank.anyPart') }}
+      </button>
+      <button
+        v-for="part in availableParts"
+        :key="part"
+        type="button"
+        class="filter-tab font-label"
+        :class="{ 'filter-tab--active': selectedPart === part }"
+        @click="selectedPart = part"
+      >
+        {{ part }}
       </button>
     </div>
 
@@ -336,6 +380,15 @@ onMounted(fetchData);
   color: var(--text-on-accent);
 }
 
+.hub-filters--parts {
+  align-items: center;
+  margin-top: calc(-1 * var(--space-5));
+}
+.hub-parts-label {
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-normal);
+  color: var(--text-secondary);
+}
 .hub-skeleton-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

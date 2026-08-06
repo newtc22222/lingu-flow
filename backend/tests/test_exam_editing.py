@@ -35,6 +35,7 @@ async def _add_question(client: AsyncClient, headers: dict, template_id: str) ->
     res = await client.post(
         f"/api/exams/templates/{template_id}/questions",
         json={
+            "examType": "custom",
             "questionText": "The meeting was _____ until Monday.",
             "options": ["A. postponed", "B. arrived", "C. sang", "D. ate"],
             "correctAnswer": "A",
@@ -104,6 +105,7 @@ async def test_update_question(client: AsyncClient):
     res = await client.put(
         f"/api/exams/questions/{question_id}",
         json={
+            "examType": "custom",
             "questionText": "She _____ to the store yesterday.",
             "options": ["A. go", "B. went", "C. gone", "D. going"],
             "correctAnswer": "B",

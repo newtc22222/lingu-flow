@@ -9,6 +9,7 @@ from app.models import (
     Deck,
     Card,
     ExamTemplate,
+    ExamTemplateQuestion,
     Question,
     ExamSession,
     AnswerRecord,
@@ -89,16 +90,26 @@ async def test_exam_template_and_question_models(db_session: AsyncSession):
     await db_session.commit()
 
     question = Question(
-        exam_template_id=template.id,
+        exam_type="jlpt",
+        part="language-knowledge",
         question_text="わたしは まいにち コーヒー _____ のみます。",
         type="multiple-choice",
         options=["A. は", "B. が", "C. を", "D. に"],
         correct_answer="C",
         explanation="を is the direct object marker.",
         difficulty="easy",
-        order_index=0,
     )
     db_session.add(question)
+    await db_session.flush()
+
+    # Placement in an exam is a join row, not a column on the question.
+    db_session.add(
+        ExamTemplateQuestion(
+            exam_template_id=template.id,
+            question_id=question.id,
+            order_index=0,
+        )
+    )
     await db_session.commit()
 
     assert question.id is not None
@@ -128,13 +139,21 @@ async def test_exam_session_and_answer_record_models(db_session: AsyncSession):
     await db_session.commit()
 
     question = Question(
-        exam_template_id=template.id,
+        exam_type="toeic",
+        part="part5",
         question_text="The project manager asked that all reports _____ submitted by Friday.",
         options=["A. are", "B. be", "C. were", "D. being"],
         correct_answer="B",
-        order_index=0,
     )
     db_session.add(question)
+    await db_session.flush()
+    db_session.add(
+        ExamTemplateQuestion(
+            exam_template_id=template.id,
+            question_id=question.id,
+            order_index=0,
+        )
+    )
     await db_session.commit()
 
     session = ExamSession(

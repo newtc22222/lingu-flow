@@ -64,6 +64,9 @@ async function logout() {
       <div class="flex gap-4 items-center font-label text-xs">
         <RouterLink :to="{ name: 'decks' }" class="util-link">{{ t('nav.manageDecks') }}</RouterLink>
         <RouterLink :to="{ name: 'cards' }" class="util-link">{{ t('nav.manageCards') }}</RouterLink>
+        <RouterLink :to="{ name: 'question-bank' }" class="util-link">
+          {{ t('nav.questionBank') }}
+        </RouterLink>
 
         <div class="lang-switch" role="group" :aria-label="t('nav.language')">
           <button

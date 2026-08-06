@@ -110,6 +110,7 @@ Both are the only native-`confirm()` usages in the entire frontend. Phase 1.5 lo
 | `loadingText` | `string` | shown while `isLoading` |
 | `emptyText` | `string` | shown when `rows.length === 0` |
 | `rows` | `T[]` | the list to render |
+| `canModify` | `(item: T) => boolean` *(optional)* | **Phase 1.6 addition.** Per-row guard; return false to disable that row's edit/delete buttons. Added for the question bank, where seeded questions have no owner and can never be edited — without it the shell offered actions whose only possible outcome was a silent 404. Omitting it leaves every row editable, so the deck and card lists are unaffected. |
 
 ### Emits
 | Event | Payload | Purpose |
@@ -145,7 +146,41 @@ Fully tokenized — carries forward every `var(--space-*)`/`var(--font-size-*)`/
 **Row vertical alignment changed for `DeckManagementView`.** The original `.card-row` used `align-items: flex-start` (correct for its 4-line front/back content) while `.deck-row` used `align-items: center` (fine for its shorter 2-line name/description content). The shared `.manage-row` uses `flex-start` (the `CardManagementView` behavior) for both, since a single shell can only pick one. Deck rows will now render with their edit/delete buttons top-aligned instead of vertically centered against the name/description text — a subtle but real visual change worth a look.
 
 ### Consumers
-`CardManagementView.vue`, `DeckManagementView.vue` — the only two manage-list views in the app.
+`CardManagementView.vue`, `DeckManagementView.vue`, and (Phase 1.6) `features/question-bank/QuestionBankView.vue`.
+
+### Delete confirmation — three consumers, two patterns
+Deck and Card still gate delete behind native `confirm()`. `QuestionBankView` deliberately does **not** add a third: `ui-guidelines.md` names those two a known gap not to be extended and asks that a third be flagged rather than added, so it renders a two-step inline confirm inside the `row` slot instead. Building a real `shared/components/ConfirmDialog.vue` and retrofitting all three is filed as its own issue.
+
+---
+
+## QuestionFilters
+
+`frontend/src/shared/components/QuestionFilters.vue` — exam-type / part / difficulty / tag / search filter bar for the question bank.
+
+**Lives in `shared/`, not in `features/question-bank/`.** Issue #33 specified the feature-private path, but the exam composer consumes it too, and `ui-guidelines.md` forbids cross-feature imports ("if a feature-private component gains a second feature's consumer, promote it to `shared/components/`"). It was placed here from the start rather than moved a PR later.
+
+Controlled via `v-model` on a `QuestionFilterState`; emits `reset`. Part and tag options come from the server (`GET /api/questions/{parts,tags}`) rather than a hardcoded list, because `part` is free-form.
+
+### Consumers
+`features/question-bank/QuestionBankView.vue`, `features/exam/ExamComposerView.vue`.
+
+---
+
+## QuestionForm
+
+`frontend/src/features/question-bank/components/QuestionForm.vue` — create/edit form for a bank question (text, passage, passage group, 4 options, correct answer, explanation, difficulty, exam type, part, tags).
+
+The four option inputs hold **bare** text. The stored `"A. "` prefix is stripped on load and re-applied on submit via `@/utils/options`, so the user never edits a letter they can't meaningfully change. That helper re-derives the letter from the index, so reordering options can't leave a stale label; the backend normalizes identically.
+
+Used both standalone (bank) and inline inside the composer's create-new flow.
+
+---
+
+## ExamQuestionRow
+
+`frontend/src/features/exam/components/ExamQuestionRow.vue` — one draggable question in an exam's composition. Same parent-owns-the-array split as `CardRow` (below): emits `dragstart`/`dragenter`/`dragend` and never reorders itself.
+
+Its destructive action is **detach**, labelled "remove from exam" — the question survives in the bank and in any other exam using it. This wording is load-bearing: the bank's own delete is one screen away and means something materially different.
 
 ---
 

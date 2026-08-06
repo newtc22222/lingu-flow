@@ -6,13 +6,17 @@
     "manageDecks": "MANAGE DECKS",
     "manageCards": "MANAGE CARDS",
     "logout": "LOG OUT",
-    "language": "LANGUAGE"
+    "language": "LANGUAGE",
+    "questionBank": "QUESTION BANK"
   },
   "common": {
     "loading": "LOADING…",
     "retry": "RETRY",
     "back": "← BACK",
     "cancel": "CANCEL",
+    "moveUp": "MOVE UP",
+    "moveDown": "MOVE DOWN",
+    "requestFailed": "Request failed ({status})",
     "save": "SAVE",
     "update": "UPDATE",
     "delete": "DELETE",
@@ -192,7 +196,8 @@
     "passage": "PASSAGE",
     "correctTag": "✓ CORRECT",
     "yourAnswerTag": "YOUR ANSWER",
-    "explanation": "💡 EXPLANATION"
+    "explanation": "💡 EXPLANATION",
+    "byCategory": "RESULTS BY CATEGORY"
   },
   "examCreator": {
     "createTitle": "CREATE CUSTOM EXAM",
@@ -216,5 +221,59 @@
     "saveChanges": "SAVE CHANGES",
     "needQuestion": "At least one question is required.",
     "saveFailed": "Could not save the exam. Please try again."
+  },
+  "questionBank": {
+    "title": "QUESTION BANK",
+    "countLabel": "QUESTIONS",
+    "loading": "▸ LOADING QUESTIONS…",
+    "empty": "NO QUESTIONS YET. CREATE YOUR FIRST ONE ABOVE.",
+    "emptyFiltered": "NO QUESTIONS MATCH THESE FILTERS.",
+    "createTitle": "CREATE NEW QUESTION",
+    "editTitle": "EDIT QUESTION",
+    "examType": "EXAM TYPE",
+    "anyExamType": "Any exam type",
+    "part": "PART",
+    "partOptional": "PART (OPTIONAL)",
+    "partPlaceholder": "e.g. part5",
+    "anyPart": "Any part",
+    "difficulty": "DIFFICULTY",
+    "anyDifficulty": "Any difficulty",
+    "difficulties": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard"
+    },
+    "search": "SEARCH",
+    "tags": "TAGS:",
+    "tagsField": "TAGS (COMMA SEPARATED)",
+    "tagsPlaceholder": "e.g. grammar, prepositions",
+    "clearFilters": "CLEAR FILTERS",
+    "questionText": "QUESTION TEXT",
+    "passage": "PASSAGE (OPTIONAL)",
+    "passageGroup": "PASSAGE GROUP (OPTIONAL)",
+    "passageGroupPlaceholder": "e.g. toeic-p7-email",
+    "passageGroupHint": "Questions sharing a group share one passage.",
+    "correctAnswer": "CORRECT ANSWER",
+    "explanation": "EXPLANATION (OPTIONAL)",
+    "inSet": "IN A SET",
+    "builtIn": "BUILT-IN",
+    "confirmDelete": "Remove this question from the bank?",
+    "saveFailed": "Could not save the question.",
+    "deleteFailed": "Could not delete the question."
+  },
+  "composer": {
+    "inThisExam": "IN THIS EXAM",
+    "fromBank": "FROM THE QUESTION BANK",
+    "emptyComposition": "NO QUESTIONS YET. ATTACH FROM THE BANK OR CREATE ONE.",
+    "noBankResults": "NO MORE QUESTIONS AVAILABLE TO ATTACH.",
+    "attachSelected": "ATTACH {count} SELECTED",
+    "removeFromExam": "REMOVE FROM EXAM",
+    "partOfSet": "IN A SET",
+    "next": "NEXT →",
+    "finish": "FINISH",
+    "discardDraft": "DISCARD DRAFT",
+    "attachFailed": "Could not attach the questions.",
+    "detachFailed": "Could not remove the question from this exam.",
+    "reorderFailed": "Could not save the new order."
   }
 }

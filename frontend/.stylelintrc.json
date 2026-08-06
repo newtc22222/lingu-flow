@@ -1,22 +1,52 @@
 {
   "customSyntax": "postcss-html",
-  "plugins": ["stylelint-declaration-strict-value"],
+  "plugins": [
+    "stylelint-declaration-strict-value"
+  ],
   "rules": {
     "color-no-hex": true,
-    "function-disallowed-list": ["rgb", "rgba"],
+    "function-disallowed-list": [
+      "rgb",
+      "rgba"
+    ],
     "scale-unlimited/declaration-strict-value": [
-      ["/^padding/", "/^margin/", "gap", "row-gap", "column-gap", "font-size", "letter-spacing", "/^border/", "outline"],
+      [
+        "/^padding/",
+        "/^margin/",
+        "gap",
+        "row-gap",
+        "column-gap",
+        "font-size",
+        "letter-spacing",
+        "/^border/",
+        "outline"
+      ],
       {
-        "ignoreValues": ["0", "none", "auto", "inherit", "initial", "unset", "solid", "dashed", "dotted", "double"],
+        "ignoreValues": [
+          "0",
+          "none",
+          "auto",
+          "inherit",
+          "initial",
+          "unset",
+          "solid",
+          "dashed",
+          "dotted",
+          "double"
+        ],
         "expandShorthand": true,
         "message": "Raw value - reference a design token (--space-*, --font-size-*, --tracking-*, --border-width-*, --focus-ring-width) or add a stylelint-disable-next-line with a reason if this is a documented one-off (see COMPONENTS.md)."
       }
     ],
-    "selector-disallowed-list": ["/^\\.btn-/"]
+    "selector-disallowed-list": [
+      "/^\\.btn-/"
+    ]
   },
   "overrides": [
     {
-      "files": ["src/styles/tokens.css"],
+      "files": [
+        "src/styles/tokens.css"
+      ],
       "rules": {
         "color-no-hex": null,
         "function-disallowed-list": null,
@@ -24,23 +54,20 @@
       }
     },
     {
-      "files": ["src/shared/components/AppButton.vue"],
+      "files": [
+        "src/shared/components/AppButton.vue"
+      ],
       "rules": {
         "selector-disallowed-list": null
       }
     },
     {
-      "files": ["src/shared/components/MarkdownRenderer.vue"],
+      "files": [
+        "src/shared/components/MarkdownRenderer.vue"
+      ],
       "comment": "rgba(255,255,255,0.1) on :deep(code) is a previously-approved isolated one-off - see COMPONENTS.md / ui-guidelines.md.",
       "rules": {
         "function-disallowed-list": null
-      }
-    },
-    {
-      "files": ["src/features/exam/ExamCreatorView.vue"],
-      "comment": ".btn-remove/.btn-add-question are previously-documented single-use exceptions (COMPONENTS.md) - not folded into AppButton because they're structurally distinct affordances with exactly one consumer each.",
-      "rules": {
-        "selector-disallowed-list": null
       }
     }
   ]

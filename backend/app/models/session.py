@@ -61,6 +61,15 @@ class AnswerRecord(Base):
     question_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("questions.id", ondelete="CASCADE"), index=True, nullable=False
     )
+    # Position of this question within the exam as the user actually sat it.
+    # `create_session` pre-creates one row per question, so the answer records
+    # ARE the composition snapshot — this column just gives them their order.
+    # Results are resolved from here, not from the template's current
+    # composition, so attaching/detaching/reordering an exam afterwards cannot
+    # retroactively rewrite somebody's finished session.
+    order_index: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
     user_answer: Mapped[str] = mapped_column(String, default="", nullable=False)
     is_correct: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     time_taken_seconds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
