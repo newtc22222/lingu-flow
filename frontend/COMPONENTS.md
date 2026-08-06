@@ -85,14 +85,27 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 ## Modal / Dialog
 
-**Status: still does not exist** — no component was built, per your explicit instruction. Confirmed `confirm()` call sites for the `ui-guidelines.md` backlog note:
+`frontend/src/shared/components/ConfirmDialog.vue` — shared accessible modal primitive for action confirmation (e.g. logout warning, destructive prompts). Built with `PixelFrame`, `AppButton`, Teleport overlay, keyboard Escape handler, and focus ring management.
 
-| File | Message |
-|---|---|
-| `frontend/src/features/library/CardManagementView.vue` | `t('cards.confirmDelete')` (delete card) |
-| `frontend/src/features/library/DeckManagementView.vue` | `t('decks.confirmDelete')` (delete deck) |
+### Props
+| Prop | Type | Default | Purpose |
+|---|---|---|---|
+| `isOpen` | `boolean` | (required) | Controls modal visibility (`v-model:isOpen`) |
+| `title` | `string` | (required) | Header title text |
+| `message` | `string` | (required) | Body explanation text |
+| `confirmText` | `string` | `''` | Confirm button label (falls back to `common.delete` or `common.save`) |
+| `cancelText` | `string` | `''` | Cancel button label (falls back to `common.cancel`) |
+| `variant` | `'primary' \| 'danger'` | `'danger'` | Confirm button variant and `PixelFrame` border styling |
 
-Both are the only native-`confirm()` usages in the entire frontend. Phase 1.5 localized their messages but did **not** add a third call site — the new destructive-ish actions (reorder, Learn restart, Match replay) are all non-destructive or trivially repeatable, so none needed a confirmation gate. Neither was touched by the `ManageListShell` extraction — the shell only emits `delete(id)` up to the parent; the `confirm()` gate and its per-entity message stay in each view's own `deleteCard`/`deleteDeck` handler.
+### Emits
+| Event | Payload | Purpose |
+|---|---|---|
+| `update:isOpen` | `boolean` | Two-way binding for dialog open state |
+| `confirm` | — | Emitted when user clicks confirm button |
+| `cancel` | — | Emitted when user clicks cancel, backdrop, or presses Escape |
+
+### Consumers
+`App.vue` (logout warning).
 
 ---
 
@@ -235,6 +248,15 @@ Unchanged. Still the model example — full JSDoc, clean token usage, no flags.
 ## MarkdownRenderer
 
 Unchanged. Still at `shared/components/MarkdownRenderer.vue` (relocated in the earlier prep commit). `rgba(255,255,255,0.1)` on `:deep(code)` remains a deliberate local literal per your standing instruction.
+
+---
+
+## AppFooter
+
+`frontend/src/shared/components/AppFooter.vue` — shared arcade footer component rendering brand indicator (`LINGU FLOW - 1.0.0`) and footer navigation links (`PROTOCOL`, `DOCUMENTATION`, `SUPPORT`). Rendered at the bottom of the viewport shell in `App.vue` for all authenticated application routes.
+
+### Consumers
+`App.vue`.
 
 ---
 

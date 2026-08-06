@@ -12,20 +12,25 @@
  */
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'danger' | 'secondary' | 'edit' | 'delete'
-    type?: 'button' | 'submit' | 'reset'
-    disabled?: boolean
+    variant?: 'primary' | 'danger' | 'secondary' | 'edit' | 'delete';
+    type?: 'button' | 'submit' | 'reset';
+    disabled?: boolean;
   }>(),
   {
     variant: 'primary',
     type: 'button',
     disabled: false,
   },
-)
+);
 </script>
 
 <template>
-  <button :type="type" :disabled="disabled" class="app-btn font-label" :class="`app-btn--${variant}`">
+  <button
+    :type="type"
+    :disabled="disabled"
+    class="app-btn font-label"
+    :class="`app-btn--${variant}`"
+  >
     <slot />
   </button>
 </template>
@@ -35,11 +40,13 @@ withDefaults(
   cursor: pointer;
   font-family: var(--font-label);
 }
+
 .app-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
 }
+
 .app-btn:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
@@ -54,16 +61,19 @@ withDefaults(
   border: none;
   padding: var(--space-6) var(--space-10);
 }
+
 .app-btn--primary {
   background: var(--status-success);
   color: var(--text-on-accent);
   box-shadow: 0 4px 0 var(--status-success-subtle);
 }
+
 .app-btn--danger {
   background: var(--status-danger);
   color: var(--text-on-accent);
   box-shadow: 0 4px 0 var(--status-danger-subtle);
 }
+
 .app-btn--primary:active:not(:disabled),
 .app-btn--danger:active:not(:disabled) {
   transform: translateY(4px);
@@ -78,6 +88,7 @@ withDefaults(
   font-size: var(--font-size-sm);
   letter-spacing: var(--tracking-normal);
 }
+
 .app-btn--secondary:hover:not(:disabled) {
   border-color: var(--color-accent);
   color: var(--text-primary);
@@ -91,15 +102,19 @@ withDefaults(
   border: none;
   background: var(--surface-panel-border);
 }
+
 .app-btn--edit {
   color: var(--color-accent);
 }
+
 .app-btn--edit:hover:not(:disabled) {
   background: var(--state-selected-surface);
 }
+
 .app-btn--delete {
   color: var(--status-danger);
 }
+
 .app-btn--delete:hover:not(:disabled) {
   background: var(--status-danger-subtle);
   color: var(--text-primary);

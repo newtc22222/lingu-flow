@@ -12,7 +12,7 @@
 withDefaults(
   defineProps<{
     /** Color of the outer notch ring. */
-    frameColor?: 'amber' | 'cabinet-light'
+    frameColor?: 'amber' | 'cabinet-light' | 'red'
     /** Color of the inner surface the content sits on. */
     surface?: 'cabinet' | 'ink'
     /** Thickness of the visible ring, in pixels. */
@@ -29,7 +29,7 @@ withDefaults(
 <template>
   <div
     class="pixel-frame"
-    :class="frameColor === 'amber' ? 'bg-amber' : 'bg-cabinet-light'"
+    :class="frameColor === 'amber' ? 'bg-amber' : frameColor === 'red' ? 'bg-red' : 'bg-cabinet-light'"
     :style="{ padding: `${ringWidth}px` }"
   >
     <div class="h-full" :class="surface === 'ink' ? 'bg-ink' : 'bg-cabinet'">
