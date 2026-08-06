@@ -268,7 +268,7 @@ TOEIC_READING_QUESTIONS = [
     },
     {
         "part": "part5",
-        "questionText": "Employees who wish to transfer to the Singapore office must submit their applications _____ themselves.",
+        "questionText": "Employees who wish to transfer to the Singapore office must submit their applications _____.",
         "options": ["A. they", "B. them", "C. their", "D. themselves"],
         "correctAnswer": "D",
         "explanation": "The reflexive pronoun is required because the subject and object refer to the same people.",

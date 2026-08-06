@@ -88,31 +88,13 @@ def upgrade() -> None:
     )
 
     # 2. Backfill one link per existing question, preserving its order.
-    #    UUIDs are generated Python-side to match how the app makes every other
-    #    id — pgcrypto/gen_random_uuid() is not installed here.
-    #    This reads rows, so it cannot run under `--sql` (offline) rendering;
-    #    the DDL around it still renders for review.
-    if not context.is_offline_mode():
-        existing = conn.execute(
-            sa.text("SELECT id, exam_template_id, order_index FROM questions")
-        ).fetchall()
-        if existing:
-            conn.execute(
-                sa.text(
-                    "INSERT INTO exam_template_questions "
-                    "(id, exam_template_id, question_id, order_index) "
-                    "VALUES (:id, :template_id, :question_id, :order_index)"
-                ),
-                [
-                    {
-                        "id": str(uuid.uuid4()),
-                        "template_id": str(row[1]),
-                        "question_id": str(row[0]),
-                        "order_index": row[2],
-                    }
-                    for row in existing
-                ],
-            )
+    #    PostgreSQL 16 provides gen_random_uuid() natively.
+    op.execute(
+        """
+        INSERT INTO exam_template_questions (id, exam_template_id, question_id, order_index)
+        SELECT gen_random_uuid(), exam_template_id, id, order_index FROM questions
+        """
+    )
 
     # 3. Bank taxonomy. exam_type is backfilled from the owning template, then
     #    tightened to NOT NULL.
@@ -225,6 +207,15 @@ def downgrade() -> None:
         ['exam_template_id'], ['id'], ondelete='CASCADE',
     )
     op.create_index('ix_questions_exam_template_id', 'questions', ['exam_template_id'])
+
+    op.execute(
+        """
+        UPDATE exam_templates SET total_questions = (
+            SELECT COUNT(*) FROM questions
+            WHERE questions.exam_template_id = exam_templates.id
+        )
+        """
+    )
 
     op.drop_index('ix_exam_templates_seed_key', table_name='exam_templates')
     op.drop_column('exam_templates', 'seed_version')

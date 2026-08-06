@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 
@@ -76,7 +76,7 @@ class QuestionCreateRequest(BaseModel):
     question_text: str = Field(alias="questionText")
     passage: Optional[str] = None
     type: str = "multiple-choice"
-    options: List[str]
+    options: List[str] = Field(min_length=4, max_length=4)
     correct_answer: str = Field(alias="correctAnswer")
     explanation: Optional[str] = None
     tags: Optional[List[str]] = None
@@ -99,7 +99,7 @@ class QuestionUpdateRequest(BaseModel):
     question_text: str = Field(alias="questionText")
     passage: Optional[str] = None
     type: str = "multiple-choice"
-    options: List[str]
+    options: List[str] = Field(min_length=4, max_length=4)
     correct_answer: str = Field(alias="correctAnswer")
     explanation: Optional[str] = None
     tags: Optional[List[str]] = None
@@ -113,13 +113,10 @@ class QuestionUpdateRequest(BaseModel):
         return _normalize_part(v)
 
 
-class QuestionResponse(BaseModel):
+class QuestionResponsePublic(BaseModel):
     """
     A question as it exists in the bank — independent of any exam.
-
-    Note there is no `examTemplateId` and no `orderIndex`: both are properties
-    of a question's placement in a specific exam, not of the question itself.
-    Position lives on `TemplateQuestionResponse` below.
+    This public schema omits the correct answer and explanation.
     """
 
     id: uuid.UUID
@@ -131,8 +128,6 @@ class QuestionResponse(BaseModel):
     passage: Optional[str] = None
     type: str = "multiple-choice"
     options: List[str]
-    correct_answer: str = Field(alias="correctAnswer")
-    explanation: Optional[str] = None
     tags: Optional[List[str]] = None
     difficulty: str = "medium"
     # Router-populated: the frontend holds only a token, never a user id, so it
@@ -149,6 +144,19 @@ class QuestionResponse(BaseModel):
         return str(self.id)
 
 
+class QuestionResponse(QuestionResponsePublic):
+    """The full question schema, including answer keys, for authorized users."""
+
+    correct_answer: str = Field(alias="correctAnswer")
+    explanation: Optional[str] = None
+
+
+class TemplateQuestionResponsePublic(QuestionResponsePublic):
+    """A bank question plus its position within one exam template."""
+
+    order_index: int = Field(default=0, alias="orderIndex")
+
+
 class TemplateQuestionResponse(QuestionResponse):
     """A bank question plus its position within one exam template."""
 
@@ -163,20 +171,28 @@ def _is_owned(question: Any, current_user_id: Optional[uuid.UUID]) -> bool:
 
 def build_question_response(
     question: Any, current_user_id: Optional[uuid.UUID]
-) -> "QuestionResponse":
+) -> Union["QuestionResponse", "QuestionResponsePublic"]:
     """Serialize a bank question, stamping viewer-relative ownership."""
-    response = QuestionResponse.model_validate(question)
-    response.is_owned = _is_owned(question, current_user_id)
+    is_owned = _is_owned(question, current_user_id)
+    if is_owned:
+        response = QuestionResponse.model_validate(question)
+    else:
+        response = QuestionResponsePublic.model_validate(question)
+    response.is_owned = is_owned
     return response
 
 
 def build_template_question_response(
     question: Any, order_index: int, current_user_id: Optional[uuid.UUID]
-) -> "TemplateQuestionResponse":
+) -> Union["TemplateQuestionResponse", "TemplateQuestionResponsePublic"]:
     """Serialize a question together with its position in one exam template."""
-    response = TemplateQuestionResponse.model_validate(question)
+    is_owned = _is_owned(question, current_user_id)
+    if is_owned:
+        response = TemplateQuestionResponse.model_validate(question)
+    else:
+        response = TemplateQuestionResponsePublic.model_validate(question)
     response.order_index = order_index
-    response.is_owned = _is_owned(question, current_user_id)
+    response.is_owned = is_owned
     return response
 
 

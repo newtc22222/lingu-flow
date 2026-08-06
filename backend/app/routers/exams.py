@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Union
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +20,7 @@ from app.schemas.exam import (
     SessionDetailsResponse,
     SubmitAnswerRequest,
     TemplateQuestionResponse,
+    TemplateQuestionResponsePublic,
     build_question_response,
     build_template_question_response,
 )
@@ -122,7 +123,7 @@ async def delete_template(
 # ─── QUESTIONS ───────────────────────────────────────────────────
 @router.get(
     "/templates/{template_id}/questions",
-    response_model=List[TemplateQuestionResponse],
+    response_model=List[Union[TemplateQuestionResponse, TemplateQuestionResponsePublic]],
 )
 async def get_template_questions(
     template_id: uuid.UUID,
@@ -157,7 +158,7 @@ async def add_template_question(
 
 @router.post(
     "/templates/{template_id}/questions/attach",
-    response_model=List[TemplateQuestionResponse],
+    response_model=List[Union[TemplateQuestionResponse, TemplateQuestionResponsePublic]],
 )
 async def attach_template_questions(
     template_id: uuid.UUID,
@@ -177,7 +178,7 @@ async def attach_template_questions(
 
 @router.put(
     "/templates/{template_id}/questions/reorder",
-    response_model=List[TemplateQuestionResponse],
+    response_model=List[Union[TemplateQuestionResponse, TemplateQuestionResponsePublic]],
 )
 async def reorder_template_questions(
     template_id: uuid.UUID,
@@ -236,13 +237,12 @@ async def update_question(
 @router.delete("/questions/{question_id}")
 async def delete_question(
     question_id: uuid.UUID,
-    hard: bool = False,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Archive a question owned by the user (see `delete_question` for why)."""
     success = await exam_service.delete_question(
-        db, question_id, current_user.id, hard=hard
+        db, question_id, current_user.id
     )
     if not success:
         raise HTTPException(

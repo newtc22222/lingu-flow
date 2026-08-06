@@ -409,10 +409,9 @@ class ExamService:
         db: AsyncSession,
         question_id: uuid.UUID,
         user_id: uuid.UUID,
-        hard: bool = False,
     ) -> bool:
         return await question_service.delete_question(
-            db, question_id, user_id, hard=hard
+            db, question_id, user_id
         )
 
     # ─── SESSIONS ────────────────────────────────────────────────

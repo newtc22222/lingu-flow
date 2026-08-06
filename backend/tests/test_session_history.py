@@ -18,6 +18,7 @@ async def _register(client: AsyncClient, name: str) -> dict:
             "password": "Password123!",
         },
     )
+    assert res.status_code == 201
     return {"Authorization": f"Bearer {res.json()['token']}"}
 
 
@@ -32,6 +33,7 @@ async def _template(client: AsyncClient, headers: dict) -> str:
         },
         headers=headers,
     )
+    assert res.status_code == 201
     return res.json()["id"]
 
 
@@ -95,14 +97,18 @@ async def test_editing_exam_does_not_rewrite_finished_session(client: AsyncClien
 
     # Now mutate the exam in every way the composition endpoints allow.
     third = await _add_question(client, headers, template_id, "Q3")
-    await client.delete(
+    res_del = await client.delete(
         f"/api/exams/templates/{template_id}/questions/{first}", headers=headers
     )
-    await client.put(
+    assert res_del.status_code == 200
+
+    res_put = await client.put(
         f"/api/exams/templates/{template_id}/questions/reorder",
         json={"questionIds": [third, second]},
         headers=headers,
     )
+    assert res_put.status_code == 200
+    assert [q["id"] for q in res_put.json()] == [third, second]
 
     after = (
         await client.get(f"/api/exams/sessions/{session_id}/details", headers=headers)
@@ -140,16 +146,30 @@ async def test_deleted_question_still_renders_in_past_results(client: AsyncClien
 
 
 @pytest.mark.asyncio
-async def test_hard_delete_of_answered_question_is_refused(client: AsyncClient):
-    headers = await _register(client, "histhard")
+async def test_public_routes_redact_answer_keys(client: AsyncClient):
+    """Bank listing, bank detail, and template composition routes must not leak correctAnswer to non-owners."""
+    headers = await _register(client, "author")
     template_id = await _template(client, headers)
-    question_id = await _add_question(client, headers, template_id, "Answered")
-    await _sit_exam(client, headers, template_id)
+    question_id = await _add_question(client, headers, template_id, "Redacted")
+    
+    # 1. Bank listing (unauthenticated)
+    listing = (await client.get("/api/questions")).json()
+    assert len(listing) > 0
+    assert all("correctAnswer" not in q for q in listing)
+    
+    # 2. Bank detail (unauthenticated)
+    detail = (await client.get(f"/api/questions/{question_id}")).json()
+    assert "correctAnswer" not in detail
+    assert "explanation" not in detail
+    
+    # 3. Template composition (unauthenticated)
+    composition = (await client.get(f"/api/exams/templates/{template_id}/questions")).json()
+    assert len(composition) == 1
+    assert "correctAnswer" not in composition[0]
 
-    res = await client.delete(
-        f"/api/exams/questions/{question_id}?hard=true", headers=headers
-    )
-    assert res.status_code == 409
+    # The owner still sees them
+    owner_detail = (await client.get(f"/api/questions/{question_id}", headers=headers)).json()
+    assert "correctAnswer" in owner_detail
 
 
 @pytest.mark.asyncio
@@ -195,7 +215,8 @@ async def test_answering_a_question_outside_the_session_is_rejected(
     finished = (
         await client.put(f"/api/exams/sessions/{session_id}/finish", headers=headers)
     ).json()
-    assert finished["correctCount"] <= finished["totalCount"]
+    assert finished["totalCount"] == 1
+    assert finished["correctCount"] == 0
 
 
 @pytest.mark.asyncio

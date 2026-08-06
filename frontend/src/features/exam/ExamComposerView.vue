@@ -75,9 +75,9 @@ const attachable = computed(() => {
 async function describeFailure(res: Response): Promise<string> {
   try {
     const body = await res.json()
-    return body?.detail || `Request failed (${res.status})`
+    return body?.detail || t('common.requestFailed', { status: res.status })
   } catch {
-    return `Request failed (${res.status})`
+    return t('common.requestFailed', { status: res.status })
   }
 }
 
@@ -195,6 +195,18 @@ function onDragEnter(index: number) {
 }
 function onDragEnd() {
   draggingIndex.value = null
+}
+
+function moveUp(index: number) {
+  if (index <= 0) return
+  const [moved] = composition.value.splice(index, 1)
+  composition.value.splice(index - 1, 0, moved)
+}
+
+function moveDown(index: number) {
+  if (index >= composition.value.length - 1) return
+  const [moved] = composition.value.splice(index, 1)
+  composition.value.splice(index + 1, 0, moved)
 }
 
 async function saveOrder() {
@@ -388,6 +400,8 @@ onMounted(async () => {
                     @dragstart="onDragStart(index)"
                     @dragenter="onDragEnter(index)"
                     @dragend="onDragEnd"
+                    @move-up="moveUp(index)"
+                    @move-down="moveDown(index)"
                     @detach="detach(question.id)"
                   />
                 </ol>

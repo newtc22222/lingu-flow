@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.exam import (
     QuestionCreateRequest,
     QuestionResponse,
+    QuestionResponsePublic,
     QuestionUpdateRequest,
     build_question_response,
 )
@@ -46,7 +47,7 @@ async def list_parts(
     return await question_service.list_parts(db, exam_type=examType)
 
 
-@router.get("", response_model=List[QuestionResponse])
+@router.get("", response_model=List[Union[QuestionResponse, QuestionResponsePublic]])
 async def list_questions(
     examType: Optional[str] = Query(default=None),
     part: Optional[str] = Query(default=None),
@@ -83,7 +84,7 @@ async def create_question(
     return build_question_response(question, viewer_id(current_user))
 
 
-@router.get("/{question_id}", response_model=QuestionResponse)
+@router.get("/{question_id}", response_model=Union[QuestionResponse, QuestionResponsePublic])
 async def get_question(
     question_id: uuid.UUID,
     current_user: Optional[User] = Depends(get_optional_current_user),
@@ -119,13 +120,12 @@ async def update_question(
 @router.delete("/{question_id}")
 async def delete_question(
     question_id: uuid.UUID,
-    hard: bool = Query(default=False),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Archive a question the user owns, detaching it from every exam."""
     success = await question_service.delete_question(
-        db, question_id, current_user.id, hard=hard
+        db, question_id, current_user.id
     )
     if not success:
         raise HTTPException(

@@ -22,9 +22,9 @@ When adding an endpoint a component already calls, check the call site for the s
 
 Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bumping the version updates the template row **in place** so its id survives for past sessions. Never match seed content by `name`.
 
-Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 46 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
+Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 73 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
 
-Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`).
+Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`, `0003_question_bank`).
 
 **Stale docs — do not trust without cross-checking code:**
 

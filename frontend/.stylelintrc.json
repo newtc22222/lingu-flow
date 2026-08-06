@@ -69,15 +69,6 @@
       "rules": {
         "function-disallowed-list": null
       }
-    },
-    {
-      "files": [
-        "src/features/exam/ExamComposerView.vue"
-      ],
-      "comment": "Retained from ExamCreatorView, which this replaced. Path-scoped overrides do not follow renames - see COMPONENTS.md.",
-      "rules": {
-        "selector-disallowed-list": null
-      }
     }
   ]
 }

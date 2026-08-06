@@ -21,7 +21,7 @@ async def test_builtin_exam_seeding(db_session: AsyncSession):
     await seed_builtin_exams(db_session)
 
     t_res = await db_session.execute(
-        select(ExamTemplate).where(ExamTemplate.is_public == True)
+        select(ExamTemplate).where(ExamTemplate.is_public.is_(True))
     )
     templates = t_res.scalars().all()
     assert len(templates) == EXPECTED_TEMPLATES
@@ -38,7 +38,7 @@ async def test_builtin_exam_seeding(db_session: AsyncSession):
     # Re-running at the same version changes nothing.
     await seed_builtin_exams(db_session)
     t_res2 = await db_session.execute(
-        select(ExamTemplate).where(ExamTemplate.is_public == True)
+        select(ExamTemplate).where(ExamTemplate.is_public.is_(True))
     )
     assert len(t_res2.scalars().all()) == EXPECTED_TEMPLATES
     q_res2 = await db_session.execute(select(Question))

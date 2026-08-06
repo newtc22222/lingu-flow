@@ -376,6 +376,9 @@ async def seed_builtin_exams(db: AsyncSession) -> None:
                         Question.id.in_(previous_ids),
                         Question.user_id.is_(None),
                         Question.archived_at.is_(None),
+                        ~select(ExamTemplateQuestion.question_id)
+                        .where(ExamTemplateQuestion.question_id == Question.id)
+                        .exists(),
                     )
                     .values(archived_at=datetime.now(timezone.utc))
                 )

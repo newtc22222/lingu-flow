@@ -210,7 +210,6 @@ class QuestionService:
         db: AsyncSession,
         question_id: uuid.UUID,
         user_id: uuid.UUID,
-        hard: bool = False,
     ) -> bool:
         """
         Archive a question the user owns and detach it from every exam.
@@ -229,15 +228,6 @@ class QuestionService:
         if not question:
             return False
 
-        if hard and await self._answer_count(db, question_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    "This question has been answered; hard-deleting it would "
-                    "destroy session history. Delete it normally to archive it."
-                ),
-            )
-
         affected = list(
             (
                 await db.execute(
@@ -252,10 +242,7 @@ class QuestionService:
                 ExamTemplateQuestion.question_id == question_id
             )
         )
-        if hard:
-            await db.delete(question)
-        else:
-            question.archived_at = datetime.now(timezone.utc)
+        question.archived_at = datetime.now(timezone.utc)
 
         await db.flush()
         for template_id in set(affected):

@@ -25,6 +25,8 @@ defineEmits<{
   (e: 'dragenter'): void
   (e: 'dragend'): void
   (e: 'detach'): void
+  (e: 'move-up'): void
+  (e: 'move-down'): void
 }>()
 
 const { t } = useI18n()
@@ -42,6 +44,19 @@ const { t } = useI18n()
   >
     <span class="eq-handle font-label" aria-hidden="true">⠿</span>
     <span class="eq-index font-label">{{ index + 1 }}</span>
+
+    <div class="eq-controls">
+      <button 
+        class="eq-control font-label" 
+        :aria-label="t('common.moveUp')" 
+        @click.stop="$emit('move-up')"
+      >▲</button>
+      <button 
+        class="eq-control font-label" 
+        :aria-label="t('common.moveDown')" 
+        @click.stop="$emit('move-down')"
+      >▼</button>
+    </div>
 
     <div class="eq-body">
       <div class="eq-meta font-label">
@@ -86,6 +101,26 @@ const { t } = useI18n()
   min-width: 24px;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+.eq-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.eq-control {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  font-size: var(--font-size-2xs);
+}
+.eq-control:hover {
+  color: var(--color-accent);
+}
+.eq-control:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: 1px;
 }
 .eq-body {
   flex: 1;
