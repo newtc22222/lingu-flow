@@ -256,5 +256,20 @@
     "confirmDelete": "Xóa câu hỏi này khỏi ngân hàng?",
     "saveFailed": "Không thể lưu câu hỏi.",
     "deleteFailed": "Không thể xóa câu hỏi."
+  },
+  "composer": {
+    "inThisExam": "TRONG ĐỀ THI NÀY",
+    "fromBank": "TỪ NGÂN HÀNG CÂU HỎI",
+    "emptyComposition": "CHƯA CÓ CÂU HỎI NÀO. THÊM TỪ NGÂN HÀNG HOẶC TẠO MỚI.",
+    "noBankResults": "KHÔNG CÒN CÂU HỎI NÀO ĐỂ THÊM.",
+    "attachSelected": "THÊM {count} CÂU ĐÃ CHỌN",
+    "removeFromExam": "BỎ KHỎI ĐỀ",
+    "partOfSet": "THUỘC BỘ",
+    "next": "TIẾP THEO →",
+    "finish": "HOÀN TẤT",
+    "discardDraft": "HỦY BỎ BẢN NHÁP",
+    "attachFailed": "Không thể thêm câu hỏi.",
+    "detachFailed": "Không thể bỏ câu hỏi khỏi đề.",
+    "reorderFailed": "Không thể lưu thứ tự."
   }
 }

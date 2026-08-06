@@ -256,5 +256,20 @@
     "confirmDelete": "Remove this question from the bank?",
     "saveFailed": "Could not save the question.",
     "deleteFailed": "Could not delete the question."
+  },
+  "composer": {
+    "inThisExam": "IN THIS EXAM",
+    "fromBank": "FROM THE QUESTION BANK",
+    "emptyComposition": "NO QUESTIONS YET. ATTACH FROM THE BANK OR CREATE ONE.",
+    "noBankResults": "NO MORE QUESTIONS AVAILABLE TO ATTACH.",
+    "attachSelected": "ATTACH {count} SELECTED",
+    "removeFromExam": "REMOVE FROM EXAM",
+    "partOfSet": "IN A SET",
+    "next": "NEXT →",
+    "finish": "FINISH",
+    "discardDraft": "DISCARD DRAFT",
+    "attachFailed": "Could not attach the questions.",
+    "detachFailed": "Could not remove the question from this exam.",
+    "reorderFailed": "Could not save the new order."
   }
 }

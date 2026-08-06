@@ -71,13 +71,13 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/exams/create',
     name: 'exam-create',
-    component: () => import('@/features/exam/ExamCreatorView.vue'),
+    component: () => import('@/features/exam/ExamComposerView.vue'),
     meta: { fullBleed: true },
   },
   {
     path: '/exams/:templateId/edit',
     name: 'exam-edit',
-    component: () => import('@/features/exam/ExamCreatorView.vue'),
+    component: () => import('@/features/exam/ExamComposerView.vue'),
     props: true,
     meta: { fullBleed: true },
   },
