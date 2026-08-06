@@ -43,7 +43,7 @@ Detailed architecture, database models, API specs, and algorithms are published 
 Run the full stack with Docker Compose:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 - Frontend UI: `http://localhost:8080`
@@ -56,6 +56,7 @@ docker-compose up --build
 ### Local Development (Without Docker)
 
 **1. Backend (Python):**
+
 ```bash
 cd backend
 python -m venv venv
@@ -65,9 +66,11 @@ python -m uvicorn app.main:app --port 8000 --reload
 ```
 
 **2. Frontend (Vue 3):**
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
 *(Vite automatically proxies `/api` to `http://localhost:8000`).*
