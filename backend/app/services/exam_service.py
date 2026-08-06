@@ -39,6 +39,35 @@ class ExamService:
         result = await db.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_parts_by_template(
+        self, db: AsyncSession, template_ids: List[uuid.UUID]
+    ) -> Dict[uuid.UUID, List[str]]:
+        """
+        Distinct question parts per template, in one query.
+
+        Parts are a property of questions, but the exam hub filters templates by
+        them — so they have to be rolled up here rather than stored.
+        """
+        if not template_ids:
+            return {}
+
+        rows = (
+            await db.execute(
+                select(ExamTemplateQuestion.exam_template_id, Question.part)
+                .join(Question, Question.id == ExamTemplateQuestion.question_id)
+                .where(
+                    ExamTemplateQuestion.exam_template_id.in_(template_ids),
+                    Question.part.is_not(None),
+                )
+                .distinct()
+            )
+        ).all()
+
+        grouped: Dict[uuid.UUID, List[str]] = {}
+        for template_id, part in rows:
+            grouped.setdefault(template_id, []).append(part)
+        return {key: sorted(value) for key, value in grouped.items()}
+
     async def get_template_by_id(
         self, db: AsyncSession, template_id: uuid.UUID
     ) -> Optional[ExamTemplate]:

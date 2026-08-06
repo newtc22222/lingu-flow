@@ -193,7 +193,8 @@
     "passage": "ĐOẠN VĂN",
     "correctTag": "✓ ĐÚNG",
     "yourAnswerTag": "BẠN CHỌN",
-    "explanation": "💡 GIẢI THÍCH"
+    "explanation": "💡 GIẢI THÍCH",
+    "byCategory": "KẾT QUẢ THEO CHUYÊN ĐỀ"
   },
   "examCreator": {
     "createTitle": "TẠO ĐỀ THI RIÊNG",

@@ -29,6 +29,9 @@ class ExamTemplateResponse(BaseModel):
     level: Optional[str] = None
     is_public: bool = Field(default=False, alias="isPublic")
     tags: Optional[List[str]] = None
+    # Derived from the template's questions, not stored: parts live on
+    # questions, but the hub needs them to offer part filter chips.
+    parts: List[str] = Field(default_factory=list)
     created_at: datetime = Field(alias="createdAt")
     updated_at: datetime = Field(alias="updatedAt")
 

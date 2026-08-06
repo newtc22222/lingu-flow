@@ -193,7 +193,8 @@
     "passage": "PASSAGE",
     "correctTag": "✓ CORRECT",
     "yourAnswerTag": "YOUR ANSWER",
-    "explanation": "💡 EXPLANATION"
+    "explanation": "💡 EXPLANATION",
+    "byCategory": "RESULTS BY CATEGORY"
   },
   "examCreator": {
     "createTitle": "CREATE CUSTOM EXAM",

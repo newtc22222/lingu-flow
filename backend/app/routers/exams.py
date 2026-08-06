@@ -43,7 +43,16 @@ async def get_templates(
     """List public exam templates plus custom templates owned by user."""
     user_id = current_user.id if current_user else None
     templates = await exam_service.get_templates(db, user_id)
-    return [ExamTemplateResponse.model_validate(t) for t in templates]
+    parts_by_template = await exam_service.get_parts_by_template(
+        db, [t.id for t in templates]
+    )
+
+    responses = []
+    for template in templates:
+        response = ExamTemplateResponse.model_validate(template)
+        response.parts = parts_by_template.get(template.id, [])
+        responses.append(response)
+    return responses
 
 
 @router.post(

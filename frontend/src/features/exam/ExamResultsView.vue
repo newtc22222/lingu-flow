@@ -20,6 +20,7 @@ interface QuestionData {
   correctAnswer: string;
   explanation?: string;
   difficulty: string;
+  tags?: string[] | null;
 }
 
 interface UserAnswer {
@@ -83,6 +84,40 @@ const EXAM_CONFIG: Record<string, { flag: string }> = {
 };
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
+
+/** Tags with fewer than this many questions are too noisy to report — a lone
+ *  miss would read as a categorical "0%" weakness. */
+const MIN_TAG_SAMPLE = 2;
+
+/**
+ * Correctness per question tag, worst ratio first.
+ *
+ * Sorted by weakness rather than alphabetically because the point of the
+ * breakdown is to show what to revise next. Computed entirely client-side —
+ * the tags are already on the wire.
+ */
+const tagBreakdown = computed(() => {
+  const totals = new Map<string, { correct: number; total: number }>();
+
+  for (const row of reviewRows.value) {
+    for (const tag of row.question.tags ?? []) {
+      const entry = totals.get(tag) ?? { correct: 0, total: 0 };
+      entry.total += 1;
+      if (row.isCorrect) entry.correct += 1;
+      totals.set(tag, entry);
+    }
+  }
+
+  return [...totals.entries()]
+    .filter(([, { total }]) => total >= MIN_TAG_SAMPLE)
+    .map(([tag, { correct, total }]) => ({
+      tag,
+      correct,
+      total,
+      percent: Math.round((correct / total) * 100),
+    }))
+    .sort((a, b) => a.percent - b.percent || b.total - a.total);
+});
 
 const passed = computed(() =>
   details.value
@@ -215,6 +250,27 @@ onMounted(fetchResults);
 
       <!-- ── Question Review ─────────────────────────────────────────────────── -->
       <div class="review">
+        <template v-if="tagBreakdown.length">
+          <h2 class="review-title font-body">{{ t('results.byCategory') }}</h2>
+          <ul class="tag-breakdown">
+            <li v-for="entry in tagBreakdown" :key="entry.tag" class="tag-row">
+              <span class="tag-name font-body">{{ entry.tag }}</span>
+              <span class="tag-track">
+                <span
+                  class="tag-fill"
+                  :class="{
+                    'tag-fill--good': entry.percent >= 80,
+                    'tag-fill--mid': entry.percent >= 50 && entry.percent < 80,
+                    'tag-fill--bad': entry.percent < 50,
+                  }"
+                  :style="{ width: `${entry.percent}%` }"
+                />
+              </span>
+              <span class="tag-score font-label">{{ entry.correct }}/{{ entry.total }}</span>
+            </li>
+          </ul>
+        </template>
+
         <h2 class="review-title font-body">{{ t('results.review') }}</h2>
 
         <div class="review-list">
@@ -484,6 +540,51 @@ onMounted(fetchResults);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-8);
+}
+.tag-breakdown {
+  list-style: none;
+  margin: 0 0 var(--space-11);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+.tag-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+.tag-name {
+  flex: 0 0 160px;
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tag-track {
+  flex: 1;
+  height: 10px;
+  background: var(--surface-page);
+}
+.tag-fill {
+  display: block;
+  height: 100%;
+}
+.tag-fill--good {
+  background: var(--status-success);
+}
+.tag-fill--mid {
+  background: var(--status-caution);
+}
+.tag-fill--bad {
+  background: var(--status-danger);
+}
+.tag-score {
+  flex: 0 0 48px;
+  text-align: right;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
 }
 .review-list {
   display: flex;
