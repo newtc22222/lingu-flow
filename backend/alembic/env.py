@@ -8,6 +8,12 @@ from alembic import context
 from app.config import get_settings
 from app.database import Base
 
+# Importing the models is what registers them against Base.metadata. Without
+# this, target_metadata below is empty and `--autogenerate` cheerfully emits a
+# migration that drops every table in the database. `alembic check` is likewise
+# meaningless without it. Imported for the side effect only.
+import app.models  # noqa: F401
+
 config = context.config
 settings = get_settings()
 

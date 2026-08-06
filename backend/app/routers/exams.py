@@ -7,6 +7,7 @@ from app.core.dependencies import get_current_user, get_optional_current_user
 from app.database import get_db
 from app.models.user import User
 from app.schemas.exam import (
+    AttachQuestionsRequest,
     ExamSessionCreateRequest,
     ExamSessionResponse,
     ExamTemplateCreateRequest,
@@ -15,13 +16,22 @@ from app.schemas.exam import (
     QuestionCreateRequest,
     QuestionResponse,
     QuestionUpdateRequest,
+    ReorderQuestionsRequest,
     SessionDetailsResponse,
     SubmitAnswerRequest,
+    TemplateQuestionResponse,
+    build_question_response,
+    build_template_question_response,
 )
 from app.services.exam_service import ExamService
 
 router = APIRouter(prefix="/api/exams", tags=["Exam Simulator"])
 exam_service = ExamService()
+
+
+def viewer_id(current_user: Optional[User]) -> Optional[uuid.UUID]:
+    """Id of whoever is asking, or None when unauthenticated — drives `isOwned`."""
+    return current_user.id if current_user else None
 
 
 # ─── TEMPLATES ───────────────────────────────────────────────────
@@ -102,15 +112,20 @@ async def delete_template(
 
 # ─── QUESTIONS ───────────────────────────────────────────────────
 @router.get(
-    "/templates/{template_id}/questions", response_model=List[QuestionResponse]
+    "/templates/{template_id}/questions",
+    response_model=List[TemplateQuestionResponse],
 )
 async def get_template_questions(
     template_id: uuid.UUID,
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Fetch all questions for a template ordered by index."""
-    questions = await exam_service.get_questions(db, template_id)
-    return [QuestionResponse.model_validate(q) for q in questions]
+    """Fetch a template's questions in composition order."""
+    pairs = await exam_service.get_questions_with_order(db, template_id)
+    return [
+        build_template_question_response(q, order_index, viewer_id(current_user))
+        for q, order_index in pairs
+    ]
 
 
 @router.post(
@@ -124,11 +139,70 @@ async def add_template_question(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Add a question to a template."""
+    """Create a new bank question and attach it to the end of this template."""
     question = await exam_service.add_question(
         db, template_id, current_user.id, req
     )
-    return QuestionResponse.model_validate(question)
+    return build_question_response(question, viewer_id(current_user))
+
+
+@router.post(
+    "/templates/{template_id}/questions/attach",
+    response_model=List[TemplateQuestionResponse],
+)
+async def attach_template_questions(
+    template_id: uuid.UUID,
+    req: AttachQuestionsRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Append existing bank questions to this template's composition."""
+    pairs = await exam_service.attach_questions(
+        db, template_id, current_user.id, req.question_ids
+    )
+    return [
+        build_template_question_response(q, order_index, viewer_id(current_user))
+        for q, order_index in pairs
+    ]
+
+
+@router.put(
+    "/templates/{template_id}/questions/reorder",
+    response_model=List[TemplateQuestionResponse],
+)
+async def reorder_template_questions(
+    template_id: uuid.UUID,
+    req: ReorderQuestionsRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rewrite the order of this template's questions. Must cover them exactly."""
+    pairs = await exam_service.reorder_questions(
+        db, template_id, current_user.id, req.question_ids
+    )
+    return [
+        build_template_question_response(q, order_index, viewer_id(current_user))
+        for q, order_index in pairs
+    ]
+
+
+@router.delete("/templates/{template_id}/questions/{question_id}")
+async def detach_template_question(
+    template_id: uuid.UUID,
+    question_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a question from this exam. It survives in the question bank."""
+    success = await exam_service.detach_question(
+        db, template_id, question_id, current_user.id
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question is not part of this exam",
+        )
+    return {"success": True}
 
 
 @router.put("/questions/{question_id}", response_model=QuestionResponse)
@@ -147,17 +221,20 @@ async def update_question(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Question not found or not authorized",
         )
-    return QuestionResponse.model_validate(question)
+    return build_question_response(question, viewer_id(current_user))
 
 
 @router.delete("/questions/{question_id}")
 async def delete_question(
     question_id: uuid.UUID,
+    hard: bool = False,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete a single question owned by the user."""
-    success = await exam_service.delete_question(db, question_id, current_user.id)
+    """Archive a question owned by the user (see `delete_question` for why)."""
+    success = await exam_service.delete_question(
+        db, question_id, current_user.id, hard=hard
+    )
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

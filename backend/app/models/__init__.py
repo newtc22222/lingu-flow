@@ -1,7 +1,7 @@
 from app.models.user import User
 from app.models.deck import Deck
 from app.models.card import Card
-from app.models.exam import ExamTemplate, Question
+from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
 from app.models.session import ExamSession, AnswerRecord
 
 __all__ = [
@@ -9,6 +9,7 @@ __all__ = [
     "Deck",
     "Card",
     "ExamTemplate",
+    "ExamTemplateQuestion",
     "Question",
     "ExamSession",
     "AnswerRecord",

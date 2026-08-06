@@ -2,35 +2,98 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.exam import ExamTemplate, Question
+from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
 from app.routers.events import event_generator
-from app.seed.exam_seed import seed_builtin_exams
+from app.seed.exam_seed import BUILTIN_SEED_DATA, seed_builtin_exams
+
+# Derived, not hardcoded: the counts move whenever seed content is authored,
+# and a test that has to be edited alongside the content it guards stops
+# guarding anything.
+EXPECTED_TEMPLATES = len(BUILTIN_SEED_DATA)
+EXPECTED_QUESTIONS = sum(len(t["questions"]) for t in BUILTIN_SEED_DATA)
 
 
 @pytest.mark.asyncio
 async def test_builtin_exam_seeding(db_session: AsyncSession):
-    """Test seeding 33 built-in certification exam questions across 4 templates."""
-    # 1. Run seed
+    """Seeds every built-in template with its questions, and is idempotent."""
     await seed_builtin_exams(db_session)
 
-    # 2. Check 4 templates exist
     t_res = await db_session.execute(
         select(ExamTemplate).where(ExamTemplate.is_public == True)
     )
     templates = t_res.scalars().all()
-    assert len(templates) == 4
+    assert len(templates) == EXPECTED_TEMPLATES
+    # Every built-in carries a stable seed identity for later content updates.
+    assert all(t.seed_key and t.seed_version for t in templates)
 
-    # 3. Check questions count = 33
     q_res = await db_session.execute(select(Question))
-    questions = q_res.scalars().all()
-    assert len(questions) == 33
+    assert len(q_res.scalars().all()) == EXPECTED_QUESTIONS
 
-    # 4. Run seed second time to verify idempotency
+    # Questions reach their exam through the junction, not an ownership FK.
+    link_res = await db_session.execute(select(ExamTemplateQuestion))
+    assert len(link_res.scalars().all()) == EXPECTED_QUESTIONS
+
+    # Re-running at the same version changes nothing.
     await seed_builtin_exams(db_session)
     t_res2 = await db_session.execute(
         select(ExamTemplate).where(ExamTemplate.is_public == True)
     )
-    assert len(t_res2.scalars().all()) == 4
+    assert len(t_res2.scalars().all()) == EXPECTED_TEMPLATES
+    q_res2 = await db_session.execute(select(Question))
+    assert len(q_res2.scalars().all()) == EXPECTED_QUESTIONS
+
+
+@pytest.mark.asyncio
+async def test_seed_version_bump_updates_in_place(monkeypatch, db_session: AsyncSession):
+    """
+    A content update must reuse the template row rather than adding a second one.
+
+    The template id has to survive: past ExamSessions reference it, so creating
+    a replacement would strand their history behind a dead foreign key.
+    """
+    await seed_builtin_exams(db_session)
+
+    original = (
+        await db_session.execute(
+            select(ExamTemplate).where(
+                ExamTemplate.seed_key == BUILTIN_SEED_DATA[0]["seedKey"]
+            )
+        )
+    ).scalar_one()
+    original_id = original.id
+
+    bumped = [dict(BUILTIN_SEED_DATA[0])]
+    bumped[0]["seedVersion"] = "2"
+    bumped[0]["questions"] = [
+        {
+            "questionText": "A replacement question.",
+            "options": ["A. one", "B. two", "C. three", "D. four"],
+            "correctAnswer": "A",
+            "part": "part5",
+        }
+    ]
+    monkeypatch.setattr("app.seed.exam_seed.BUILTIN_SEED_DATA", bumped)
+
+    await seed_builtin_exams(db_session)
+
+    updated = (
+        await db_session.execute(
+            select(ExamTemplate).where(ExamTemplate.seed_key == bumped[0]["seedKey"])
+        )
+    ).scalars().all()
+    assert len(updated) == 1, "a version bump must not create a second template"
+    assert updated[0].id == original_id
+    assert updated[0].seed_version == "2"
+    assert updated[0].total_questions == 1
+
+    # The replaced questions are archived, not deleted — past sessions'
+    # answer records still point at them.
+    archived = (
+        await db_session.execute(
+            select(Question).where(Question.archived_at.is_not(None))
+        )
+    ).scalars().all()
+    assert len(archived) == len(BUILTIN_SEED_DATA[0]["questions"])
 
 
 @pytest.mark.asyncio
