@@ -70,7 +70,9 @@ npm run build      # runs `vue-tsc -b` (typecheck) then `vite build`
 npm run preview
 ```
 
-There is no root-level install/build step beyond the `dev:*`/`build:frontend` scripts in the root `package.json` — frontend and backend dependencies are managed independently in their own directories (no npm workspaces despite what `DEPLOYMENT.md` implies).
+The root `package.json` has **no dependencies at all** — it is a pure delegator (`dev:frontend`, `dev:backend`, `build:frontend`, `format:frontend`) and never needs `npm install`. Each half is standalone: Python deps live in `backend/venv` (`pip install -r backend/requirements.txt`), Node deps in `frontend/node_modules` (`npm install` from `frontend/`). No npm workspaces, despite what `DEPLOYMENT.md` implies.
+
+Prettier runs only in `frontend/` (`npm run format` / `format:check`, config at `frontend/.prettierrc.json`). `backend/` is pure Python with no Node config — format it with Ruff/Black.
 
 ## Architecture
 
