@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import LevelPath, { type LevelProgress } from './LevelPath.vue'
 
 export type { LevelProgress }
+
+const { t } = useI18n()
 
 defineProps<{
   title: string
@@ -12,56 +15,78 @@ defineProps<{
 </script>
 
 <template>
-  <section class="world-zone">
-    <div class="zone-banner">
-      <h3 class="zone-title font-label">{{ title }}</h3>
-      <div class="zone-progress-track">
-        <div class="zone-progress-fill" :style="{ width: `${progressPercent}%` }" />
+  <section class="world-card">
+    <div class="world-card-accent" />
+    <div class="world-card-body">
+      <header class="world-card-header">
+        <div>
+          <h3 class="world-title font-pixel">{{ title }}</h3>
+          <p class="world-sublabel font-label">{{ subLabel }}</p>
+        </div>
+        <div class="world-percent font-label">
+          {{ t('dashboard.complete', { percent: progressPercent }) }}
+        </div>
+      </header>
+
+      <div class="world-path-container">
+        <LevelPath :levels="levels" />
       </div>
-      <span class="zone-percent font-label">{{ progressPercent }}%</span>
     </div>
-    <LevelPath :levels="levels" />
-    <span class="zone-sub font-label">{{ subLabel }}</span>
   </section>
 </template>
 
 <style scoped>
-.world-zone {
-  margin-bottom: var(--space-11);
+.world-card {
+  background: var(--surface-panel);
+  border: var(--space-1) solid var(--surface-panel-border);
+  position: relative;
+  margin-bottom: var(--space-9);
+  box-shadow: 0 4px 12px var(--ink);
 }
-.zone-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-7);
-  margin-bottom: var(--space-7);
-}
-.zone-title {
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  letter-spacing: var(--tracking-normal);
-  text-transform: uppercase;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-.zone-progress-track {
-  flex: 1;
+
+.world-card-accent {
   height: 4px;
-  background: var(--surface-panel-border);
-}
-.zone-progress-fill {
-  height: 100%;
   background: var(--color-accent);
+  width: 100%;
 }
-.zone-percent {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  min-width: 32px;
-  text-align: right;
+
+.world-card-body {
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
 }
-.zone-sub {
-  display: block;
-  margin-top: var(--space-6);
-  font-size: var(--font-size-sm);
+
+.world-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.world-title {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-tight);
+}
+
+.world-sublabel {
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
+  letter-spacing: var(--tracking-normal);
+  margin-top: var(--space-2);
+  text-transform: uppercase;
+}
+
+.world-percent {
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+}
+
+.world-path-container {
+  padding-top: var(--space-4);
 }
 </style>
