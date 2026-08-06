@@ -1,13 +1,18 @@
 {
   "nav": {
-    "examMode": "EXAM MODE",
+    "brand": "LINGUFLOW",
+    "examMode": "EXAMS",
     "flashcards": "FLASHCARDS",
     "dashboard": "DASHBOARD",
-    "manageDecks": "MANAGE DECKS",
-    "manageCards": "MANAGE CARDS",
+    "manageDecks": "DECKS",
+    "manageCards": "CARDS",
+    "questionBank": "BANK",
+    "operator": "OPERATOR",
     "logout": "LOG OUT",
-    "language": "LANGUAGE",
-    "questionBank": "QUESTION BANK"
+    "logoutConfirmTitle": "LOG OUT CONFIRMATION",
+    "logoutConfirmMessage": "Are you sure you want to log out of your session?",
+    "logoutConfirm": "LOG OUT",
+    "language": "LANGUAGE"
   },
   "common": {
     "loading": "LOADING…",
@@ -42,7 +47,7 @@
     "forgotSent": "If that email exists, we've sent a password reset link.",
     "sending": "SENDING…",
     "sendResetLink": "SEND RESET LINK",
-    "emailPlaceholder": "user@example.com",
+    "emailPlaceholder": "user{'@'}example.com",
     "passwordPlaceholder": "••••••••",
     "google": "CONTINUE WITH GOOGLE",
     "footerBrand": "LINGU FLOW - 1.0.0",
@@ -61,9 +66,15 @@
     }
   },
   "dashboard": {
+    "commandCenter": "COMMAND CENTER",
+    "stageSelectTitle": "STAGE SELECT & WORLDS",
+    "complete": "{percent}% COMPLETE",
+    "continueLevel": "CONTINUE LEVEL {level}",
+    "current": "CURRENT",
     "loading": "▸ LOADING PROGRESS…",
     "error": "Could not load progress data. Please try again later.",
-    "streak": "DAY STREAK",
+    "streak": "STREAK",
+    "streakDays": "{count} DAYS",
     "totalXp": "TOTAL XP",
     "examReadiness": "EXAM READINESS",
     "continue": "▶ CONTINUE — LEVEL {level}",

@@ -1,13 +1,18 @@
 {
   "nav": {
-    "examMode": "CHẾ ĐỘ THI",
-    "flashcards": "THẺ GHI NHỚ",
-    "dashboard": "TỔNG QUAN",
-    "manageDecks": "QUẢN LÝ BỘ THẺ",
+    "brand": "LINGUFLOW",
+    "examMode": "THI CỬ",
+    "flashcards": "THẺ THI",
+    "dashboard": "BẢNG ĐIỀU KHIỂN",
+    "manageDecks": "BỘ THẺ",
     "manageCards": "QUẢN LÝ THẺ",
+    "questionBank": "CÂU HỎI",
+    "operator": "NGƯỜI DÙNG",
     "logout": "ĐĂNG XUẤT",
-    "language": "NGÔN NGỮ",
-    "questionBank": "NGÂN HÀNG CÂU HỎI"
+    "logoutConfirmTitle": "XÁC NHẬN ĐĂNG XUẤT",
+    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc?",
+    "logoutConfirm": "ĐĂNG XUẤT",
+    "language": "NGÔN NGỮ"
   },
   "common": {
     "loading": "ĐANG TẢI…",
@@ -42,7 +47,7 @@
     "forgotSent": "Nếu email tồn tại, chúng tôi đã gửi liên kết đặt lại mật khẩu.",
     "sending": "ĐANG GỬI…",
     "sendResetLink": "GỬI LIÊN KẾT ĐẶT LẠI",
-    "emailPlaceholder": "user@example.com",
+    "emailPlaceholder": "user{'@'}example.com",
     "passwordPlaceholder": "••••••••",
     "google": "TIẾP TỤC VỚI GOOGLE",
     "footerBrand": "LINGU FLOW - 1.0.0",
@@ -61,9 +66,15 @@
     }
   },
   "dashboard": {
+    "commandCenter": "TRUNG TÂM ĐIỀU HÀNH",
+    "stageSelectTitle": "CHỌN MÀN CHƠI & THẾ GIỚI",
+    "complete": "HOÀN THÀNH {percent}%",
+    "continueLevel": "TIẾP TỤC CẤP {level}",
+    "current": "HIỆN TẠI",
     "loading": "▸ ĐANG TẢI TIẾN TRÌNH…",
     "error": "Không thể tải dữ liệu tiến trình. Vui lòng thử lại sau.",
     "streak": "CHUỖI NGÀY",
+    "streakDays": "{count} NGÀY",
     "totalXp": "TỔNG XP",
     "examReadiness": "SẴN SÀNG THI",
     "continue": "▶ TIẾP TỤC — CẤP {level}",
