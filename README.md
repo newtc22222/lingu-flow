@@ -6,13 +6,14 @@ LinguFlow is a modern, high-performance, keyboard-driven flashcard web app and c
 
 ## 📚 Technical Wiki & Documentation
 
-Detailed architecture, database models, API specs, and algorithms are documented in the **[LinguFlow Technical Wiki](docs/wiki/Home.md)**:
+Detailed architecture, database models, API specs, and algorithms are published in the **[LinguFlow GitHub Wiki](https://github.com/newtc22222/lingu-flow/wiki)**:
 
-- 🏠 **[Wiki Home Page](docs/wiki/Home.md)** — Project overview, technology stack, and architecture sitemap.
-- 🏗️ **[Architecture & Database Schema](docs/wiki/Architecture-and-Database-Schema.md)** — ER diagram, 7 PostgreSQL models, Alembic migrations.
-- 📡 **[API Documentation](docs/wiki/API-Documentation.md)** — OpenAPI endpoints, Pydantic schemas, and auth contracts.
-- 🧠 **[Spaced Repetition (SM-2)](docs/wiki/Spaced-Repetition-SM2.md)** — Mathematical formulation, score mapping (1-4 -> 0-5), and Python implementation.
-- 🚢 **[Deployment & DevOps Guide](docs/wiki/Deployment-Guide.md)** — Deployment guides for Vercel, Railway, Cloudflare R2, and Docker Compose.
+- 🏠 **[Wiki Home Page](https://github.com/newtc22222/lingu-flow/wiki/Home)** — Project overview, technology stack, and architecture sitemap.
+- 🚀 **[Release Notes (v0.1.0)](https://github.com/newtc22222/lingu-flow/wiki/Release-Notes)** — Production release highlights, features, and verification.
+- 🏗️ **[Architecture & Database Schema](https://github.com/newtc22222/lingu-flow/wiki/Architecture-and-Database-Schema)** — ER diagram, 7 PostgreSQL models, Alembic migrations.
+- 📡 **[API Documentation](https://github.com/newtc22222/lingu-flow/wiki/API-Documentation)** — OpenAPI endpoints, Pydantic schemas, and auth contracts.
+- 🧠 **[Spaced Repetition (SM-2)](https://github.com/newtc22222/lingu-flow/wiki/Spaced-Repetition-SM2)** — Mathematical formulation, score mapping (1-4 -> 0-5), and Python implementation.
+- 🚢 **[Deployment & DevOps Guide](https://github.com/newtc22222/lingu-flow/wiki/Deployment-Guide)** — Deployment guides for Vercel, Railway, Cloudflare R2, and Docker Compose.
 
 ---
 
