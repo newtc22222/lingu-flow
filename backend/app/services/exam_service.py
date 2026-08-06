@@ -7,6 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
 from app.models.session import AnswerRecord, ExamSession
+from app.services.question_service import (
+    QuestionService,
+    normalize_options,
+    sync_total_questions,
+)
 from app.schemas.exam import (
     ExamSessionCreateRequest,
     ExamTemplateCreateRequest,
@@ -15,6 +20,9 @@ from app.schemas.exam import (
     QuestionUpdateRequest,
     SubmitAnswerRequest,
 )
+
+
+question_service = QuestionService()
 
 
 class ExamService:
@@ -121,22 +129,8 @@ class ExamService:
     async def _sync_total_questions(
         self, db: AsyncSession, template_id: uuid.UUID
     ) -> None:
-        """
-        Recompute the denormalized `total_questions` from the junction table.
-
-        There are now six ways a composition can change (create, attach,
-        detach, delete, soft-delete, re-seed). Hand-maintained `+= 1` / `-= 1`
-        arithmetic at each of those was a drift bug waiting to happen, so every
-        mutation funnels through this instead.
-        """
-        count = await db.scalar(
-            select(func.count())
-            .select_from(ExamTemplateQuestion)
-            .where(ExamTemplateQuestion.exam_template_id == template_id)
-        )
-        template = await self.get_template_by_id(db, template_id)
-        if template:
-            template.total_questions = count or 0
+        """Delegates to the shared helper (see question_service)."""
+        await sync_total_questions(db, template_id)
 
     async def get_questions(
         self, db: AsyncSession, template_id: uuid.UUID
@@ -226,7 +220,7 @@ class ExamService:
             question_text=req.question_text,
             passage=req.passage,
             type=req.type,
-            options=req.options,
+            options=normalize_options(req.options),
             correct_answer=req.correct_answer,
             explanation=req.explanation,
             tags=req.tags or [],
@@ -370,15 +364,8 @@ class ExamService:
         return True
 
     # ─── QUESTIONS ───────────────────────────────────────────────
-    async def _answer_count(self, db: AsyncSession, question_id: uuid.UUID) -> int:
-        return (
-            await db.scalar(
-                select(func.count())
-                .select_from(AnswerRecord)
-                .where(AnswerRecord.question_id == question_id)
-            )
-        ) or 0
-
+    # Question CRUD lives in QuestionService; these thin wrappers keep the
+    # legacy /api/exams/questions/{id} routes working against one implementation.
     async def update_question(
         self,
         db: AsyncSession,
@@ -386,54 +373,7 @@ class ExamService:
         user_id: uuid.UUID,
         req: QuestionUpdateRequest,
     ) -> Optional[Question]:
-        """
-        Update a question the user owns.
-
-        Once a question has been answered its options and correct answer are
-        frozen: changing them would leave every stored `is_correct` disagreeing
-        with the displayed answer key, so past results would quietly start
-        lying. Wording, explanation, tags and difficulty stay editable.
-        """
-        result = await db.execute(
-            select(Question).where(
-                Question.id == question_id,
-                Question.user_id == user_id,
-                Question.archived_at.is_(None),
-            )
-        )
-        question = result.scalar_one_or_none()
-        if not question:
-            return None
-
-        answer_key_changed = (
-            list(req.options) != list(question.options)
-            or req.correct_answer != question.correct_answer
-        )
-        if answer_key_changed and await self._answer_count(db, question_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    "This question has already been answered; its options and "
-                    "correct answer can no longer be changed."
-                ),
-            )
-
-        question.exam_type = req.exam_type
-        question.part = req.part
-        question.passage_group = req.passage_group
-        question.question_text = req.question_text
-        question.passage = req.passage
-        question.type = req.type
-        question.options = req.options
-        question.correct_answer = req.correct_answer
-        question.explanation = req.explanation
-        question.difficulty = req.difficulty
-        if req.tags is not None:
-            question.tags = req.tags
-
-        await db.commit()
-        await db.refresh(question)
-        return question
+        return await question_service.update_question(db, question_id, user_id, req)
 
     async def delete_question(
         self,
@@ -442,59 +382,9 @@ class ExamService:
         user_id: uuid.UUID,
         hard: bool = False,
     ) -> bool:
-        """
-        Soft-delete a question the user owns and detach it from every exam.
-
-        Soft, because `AnswerRecord.question_id` cascades: a hard delete would
-        erase the answer history of every past session that used the question,
-        leaving finished sessions with a stored score but no answers to show.
-        Archived questions stay out of bank listings but still resolve in
-        session results.
-        """
-        result = await db.execute(
-            select(Question).where(
-                Question.id == question_id, Question.user_id == user_id
-            )
+        return await question_service.delete_question(
+            db, question_id, user_id, hard=hard
         )
-        question = result.scalar_one_or_none()
-        if not question:
-            return False
-
-        if hard and await self._answer_count(db, question_id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    "This question has been answered; hard-deleting it would "
-                    "destroy session history. Delete it normally to archive it."
-                ),
-            )
-
-        affected = list(
-            (
-                await db.execute(
-                    select(ExamTemplateQuestion.exam_template_id).where(
-                        ExamTemplateQuestion.question_id == question_id
-                    )
-                )
-            ).scalars().all()
-        )
-
-        await db.execute(
-            delete(ExamTemplateQuestion).where(
-                ExamTemplateQuestion.question_id == question_id
-            )
-        )
-        if hard:
-            await db.delete(question)
-        else:
-            question.archived_at = datetime.now(timezone.utc)
-
-        await db.flush()
-        for template_id in set(affected):
-            await self._sync_total_questions(db, template_id)
-
-        await db.commit()
-        return True
 
     # ─── SESSIONS ────────────────────────────────────────────────
     async def get_user_sessions(
