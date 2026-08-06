@@ -14,6 +14,14 @@ The API is the source of truth for request/response shapes; the Pydantic schemas
 
 When adding an endpoint a component already calls, check the call site for the shape it expects, and mind the field names: several frontend/backend mismatches (`duration` vs `durationMinutes`, `timeLimit` vs `timeLimitMinutes`, a flat vs. nested session-details response) went unnoticed for a long time because they failed silently into fallback values rather than erroring.
 
+**Questions are a shared bank, not exam property** (Phase 1.6). `Question` has no `exam_template_id`; placement lives in the `exam_template_questions` join table, so one question can appear in many exams and deleting an exam removes only its links. Three invariants exist to stop a shared, mutable bank corrupting finished sessions — don't work around them:
+
+- **Session results resolve from `AnswerRecord`, not the template.** `create_session` pre-creates one record per question and freezes their order in `AnswerRecord.order_index`. Reading the template's *current* composition instead would let attach/detach/reorder/re-seed retroactively rewrite somebody's finished exam.
+- **Deleting a question is a soft delete** (`Question.archived_at`). `AnswerRecord.question_id` cascades, so a hard delete erases the answer history of every past session that used it. Bank listings filter archived rows; session/results resolution deliberately does not.
+- **An answered question's `options`/`correct_answer` are frozen** (409). Changing them would leave every stored `is_correct` disagreeing with the displayed key.
+
+Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bumping the version updates the template row **in place** so its id survives for past sessions. Never match seed content by `name`.
+
 Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 46 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
 
 Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`).

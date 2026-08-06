@@ -117,7 +117,7 @@ Reference usage (`DeckManagementView.vue` — the simpler of the two real consum
 
 The flat `src/components/` folder no longer exists — the migration it represented is finished. There is exactly one convention now:
 
-- **`features/<domain>/{<Name>View.vue, components/, store/, types.ts}`** — every top-level route component uses a `...View.vue` suffix (`AuthView`, `DashboardView`, `ExamView`, `ExamHubView`, `ExamCreatorView`, `ExamResultsView`, `FlashcardsView`, `LearnView`, `MatchView`, `CardManagementView`, `DeckManagementView`, `DeckDetailView`). Domain-private components live in that feature's `components/` subfolder.
+- **`features/<domain>/{<Name>View.vue, components/, store/, types.ts}`** — every top-level route component uses a `...View.vue` suffix (`AuthView`, `DashboardView`, `ExamView`, `ExamHubView`, `ExamComposerView`, `ExamResultsView`, `FlashcardsView`, `LearnView`, `MatchView`, `CardManagementView`, `DeckManagementView`, `DeckDetailView`, `QuestionBankView`). Domain-private components live in that feature's `components/` subfolder.
 - **`shared/components/`** — only for primitives with consumers in more than one feature (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`).
 
 Don't reintroduce a top-level `components/` folder. If a feature-private component gains a second feature's consumer, promote it to `shared/components/` rather than importing across feature boundaries.
