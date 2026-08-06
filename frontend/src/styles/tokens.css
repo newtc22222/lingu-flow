@@ -31,6 +31,12 @@
   --surface-selected: #3a3320;
   --code-fg: #9fe6b0;
 
+  /* ---- Third-party brand tokens ---- */
+  --brand-google-blue: #4285f4;
+  --brand-google-green: #34a853;
+  --brand-google-yellow: #fbbc05;
+  --brand-google-red: #ea4335;
+
   /* ---- Semantic tokens ----
      Purpose-named aliases extracted from how the primitives above are
      actually used across every scoped-style block in the app (grep of

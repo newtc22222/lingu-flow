@@ -42,6 +42,13 @@
     "forgotSent": "If that email exists, we've sent a password reset link.",
     "sending": "SENDING…",
     "sendResetLink": "SEND RESET LINK",
+    "emailPlaceholder": "user@example.com",
+    "passwordPlaceholder": "••••••••",
+    "google": "CONTINUE WITH GOOGLE",
+    "footerBrand": "LINGU FLOW - 1.0.0",
+    "footerProtocol": "PROTOCOL",
+    "footerDocs": "DOCUMENTATION",
+    "footerSupport": "SUPPORT",
     "errors": {
       "loginFailed": "Login failed",
       "signupFailed": "Sign up failed",
