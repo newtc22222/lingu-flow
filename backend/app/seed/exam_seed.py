@@ -6,103 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
+from app.seed.data.toeic_reading import TOEIC_READING_TEMPLATE
 
 logger = logging.getLogger("linguflow")
 
 BUILTIN_SEED_DATA = [
-    # ─── TOEIC PART 5 ──────────────────────────────────────────────────────────
-    {
-        "seedKey": "toeic-reading-full",
-        "seedVersion": "1",
-        "name": "TOEIC Part 5 — Incomplete Sentences Practice",
-        "examType": "toeic",
-        "description": "Authentic TOEIC Part 5 multiple-choice questions testing grammar, vocabulary, collocations, and business English usage.",
-        "durationMinutes": 25,
-        "passingScore": 60,
-        "level": "Intermediate",
-        "questions": [
-            {
-                "questionText": "The project manager asked that all quarterly reports _____ submitted to the steering committee by Friday afternoon.",
-                "options": ["A. are", "B. be", "C. were", "D. being"],
-                "correctAnswer": "B",
-                "explanation": "The verb 'asked' introduces a subjunctive clause (demand/request), requiring the base form of the verb: 'be submitted'.",
-                "difficulty": "medium",
-                "tags": ["grammar", "subjunctive"],
-            },
-            {
-                "questionText": "Despite several technical delays during testing, the software update was launched _____ schedule.",
-                "options": ["A. on", "B. at", "C. in", "D. to"],
-                "correctAnswer": "A",
-                "explanation": "'On schedule' is a fixed business prepositional phrase meaning happening at the expected time.",
-                "difficulty": "easy",
-                "tags": ["prepositions", "collocation"],
-            },
-            {
-                "questionText": "Ms. Lawson has proved to be _____ of the two candidates interviewed for the senior marketing officer role.",
-                "options": ["A. the most qualified", "B. more qualified", "C. the more qualified", "D. qualified"],
-                "correctAnswer": "C",
-                "explanation": "When comparing exactly two items or people, the comparative form with 'the' ('the more qualified') is grammatically required.",
-                "difficulty": "hard",
-                "tags": ["grammar", "comparatives"],
-            },
-            {
-                "questionText": "Please inform the Human Resources manager _____ you intend to take extended leave during the third quarter.",
-                "options": ["A. should", "B. whether", "C. unless", "D. provided"],
-                "correctAnswer": "A",
-                "explanation": "Inverted conditional: 'Should you intend' is formal for 'If you intend'.",
-                "difficulty": "hard",
-                "tags": ["conditionals", "inversion"],
-            },
-            {
-                "questionText": "All attendees at the annual shareholder summit are required to display their badges _____ at all times.",
-                "options": ["A. prominent", "B. prominence", "C. prominently", "D. most prominent"],
-                "correctAnswer": "C",
-                "explanation": "The adverb 'prominently' is needed to modify the verb 'display'.",
-                "difficulty": "easy",
-                "tags": ["parts-of-speech", "adverbs"],
-            },
-            {
-                "questionText": "Neither the chief executive officer nor the company directors _____ available to comment on the merger rumor.",
-                "options": ["A. was", "B. were", "C. is", "D. has been"],
-                "correctAnswer": "B",
-                "explanation": "With 'neither... nor...', the verb agrees with the closer subject. 'Directors' is plural, so 'were' is correct.",
-                "difficulty": "medium",
-                "tags": ["grammar", "subject-verb-agreement"],
-            },
-            {
-                "questionText": "The newly installed solar panel grid is expected to reduce factory energy expenditures _____ nearly 30 percent.",
-                "options": ["A. by", "B. with", "C. for", "D. from"],
-                "correctAnswer": "A",
-                "explanation": "The preposition 'by' indicates the margin or amount of increase/decrease.",
-                "difficulty": "easy",
-                "tags": ["prepositions", "business-vocabulary"],
-            },
-            {
-                "questionText": "Had the client submitted the requested documentation sooner, the loan application _____ processed earlier.",
-                "options": ["A. will be", "B. would have been", "C. had been", "D. is being"],
-                "correctAnswer": "B",
-                "explanation": "Inverted third conditional ('Had + past participle... would have + past participle') used for hypothetical past situations.",
-                "difficulty": "hard",
-                "tags": ["conditionals", "third-conditional"],
-            },
-            {
-                "questionText": "The board of directors reached a _____ decision regarding the acquisition of the regional logistics firm.",
-                "options": ["A. unanimous", "B. unanimousness", "C. unanimously", "D. unanimity"],
-                "correctAnswer": "A",
-                "explanation": "The adjective 'unanimous' is required to modify the noun 'decision'.",
-                "difficulty": "medium",
-                "tags": ["vocabulary", "word-family"],
-            },
-            {
-                "questionText": "The factory manager insisted that all safety procedures be strictly _____ to avoid industrial accidents.",
-                "options": ["A. adhered", "B. followed", "C. observed", "D. compiled"],
-                "correctAnswer": "A",
-                "explanation": "'Adhered to' is the correct prepositional verb idiom. Note that while 'followed' and 'observed' are synonyms, only 'adhered' pairs with 'to'.",
-                "difficulty": "medium",
-                "tags": ["collocation", "phrasal-verbs"],
-            },
-        ],
-    },
+    TOEIC_READING_TEMPLATE,
     # ─── IELTS READING ────────────────────────────────────────────────────────
     {
         "seedKey": "ielts-academic-reading-1",

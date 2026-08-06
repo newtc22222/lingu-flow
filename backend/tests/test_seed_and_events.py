@@ -1,3 +1,5 @@
+from collections import Counter
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,6 +46,41 @@ async def test_builtin_exam_seeding(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
+async def test_toeic_reading_covers_all_three_parts(db_session: AsyncSession):
+    """
+    The TOEIC set must exercise every structural path, not just Part 5.
+
+    Parts 6 and 7 are what make `passage_group` load-bearing: their questions
+    share one passage, and attaching only part of such a set produces a broken
+    exam.
+    """
+    await seed_builtin_exams(db_session)
+
+    toeic = (
+        await db_session.execute(
+            select(Question).where(Question.exam_type == "toeic")
+        )
+    ).scalars().all()
+
+    by_part = Counter(q.part for q in toeic)
+    assert by_part["part5"] >= 10
+    assert by_part["part6"] >= 4
+    assert by_part["part7"] >= 10
+
+    # Part 5 is standalone; Parts 6 and 7 are always grouped around a passage.
+    assert all(q.passage_group is None for q in toeic if q.part == "part5")
+    grouped = [q for q in toeic if q.part in ("part6", "part7")]
+    assert grouped and all(q.passage_group and q.passage for q in grouped)
+
+    # Every group holds more than one question, or it wouldn't be a set.
+    group_sizes = Counter(q.passage_group for q in grouped)
+    assert all(size > 1 for size in group_sizes.values())
+
+    # Tags drive the per-category results breakdown, so none may be untagged.
+    assert all(q.tags for q in toeic)
+
+
+@pytest.mark.asyncio
 async def test_seed_version_bump_updates_in_place(monkeypatch, db_session: AsyncSession):
     """
     A content update must reuse the template row rather than adding a second one.
@@ -63,7 +100,10 @@ async def test_seed_version_bump_updates_in_place(monkeypatch, db_session: Async
     original_id = original.id
 
     bumped = [dict(BUILTIN_SEED_DATA[0])]
-    bumped[0]["seedVersion"] = "2"
+    # Derived, not hardcoded: content versions move as seed data is authored,
+    # and a literal here would silently start matching and skip the update.
+    bumped_version = f"{BUILTIN_SEED_DATA[0]['seedVersion']}-bumped"
+    bumped[0]["seedVersion"] = bumped_version
     bumped[0]["questions"] = [
         {
             "questionText": "A replacement question.",
@@ -83,7 +123,7 @@ async def test_seed_version_bump_updates_in_place(monkeypatch, db_session: Async
     ).scalars().all()
     assert len(updated) == 1, "a version bump must not create a second template"
     assert updated[0].id == original_id
-    assert updated[0].seed_version == "2"
+    assert updated[0].seed_version == bumped_version
     assert updated[0].total_questions == 1
 
     # The replaced questions are archived, not deleted — past sessions'
