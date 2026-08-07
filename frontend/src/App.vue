@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/store/authStore'
@@ -13,9 +13,10 @@ const auth = useAuthStore()
 const { t, locale } = useI18n()
 
 const showLogoutConfirm = ref(false)
+const isProfileMenuOpen = ref(false)
 
 /** Which arcade tab reads as active. */
-const activeTab = computed<'dashboard' | 'exams' | 'flashcards' | 'decks' | 'cards' | 'bank' | null>(() => {
+const activeTab = computed<'dashboard' | 'exams' | 'flashcards' | 'decks' | 'cards' | 'bank' | 'profile' | null>(() => {
   const path = route.path
   if (path.startsWith('/dashboard')) return 'dashboard'
   if (path.startsWith('/exams')) return 'exams'
@@ -23,6 +24,7 @@ const activeTab = computed<'dashboard' | 'exams' | 'flashcards' | 'decks' | 'car
   if (path.startsWith('/decks')) return 'decks'
   if (path.startsWith('/cards')) return 'cards'
   if (path.startsWith('/question-bank')) return 'bank'
+  if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile'
   return null
 })
 
@@ -33,7 +35,16 @@ function switchLocale(next: AppLocale) {
   setLocale(next)
 }
 
+function toggleProfileMenu() {
+  isProfileMenuOpen.value = !isProfileMenuOpen.value
+}
+
+function closeProfileMenu() {
+  isProfileMenuOpen.value = false
+}
+
 function handleLogoutClick() {
+  closeProfileMenu()
   showLogoutConfirm.value = true
 }
 
@@ -41,6 +52,21 @@ async function handleConfirmLogout() {
   auth.logout()
   await router.push({ name: 'auth' })
 }
+
+function handleDocumentClick(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.profile-dropdown-container')) {
+    closeProfileMenu()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick)
+})
 </script>
 
 <template>
@@ -90,6 +116,13 @@ async function handleConfirmLogout() {
           >
             {{ t('nav.questionBank') }}
           </RouterLink>
+          <RouterLink
+            :to="{ name: 'profile' }"
+            class="nav-tab font-label"
+            :class="{ 'nav-tab--active': activeTab === 'profile' }"
+          >
+            {{ t('profile.title') }}
+          </RouterLink>
         </nav>
 
         <!-- Right Utility Controls -->
@@ -108,13 +141,43 @@ async function handleConfirmLogout() {
             </button>
           </div>
 
-          <button
-            type="button"
-            class="logout-btn font-label"
-            @click="handleLogoutClick"
-          >
-            [{{ t('nav.logout') }}]
-          </button>
+          <!-- Profile Choice Dropdown Menu -->
+          <div class="profile-dropdown-container">
+            <button
+              type="button"
+              class="profile-btn font-label"
+              :class="{ 'profile-btn--active': isProfileMenuOpen || activeTab === 'profile' }"
+              @click.stop="toggleProfileMenu"
+            >
+              <span>👤 PLAYER_ONE</span>
+              <span class="dropdown-arrow">▼</span>
+            </button>
+
+            <div v-if="isProfileMenuOpen" class="profile-dropdown font-label">
+              <RouterLink
+                :to="{ name: 'profile' }"
+                class="dropdown-item"
+                @click="closeProfileMenu"
+              >
+                {{ t('profile.title') }}
+              </RouterLink>
+              <RouterLink
+                :to="{ name: 'settings' }"
+                class="dropdown-item"
+                @click="closeProfileMenu"
+              >
+                {{ t('profile.systemSettings') }}
+              </RouterLink>
+              <div class="dropdown-divider" />
+              <button
+                type="button"
+                class="dropdown-item dropdown-item--danger"
+                @click="handleLogoutClick"
+              >
+                [{{ t('nav.logout') }}]
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -235,24 +298,83 @@ async function handleConfirmLogout() {
   color: var(--text-primary);
 }
 
-.logout-btn {
-  background: none;
-  border: none;
-  color: var(--status-danger);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--tracking-wide);
-  cursor: pointer;
-  padding: var(--space-2) 0;
-  text-transform: uppercase;
+.profile-dropdown-container {
+  position: relative;
 }
 
-.logout-btn:hover {
-  opacity: 0.8;
+.profile-btn {
+  background: var(--surface-panel-border);
+  border: 1px solid var(--surface-panel-border);
+  color: var(--text-primary);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-normal);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.profile-btn--active,
+.profile-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.dropdown-arrow {
+  font-size: 8px;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  background: var(--surface-panel);
+  border: 2px solid var(--surface-panel-border);
+  box-shadow: 0 8px 24px var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 50;
+}
+
+.dropdown-item {
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-normal);
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: var(--state-hover-surface);
+  color: var(--color-accent);
+}
+
+.dropdown-item--danger {
+  color: var(--status-danger);
+}
+
+.dropdown-item--danger:hover {
+  background: var(--status-danger-subtle);
+  color: var(--text-primary);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--surface-panel-border);
+  margin: var(--space-1) 0;
 }
 
 .nav-tab:focus-visible,
 .lang-btn:focus-visible,
-.logout-btn:focus-visible {
+.profile-btn:focus-visible,
+.dropdown-item:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
 }
