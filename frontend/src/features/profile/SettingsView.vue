@@ -56,6 +56,12 @@ async function fetchSettings() {
       };
       savedSettings.value = { ...loaded };
       draftSettings.value = { ...loaded };
+      
+      // Apply the loaded locale immediately so the UI reflects the backend state
+      if (loaded.locale !== locale.value) {
+        locale.value = loaded.locale;
+        setLocale(loaded.locale);
+      }
     }
   } catch (err) {
     console.error('Failed to fetch settings:', err);
@@ -89,7 +95,8 @@ async function handleSave() {
       savedSettings.value = { ...persisted };
       draftSettings.value = { ...persisted };
 
-      // Apply locale change only after successful save
+      // Apply locale change explicitly to the local i18n instance and globally
+      locale.value = persisted.locale;
       setLocale(persisted.locale);
 
       saveSuccess.value = true;

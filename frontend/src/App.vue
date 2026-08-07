@@ -3,13 +3,15 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/features/auth/store/authStore';
+import { setLocale } from '@/i18n';
+import { apiFetch } from '@/utils/api';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
 import AppFooter from '@/shared/components/AppFooter.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const showLogoutConfirm = ref(false);
 const isProfileMenuOpen = ref(false);
@@ -72,6 +74,25 @@ function handleDocumentClick(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick);
+  
+  if (auth.isAuthenticated) {
+    apiFetch('/api/settings')
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+        throw new Error('Failed to fetch settings');
+      })
+      .then((data) => {
+        if (data.locale && data.locale !== locale.value) {
+          locale.value = data.locale;
+          setLocale(data.locale);
+        }
+      })
+      .catch((err) => {
+        console.error('App init: Failed to sync user settings', err);
+      });
+  }
 });
 
 onUnmounted(() => {
