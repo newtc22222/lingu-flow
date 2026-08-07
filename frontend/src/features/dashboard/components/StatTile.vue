@@ -5,11 +5,11 @@
  * Vietnamese diacritics ever appear here) — labels use font-label instead.
  */
 defineProps<{
-  label: string
-  value: string | number
-  icon?: string
-  accentColor?: string
-}>()
+  label: string;
+  value: string | number;
+  icon?: string;
+  accentColor?: string;
+}>();
 </script>
 
 <template>

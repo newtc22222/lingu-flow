@@ -1,45 +1,45 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { apiFetch } from '@/utils/api'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import ManageListShell from '@/shared/components/ManageListShell.vue'
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import ManageListShell from '@/shared/components/ManageListShell.vue';
 
 interface Deck {
-  id: string
-  name: string
-  description: string
+  id: string;
+  name: string;
+  description: string;
 }
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const decks = ref<Deck[]>([])
-const isLoading = ref(true)
-const isEditing = ref(false)
-const editingDeckId = ref<string | null>(null)
+const decks = ref<Deck[]>([]);
+const isLoading = ref(true);
+const isEditing = ref(false);
+const editingDeckId = ref<string | null>(null);
 
 const form = ref({
   name: '',
   description: '',
-})
+});
 
 const fetchDecks = async () => {
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const res = await apiFetch('/api/decks')
-    const raw = (await res.json()) as Record<string, unknown>[]
+    const res = await apiFetch('/api/decks');
+    const raw = (await res.json()) as Record<string, unknown>[];
     decks.value = raw.map((d) => ({
       id: (d.id ?? d._id) as string,
       name: d.name as string,
       description: (d.description as string) ?? '',
-    }))
+    }));
   } catch (error) {
-    console.error('Failed to fetch decks:', error)
+    console.error('Failed to fetch decks:', error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 const saveDeck = async () => {
   try {
@@ -48,49 +48,49 @@ const saveDeck = async () => {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form.value),
-      })
+      });
     } else {
       await apiFetch('/api/decks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form.value),
-      })
+      });
     }
 
-    form.value = { name: '', description: '' }
-    isEditing.value = false
-    editingDeckId.value = null
-    await fetchDecks()
+    form.value = { name: '', description: '' };
+    isEditing.value = false;
+    editingDeckId.value = null;
+    await fetchDecks();
   } catch (error) {
-    console.error('Failed to save deck:', error)
+    console.error('Failed to save deck:', error);
   }
-}
+};
 
 const editDeck = (deck: Deck) => {
-  form.value = { name: deck.name, description: deck.description || '' }
-  isEditing.value = true
-  editingDeckId.value = deck.id
-}
+  form.value = { name: deck.name, description: deck.description || '' };
+  isEditing.value = true;
+  editingDeckId.value = deck.id;
+};
 
 const deleteDeck = async (id: string) => {
-  if (!confirm(t('decks.confirmDelete'))) return
+  if (!confirm(t('decks.confirmDelete'))) return;
   try {
-    await apiFetch(`/api/decks/${id}`, { method: 'DELETE' })
-    await fetchDecks()
+    await apiFetch(`/api/decks/${id}`, { method: 'DELETE' });
+    await fetchDecks();
   } catch (error) {
-    console.error('Failed to delete deck:', error)
+    console.error('Failed to delete deck:', error);
   }
-}
+};
 
 const cancelEdit = () => {
-  form.value = { name: '', description: '' }
-  isEditing.value = false
-  editingDeckId.value = null
-}
+  form.value = { name: '', description: '' };
+  isEditing.value = false;
+  editingDeckId.value = null;
+};
 
 onMounted(() => {
-  fetchDecks()
-})
+  fetchDecks();
+});
 </script>
 
 <template>

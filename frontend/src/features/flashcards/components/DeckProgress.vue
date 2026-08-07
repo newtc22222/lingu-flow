@@ -1,8 +1,8 @@
 <script setup lang="ts">
 defineProps<{
-  total: number
-  currentIndex: number
-}>()
+  total: number;
+  currentIndex: number;
+}>();
 </script>
 
 <template>

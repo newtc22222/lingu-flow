@@ -11,34 +11,34 @@
  * creation to a final save. That means abandoning the flow at step 2 would
  * leave an empty draft exam behind, so an explicit discard action deletes it.
  */
-import { computed, onMounted, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { apiFetch } from '@/utils/api'
-import AppButton from '@/shared/components/AppButton.vue'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import QuestionFilters from '@/shared/components/QuestionFilters.vue'
-import QuestionForm from '@/features/question-bank/components/QuestionForm.vue'
-import { useQuestionBankStore } from '@/features/question-bank/store/questionBankStore'
-import { EXAM_TYPES, type TemplateQuestion } from '@/features/question-bank/types'
-import ExamQuestionRow from './components/ExamQuestionRow.vue'
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import AppButton from '@/shared/components/AppButton.vue';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import QuestionFilters from '@/shared/components/QuestionFilters.vue';
+import QuestionForm from '@/features/question-bank/components/QuestionForm.vue';
+import { useQuestionBankStore } from '@/features/question-bank/store/questionBankStore';
+import { EXAM_TYPES, type TemplateQuestion } from '@/features/question-bank/types';
+import ExamQuestionRow from './components/ExamQuestionRow.vue';
 
-const props = defineProps<{ templateId?: string }>()
+const props = defineProps<{ templateId?: string }>();
 
-const { t } = useI18n()
-const router = useRouter()
-const bank = useQuestionBankStore()
+const { t } = useI18n();
+const router = useRouter();
+const bank = useQuestionBankStore();
 
-const step = ref<1 | 2>(1)
-const isLoading = ref(false)
-const isSaving = ref(false)
-const error = ref<string | null>(null)
+const step = ref<1 | 2>(1);
+const isLoading = ref(false);
+const isSaving = ref(false);
+const error = ref<string | null>(null);
 
 /** Set once the template exists server-side; also what edit mode starts with. */
-const templateId = ref<string | null>(props.templateId ?? null)
+const templateId = ref<string | null>(props.templateId ?? null);
 /** True when we created the template in this session and it has no questions
  *  yet — the only case where leaving should offer to discard it. */
-const isFreshDraft = ref(false)
+const isFreshDraft = ref(false);
 
 const form = ref({
   name: '',
@@ -47,54 +47,54 @@ const form = ref({
   durationMinutes: 30,
   passingScore: 70,
   level: '',
-})
+});
 
-const composition = ref<TemplateQuestion[]>([])
-const draggingIndex = ref<number | null>(null)
-const savedOrder = ref<string[]>([])
-const isSavingOrder = ref(false)
-const showInlineForm = ref(false)
-const selectedIds = ref<Set<string>>(new Set())
+const composition = ref<TemplateQuestion[]>([]);
+const draggingIndex = ref<number | null>(null);
+const savedOrder = ref<string[]>([]);
+const isSavingOrder = ref(false);
+const showInlineForm = ref(false);
+const selectedIds = ref<Set<string>>(new Set());
 
-const isEditMode = computed(() => Boolean(props.templateId))
+const isEditMode = computed(() => Boolean(props.templateId));
 const step1Valid = computed(
   () => form.value.name.trim().length >= 3 && form.value.durationMinutes > 0,
-)
+);
 const isDirtyOrder = computed(
   () =>
     composition.value.length === savedOrder.value.length &&
     composition.value.some((q, i) => q.id !== savedOrder.value[i]),
-)
+);
 
 /** Bank questions not already in this exam. */
 const attachable = computed(() => {
-  const present = new Set(composition.value.map((q) => q.id))
-  return bank.questions.filter((q) => !present.has(q.id))
-})
+  const present = new Set(composition.value.map((q) => q.id));
+  return bank.questions.filter((q) => !present.has(q.id));
+});
 
 async function describeFailure(res: Response): Promise<string> {
   try {
-    const body = await res.json()
-    return body?.detail || t('common.requestFailed', { status: res.status })
+    const body = await res.json();
+    return body?.detail || t('common.requestFailed', { status: res.status });
   } catch {
-    return t('common.requestFailed', { status: res.status })
+    return t('common.requestFailed', { status: res.status });
   }
 }
 
 async function loadComposition() {
-  if (!templateId.value) return
-  const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions`)
-  if (!res.ok) throw new Error(await describeFailure(res))
-  composition.value = (await res.json()) as TemplateQuestion[]
-  savedOrder.value = composition.value.map((q) => q.id)
+  if (!templateId.value) return;
+  const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions`);
+  if (!res.ok) throw new Error(await describeFailure(res));
+  composition.value = (await res.json()) as TemplateQuestion[];
+  savedOrder.value = composition.value.map((q) => q.id);
 }
 
 async function loadTemplate(id: string) {
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const res = await apiFetch(`/api/exams/templates/${id}`)
-    if (!res.ok) throw new Error(await describeFailure(res))
-    const template = await res.json()
+    const res = await apiFetch(`/api/exams/templates/${id}`);
+    if (!res.ok) throw new Error(await describeFailure(res));
+    const template = await res.json();
     form.value = {
       name: template.name ?? '',
       examType: template.examType ?? 'toeic',
@@ -102,21 +102,21 @@ async function loadTemplate(id: string) {
       durationMinutes: template.durationMinutes ?? 30,
       passingScore: template.passingScore ?? 70,
       level: template.level ?? '',
-    }
-    await loadComposition()
-    step.value = 2
+    };
+    await loadComposition();
+    step.value = 2;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed')
+    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed');
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 /** Create (or update) the template, then move to composition. */
 async function goToStep2() {
-  if (!step1Valid.value) return
-  isSaving.value = true
-  error.value = null
+  if (!step1Valid.value) return;
+  isSaving.value = true;
+  error.value = null;
   try {
     const res = await apiFetch(
       templateId.value ? `/api/exams/templates/${templateId.value}` : '/api/exams/templates',
@@ -125,151 +125,144 @@ async function goToStep2() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form.value),
       },
-    )
-    if (!res.ok) throw new Error(await describeFailure(res))
-    const template = await res.json()
-    if (!templateId.value) isFreshDraft.value = true
-    templateId.value = template.id
-    await loadComposition()
-    step.value = 2
+    );
+    if (!res.ok) throw new Error(await describeFailure(res));
+    const template = await res.json();
+    if (!templateId.value) isFreshDraft.value = true;
+    templateId.value = template.id;
+    await loadComposition();
+    step.value = 2;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed')
+    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed');
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 function toggleSelected(id: string) {
-  const next = new Set(selectedIds.value)
-  if (next.has(id)) next.delete(id)
-  else next.add(id)
-  selectedIds.value = next
+  const next = new Set(selectedIds.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  selectedIds.value = next;
 }
 
 async function attachSelected() {
-  if (!templateId.value || selectedIds.value.size === 0) return
-  error.value = null
+  if (!templateId.value || selectedIds.value.size === 0) return;
+  error.value = null;
   try {
-    const res = await apiFetch(
-      `/api/exams/templates/${templateId.value}/questions/attach`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionIds: [...selectedIds.value] }),
-      },
-    )
-    if (!res.ok) throw new Error(await describeFailure(res))
-    composition.value = (await res.json()) as TemplateQuestion[]
-    savedOrder.value = composition.value.map((q) => q.id)
-    selectedIds.value = new Set()
-    isFreshDraft.value = false
+    const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions/attach`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIds: [...selectedIds.value] }),
+    });
+    if (!res.ok) throw new Error(await describeFailure(res));
+    composition.value = (await res.json()) as TemplateQuestion[];
+    savedOrder.value = composition.value.map((q) => q.id);
+    selectedIds.value = new Set();
+    isFreshDraft.value = false;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('composer.attachFailed')
+    error.value = err instanceof Error ? err.message : t('composer.attachFailed');
   }
 }
 
 async function detach(questionId: string) {
-  if (!templateId.value) return
-  error.value = null
+  if (!templateId.value) return;
+  error.value = null;
   try {
-    const res = await apiFetch(
-      `/api/exams/templates/${templateId.value}/questions/${questionId}`,
-      { method: 'DELETE' },
-    )
-    if (!res.ok) throw new Error(await describeFailure(res))
-    await loadComposition()
+    const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions/${questionId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error(await describeFailure(res));
+    await loadComposition();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('composer.detachFailed')
+    error.value = err instanceof Error ? err.message : t('composer.detachFailed');
   }
 }
 
 function onDragStart(index: number) {
-  draggingIndex.value = index
+  draggingIndex.value = index;
 }
 function onDragEnter(index: number) {
-  const from = draggingIndex.value
-  if (from === null || from === index) return
-  const [moved] = composition.value.splice(from, 1)
-  composition.value.splice(index, 0, moved)
-  draggingIndex.value = index
+  const from = draggingIndex.value;
+  if (from === null || from === index) return;
+  const [moved] = composition.value.splice(from, 1);
+  composition.value.splice(index, 0, moved);
+  draggingIndex.value = index;
 }
 function onDragEnd() {
-  draggingIndex.value = null
+  draggingIndex.value = null;
 }
 
 function moveUp(index: number) {
-  if (index <= 0) return
-  const [moved] = composition.value.splice(index, 1)
-  composition.value.splice(index - 1, 0, moved)
+  if (index <= 0) return;
+  const [moved] = composition.value.splice(index, 1);
+  composition.value.splice(index - 1, 0, moved);
 }
 
 function moveDown(index: number) {
-  if (index >= composition.value.length - 1) return
-  const [moved] = composition.value.splice(index, 1)
-  composition.value.splice(index + 1, 0, moved)
+  if (index >= composition.value.length - 1) return;
+  const [moved] = composition.value.splice(index, 1);
+  composition.value.splice(index + 1, 0, moved);
 }
 
 async function saveOrder() {
-  if (!templateId.value) return
-  isSavingOrder.value = true
-  error.value = null
+  if (!templateId.value) return;
+  isSavingOrder.value = true;
+  error.value = null;
   try {
-    const res = await apiFetch(
-      `/api/exams/templates/${templateId.value}/questions/reorder`,
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionIds: composition.value.map((q) => q.id) }),
-      },
-    )
-    if (!res.ok) throw new Error(await describeFailure(res))
-    composition.value = (await res.json()) as TemplateQuestion[]
-    savedOrder.value = composition.value.map((q) => q.id)
+    const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questionIds: composition.value.map((q) => q.id) }),
+    });
+    if (!res.ok) throw new Error(await describeFailure(res));
+    composition.value = (await res.json()) as TemplateQuestion[];
+    savedOrder.value = composition.value.map((q) => q.id);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('composer.reorderFailed')
+    error.value = err instanceof Error ? err.message : t('composer.reorderFailed');
   } finally {
-    isSavingOrder.value = false
+    isSavingOrder.value = false;
   }
 }
 
 /** Create a question inline; the API attaches it to this exam in one call. */
 async function createInline(payload: Record<string, unknown>) {
-  if (!templateId.value) return
-  isSaving.value = true
-  error.value = null
+  if (!templateId.value) return;
+  isSaving.value = true;
+  error.value = null;
   try {
     const res = await apiFetch(`/api/exams/templates/${templateId.value}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-    })
-    if (!res.ok) throw new Error(await describeFailure(res))
-    await loadComposition()
-    await bank.fetchQuestions()
-    showInlineForm.value = false
-    isFreshDraft.value = false
+    });
+    if (!res.ok) throw new Error(await describeFailure(res));
+    await loadComposition();
+    await bank.fetchQuestions();
+    showInlineForm.value = false;
+    isFreshDraft.value = false;
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed')
+    error.value = err instanceof Error ? err.message : t('examCreator.saveFailed');
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 async function discardDraft() {
   if (templateId.value) {
-    await apiFetch(`/api/exams/templates/${templateId.value}`, { method: 'DELETE' })
+    await apiFetch(`/api/exams/templates/${templateId.value}`, { method: 'DELETE' });
   }
-  await router.push({ name: 'exams' })
+  await router.push({ name: 'exams' });
 }
 
 async function done() {
-  await router.push({ name: 'exams' })
+  await router.push({ name: 'exams' });
 }
 
 onMounted(async () => {
-  await Promise.all([bank.fetchQuestions(), bank.fetchFacets()])
-  if (props.templateId) await loadTemplate(props.templateId)
-})
+  await Promise.all([bank.fetchQuestions(), bank.fetchFacets()]);
+  if (props.templateId) await loadTemplate(props.templateId);
+});
 </script>
 
 <template>

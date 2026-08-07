@@ -10,26 +10,26 @@
  * any other exam using it. The wording has to make that unambiguous, because
  * the bank's own delete sits one screen away and means something else.
  */
-import { useI18n } from 'vue-i18n'
-import AppButton from '@/shared/components/AppButton.vue'
-import type { TemplateQuestion } from '@/features/question-bank/types'
+import { useI18n } from 'vue-i18n';
+import AppButton from '@/shared/components/AppButton.vue';
+import type { TemplateQuestion } from '@/features/question-bank/types';
 
 defineProps<{
-  question: TemplateQuestion
-  index: number
-  isDragging: boolean
-}>()
+  question: TemplateQuestion;
+  index: number;
+  isDragging: boolean;
+}>();
 
 defineEmits<{
-  (e: 'dragstart'): void
-  (e: 'dragenter'): void
-  (e: 'dragend'): void
-  (e: 'detach'): void
-  (e: 'move-up'): void
-  (e: 'move-down'): void
-}>()
+  (e: 'dragstart'): void;
+  (e: 'dragenter'): void;
+  (e: 'dragend'): void;
+  (e: 'detach'): void;
+  (e: 'move-up'): void;
+  (e: 'move-down'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 </script>
 
 <template>
@@ -46,16 +46,20 @@ const { t } = useI18n()
     <span class="eq-index font-label">{{ index + 1 }}</span>
 
     <div class="eq-controls">
-      <button 
-        class="eq-control font-label" 
-        :aria-label="t('common.moveUp')" 
+      <button
+        class="eq-control font-label"
+        :aria-label="t('common.moveUp')"
         @click.stop="$emit('move-up')"
-      >▲</button>
-      <button 
-        class="eq-control font-label" 
-        :aria-label="t('common.moveDown')" 
+      >
+        ▲
+      </button>
+      <button
+        class="eq-control font-label"
+        :aria-label="t('common.moveDown')"
         @click.stop="$emit('move-down')"
-      >▼</button>
+      >
+        ▼
+      </button>
     </div>
 
     <div class="eq-body">

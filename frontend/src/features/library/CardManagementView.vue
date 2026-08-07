@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { apiFetch } from '@/utils/api'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import ManageListShell from '@/shared/components/ManageListShell.vue'
-import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue'
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import ManageListShell from '@/shared/components/ManageListShell.vue';
+import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue';
 
 interface Card {
-  id: string
-  front: string
-  back: string
-  deckId?: string
-  imageUrl?: string | null
-  notes?: string | null
+  id: string;
+  front: string;
+  back: string;
+  deckId?: string;
+  imageUrl?: string | null;
+  notes?: string | null;
 }
 
 interface Deck {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
-const { t } = useI18n()
-const router = useRouter()
+const { t } = useI18n();
+const router = useRouter();
 
-const cards = ref<Card[]>([])
-const decks = ref<Deck[]>([])
-const isLoading = ref(true)
-const isEditing = ref(false)
-const editingCardId = ref<string | null>(null)
+const cards = ref<Card[]>([]);
+const decks = ref<Deck[]>([]);
+const isLoading = ref(true);
+const isEditing = ref(false);
+const editingCardId = ref<string | null>(null);
 
 const blankForm = () => ({
   front: '',
@@ -37,16 +37,19 @@ const blankForm = () => ({
   deckId: '',
   imageUrl: '',
   notes: '',
-})
+});
 
-const form = ref(blankForm())
+const form = ref(blankForm());
 
 const fetchCardsAndDecks = async () => {
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const [cardsRes, decksRes] = await Promise.all([apiFetch('/api/cards'), apiFetch('/api/decks')])
-    const rawCards = (await cardsRes.json()) as Record<string, unknown>[]
-    const rawDecks = (await decksRes.json()) as Record<string, unknown>[]
+    const [cardsRes, decksRes] = await Promise.all([
+      apiFetch('/api/cards'),
+      apiFetch('/api/decks'),
+    ]);
+    const rawCards = (await cardsRes.json()) as Record<string, unknown>[];
+    const rawDecks = (await decksRes.json()) as Record<string, unknown>[];
     cards.value = rawCards.map((c) => ({
       id: c.id as string,
       front: c.front as string,
@@ -54,14 +57,14 @@ const fetchCardsAndDecks = async () => {
       deckId: c.deckId as string | undefined,
       imageUrl: c.imageUrl as string | null | undefined,
       notes: c.notes as string | null | undefined,
-    }))
-    decks.value = rawDecks.map((d) => ({ id: d.id as string, name: d.name as string }))
+    }));
+    decks.value = rawDecks.map((d) => ({ id: d.id as string, name: d.name as string }));
   } catch (error) {
-    console.error('Failed to fetch data:', error)
+    console.error('Failed to fetch data:', error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
-}
+};
 
 const saveCard = async () => {
   try {
@@ -72,31 +75,31 @@ const saveCard = async () => {
       deckId: form.value.deckId || null,
       imageUrl: form.value.imageUrl.trim() || null,
       notes: form.value.notes.trim() || null,
-    }
+    };
 
     if (isEditing.value && editingCardId.value) {
       await apiFetch(`/api/cards/${editingCardId.value}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
+      });
     } else {
       await apiFetch('/api/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-      })
+      });
     }
 
-    form.value = blankForm()
-    isEditing.value = false
-    editingCardId.value = null
+    form.value = blankForm();
+    isEditing.value = false;
+    editingCardId.value = null;
 
-    await fetchCardsAndDecks()
+    await fetchCardsAndDecks();
   } catch (error) {
-    console.error('Failed to save card:', error)
+    console.error('Failed to save card:', error);
   }
-}
+};
 
 const editCard = (card: Card) => {
   form.value = {
@@ -105,30 +108,30 @@ const editCard = (card: Card) => {
     deckId: card.deckId || '',
     imageUrl: card.imageUrl ?? '',
     notes: card.notes ?? '',
-  }
-  isEditing.value = true
-  editingCardId.value = card.id
-}
+  };
+  isEditing.value = true;
+  editingCardId.value = card.id;
+};
 
 const deleteCard = async (id: string) => {
-  if (!confirm(t('cards.confirmDelete'))) return
+  if (!confirm(t('cards.confirmDelete'))) return;
   try {
-    await apiFetch(`/api/cards/${id}`, { method: 'DELETE' })
-    await fetchCardsAndDecks()
+    await apiFetch(`/api/cards/${id}`, { method: 'DELETE' });
+    await fetchCardsAndDecks();
   } catch (error) {
-    console.error('Failed to delete card:', error)
+    console.error('Failed to delete card:', error);
   }
-}
+};
 
 const cancelEdit = () => {
-  form.value = blankForm()
-  isEditing.value = false
-  editingCardId.value = null
-}
+  form.value = blankForm();
+  isEditing.value = false;
+  editingCardId.value = null;
+};
 
 onMounted(() => {
-  fetchCardsAndDecks()
-})
+  fetchCardsAndDecks();
+});
 </script>
 
 <template>
@@ -161,7 +164,9 @@ onMounted(() => {
               <label class="arcade-label" for="card-deck">{{ t('cards.deckOptional') }}</label>
               <select id="card-deck" v-model="form.deckId" class="arcade-input">
                 <option value="">{{ t('cards.noDeck') }}</option>
-                <option v-for="deck in decks" :key="deck.id" :value="deck.id">{{ deck.name }}</option>
+                <option v-for="deck in decks" :key="deck.id" :value="deck.id">
+                  {{ deck.name }}
+                </option>
               </select>
             </div>
 
@@ -239,7 +244,9 @@ onMounted(() => {
     <template #row="{ item }">
       <div class="card-row-eyebrow font-label">{{ t('cards.frontShort') }}</div>
       <div class="card-row-text font-body">{{ item.front }}</div>
-      <div class="card-row-eyebrow card-row-eyebrow--back font-label">{{ t('cards.backShort') }}</div>
+      <div class="card-row-eyebrow card-row-eyebrow--back font-label">
+        {{ t('cards.backShort') }}
+      </div>
       <div class="card-row-text font-body">{{ item.back }}</div>
     </template>
   </ManageListShell>

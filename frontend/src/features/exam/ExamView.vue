@@ -1,46 +1,46 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import ExamHud from './components/ExamHud.vue'
-import QuestionCard from './components/QuestionCard.vue'
-import { useExamStore } from './store/examStore'
+import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import ExamHud from './components/ExamHud.vue';
+import QuestionCard from './components/QuestionCard.vue';
+import { useExamStore } from './store/examStore';
 
-const props = defineProps<{ templateId: string }>()
+const props = defineProps<{ templateId: string }>();
 
-const { t } = useI18n()
-const router = useRouter()
-const store = useExamStore()
+const { t } = useI18n();
+const router = useRouter();
+const store = useExamStore();
 
-const isLastQuestion = computed(() => store.currentIndex === store.questions.length - 1)
+const isLastQuestion = computed(() => store.currentIndex === store.questions.length - 1);
 
 function handleSubmit() {
   if (isLastQuestion.value) {
-    void store.finish()
+    void store.finish();
   } else {
-    store.next()
+    store.next();
   }
 }
 
 function onKeyDown(e: KeyboardEvent) {
-  if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return
-  if (store.isLocked) return
+  if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+  if (store.isLocked) return;
   switch (e.key.toUpperCase()) {
     case 'A':
     case 'B':
     case 'C':
     case 'D':
-      store.selectAnswer(e.key.toUpperCase())
-      break
+      store.selectAnswer(e.key.toUpperCase());
+      break;
     case 'ENTER':
-      handleSubmit()
-      break
+      handleSubmit();
+      break;
     case 'ARROWLEFT':
-      store.previous()
-      break
+      store.previous();
+      break;
     case 'ARROWRIGHT':
-      if (store.answers[store.currentQuestion?.id ?? '']) store.next()
-      break
+      if (store.answers[store.currentQuestion?.id ?? '']) store.next();
+      break;
   }
 }
 
@@ -51,20 +51,20 @@ watch(
       void router.replace({
         name: 'exam-results',
         params: { sessionId: store.finishedSessionId },
-      })
+      });
     }
   },
-)
+);
 
 onMounted(() => {
-  void store.start(props.templateId)
-  window.addEventListener('keydown', onKeyDown)
-})
+  void store.start(props.templateId);
+  window.addEventListener('keydown', onKeyDown);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown)
-  store.teardown()
-})
+  window.removeEventListener('keydown', onKeyDown);
+  store.teardown();
+});
 </script>
 
 <template>
@@ -86,7 +86,9 @@ onUnmounted(() => {
 
       <div class="exam-meta font-label">
         <span>
-          {{ t('exam.question', { current: store.currentIndex + 1, total: store.questions.length }) }}
+          {{
+            t('exam.question', { current: store.currentIndex + 1, total: store.questions.length })
+          }}
         </span>
       </div>
 

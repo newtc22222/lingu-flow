@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import LevelPath, { type LevelProgress } from './LevelPath.vue'
+import { useI18n } from 'vue-i18n';
+import LevelPath, { type LevelProgress } from './LevelPath.vue';
 
-export type { LevelProgress }
+export type { LevelProgress };
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 defineProps<{
-  title: string
-  levels: LevelProgress[]
-  progressPercent: number
-  subLabel: string
-}>()
+  title: string;
+  levels: LevelProgress[];
+  progressPercent: number;
+  subLabel: string;
+}>();
 </script>
 
 <template>

@@ -1,7 +1,7 @@
-import vuePlugin from 'eslint-plugin-vue'
-import vueParser from 'vue-eslint-parser'
-import tsParser from '@typescript-eslint/parser'
-import localRules from './eslint-local-rules/no-raw-tailwind-palette.js'
+import vuePlugin from 'eslint-plugin-vue';
+import vueParser from 'vue-eslint-parser';
+import tsParser from '@typescript-eslint/parser';
+import localRules from './eslint-local-rules/no-raw-tailwind-palette.js';
 
 export default [
   {
@@ -22,4 +22,4 @@ export default [
       'local/no-raw-tailwind-palette': 'error',
     },
   },
-]
+];

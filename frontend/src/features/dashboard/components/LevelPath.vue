@@ -5,33 +5,33 @@
  * nodes are non-interactive (aria-disabled) and show a lock glyph instead
  * of their number.
  */
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import AppButton from '@/shared/components/AppButton.vue'
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import AppButton from '@/shared/components/AppButton.vue';
 
-const { t } = useI18n()
-const router = useRouter()
+const { t } = useI18n();
+const router = useRouter();
 
 export interface LevelProgress {
-  id: string
-  index: number
-  status: 'done' | 'current' | 'locked'
+  id: string;
+  index: number;
+  status: 'done' | 'current' | 'locked';
 }
 
 defineProps<{
-  levels: LevelProgress[]
-}>()
+  levels: LevelProgress[];
+}>();
 
 function connectorStatus(levels: LevelProgress[], i: number): 'done' | 'current' | 'locked' {
-  const left = levels[i]
-  const right = levels[i + 1]
-  if (left.status === 'done' && right.status !== 'locked') return 'done'
-  if (left.status === 'done' || left.status === 'current') return 'current'
-  return 'locked'
+  const left = levels[i];
+  const right = levels[i + 1];
+  if (left.status === 'done' && right.status !== 'locked') return 'done';
+  if (left.status === 'done' || left.status === 'current') return 'current';
+  return 'locked';
 }
 
 function handleContinue() {
-  void router.push({ name: 'flashcards' })
+  void router.push({ name: 'flashcards' });
 }
 </script>
 

@@ -50,30 +50,54 @@
   /* Text */
   --text-primary: var(--phosphor); /* headings, body copy, primary content */
   --text-secondary: var(--muted); /* labels, meta, timestamps, placeholders, inactive tab text */
-  --text-disabled: var(--locked); /* explicitly locked/unavailable content (e.g. WorldCard locked levels) */
-  --text-on-accent: var(--ink); /* text placed on a solid amber/green/red fill (buttons, active tabs, badges) */
-  --text-label-accent: var(--amber); /* eyebrow / section-label accent text (form titles, card eyebrows) */
+  --text-disabled: var(
+    --locked
+  ); /* explicitly locked/unavailable content (e.g. WorldCard locked levels) */
+  --text-on-accent: var(
+    --ink
+  ); /* text placed on a solid amber/green/red fill (buttons, active tabs, badges) */
+  --text-label-accent: var(
+    --amber
+  ); /* eyebrow / section-label accent text (form titles, card eyebrows) */
   --text-code: var(--code-fg); /* monospace code-snippet foreground */
 
   /* Status */
   --status-success: var(--green); /* correct / passed / done / positive state */
-  --status-success-subtle: var(--green-shadow); /* dim success panel bg, success button press-shadow */
+  --status-success-subtle: var(
+    --green-shadow
+  ); /* dim success panel bg, success button press-shadow */
   --status-danger: var(--red); /* incorrect / failed / error / delete */
-  --status-danger-subtle: var(--red-shadow); /* dim danger panel bg, danger press-shadow, delete-hover bg */
+  --status-danger-subtle: var(
+    --red-shadow
+  ); /* dim danger panel bg, danger press-shadow, delete-hover bg */
   --status-caution: var(--amber); /* mid-tier / warning state */
   --status-caution-subtle: var(--amber-dim); /* dim caution panel bg */
 
   /* Interactive */
-  --color-accent: var(--amber); /* brand accent: headings, wordmark, default PixelFrame ring, input focus border */
-  --color-focus-ring: var(--amber); /* focus-visible outline, used on nearly every interactive element */
-  --state-selected-bg: var(--amber); /* solid bg for a toggle-style active state (tabs, step cells, level cells) — pair with --text-on-accent */
-  --state-selected-surface: var(--surface-selected); /* dim bg for an inline selected option row (AnswerOption) — pair with an inset --color-focus-ring */
+  --color-accent: var(
+    --amber
+  ); /* brand accent: headings, wordmark, default PixelFrame ring, input focus border */
+  --color-focus-ring: var(
+    --amber
+  ); /* focus-visible outline, used on nearly every interactive element */
+  --state-selected-bg: var(
+    --amber
+  ); /* solid bg for a toggle-style active state (tabs, step cells, level cells) — pair with --text-on-accent */
+  --state-selected-surface: var(
+    --surface-selected
+  ); /* dim bg for an inline selected option row (AnswerOption) — pair with an inset --color-focus-ring */
   --state-hover-surface: var(--surface-hover); /* hover bg for interactive rows/cards */
 
   /* Surfaces & borders */
-  --surface-page: var(--ink); /* app background; recessed surfaces (inputs, badges, HUD track, step cells) */
-  --surface-panel: var(--cabinet); /* card/panel background (PixelFrame, list rows, nav bar, hero) */
-  --surface-panel-border: var(--cabinet-light); /* borders/dividers on panels; inactive/default control bg */
+  --surface-page: var(
+    --ink
+  ); /* app background; recessed surfaces (inputs, badges, HUD track, step cells) */
+  --surface-panel: var(
+    --cabinet
+  ); /* card/panel background (PixelFrame, list rows, nav bar, hero) */
+  --surface-panel-border: var(
+    --cabinet-light
+  ); /* borders/dividers on panels; inactive/default control bg */
   --border-info: var(--muted); /* neutral informational callout border (e.g. exam passage block) */
 
   /* ---- Layout primitives ---- */

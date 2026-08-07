@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import MarkdownRenderer from '@/shared/components/MarkdownRenderer.vue';
 
 const props = defineProps<{
-  front: string
-  back: string
-  flipped: boolean
-  frontEyebrow?: string
-  backEyebrow?: string
-  hint?: string
-}>()
+  front: string;
+  back: string;
+  flipped: boolean;
+  frontEyebrow?: string;
+  backEyebrow?: string;
+  hint?: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'toggle'): void
-}>()
+  (e: 'toggle'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 // Labels default to the active locale rather than hardcoded Vietnamese, but
 // stay overridable so Learn/Match can relabel the faces.
-const resolvedFrontEyebrow = computed(() => props.frontEyebrow ?? `▸ ${t('deckDetail.term')}`)
-const resolvedBackEyebrow = computed(() => props.backEyebrow ?? `▸ ${t('deckDetail.definition')}`)
-const resolvedHint = computed(() => props.hint ?? t('flashcards.flipHint'))
+const resolvedFrontEyebrow = computed(() => props.frontEyebrow ?? `▸ ${t('deckDetail.term')}`);
+const resolvedBackEyebrow = computed(() => props.backEyebrow ?? `▸ ${t('deckDetail.definition')}`);
+const resolvedHint = computed(() => props.hint ?? t('flashcards.flipHint'));
 </script>
 
 <template>

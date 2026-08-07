@@ -1,101 +1,101 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { apiFetch } from '@/utils/api'
-import AppButton from '@/shared/components/AppButton.vue'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import CardRow from './components/CardRow.vue'
-import type { DeckCard } from './types'
+import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { apiFetch } from '@/utils/api';
+import AppButton from '@/shared/components/AppButton.vue';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import CardRow from './components/CardRow.vue';
+import type { DeckCard } from './types';
 
-const props = defineProps<{ deckId: string }>()
+const props = defineProps<{ deckId: string }>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const deckName = ref('')
-const cards = ref<DeckCard[]>([])
-const isLoading = ref(true)
-const notFound = ref(false)
-const isSavingOrder = ref(false)
-const orderSaved = ref(false)
+const deckName = ref('');
+const cards = ref<DeckCard[]>([]);
+const isLoading = ref(true);
+const notFound = ref(false);
+const isSavingOrder = ref(false);
+const orderSaved = ref(false);
 
 /** Index currently being dragged, or null when no drag is in flight. */
-const draggingIndex = ref<number | null>(null)
+const draggingIndex = ref<number | null>(null);
 
 /** The order differs from what the server last confirmed. */
-const savedOrder = ref<string[]>([])
+const savedOrder = ref<string[]>([]);
 const isDirty = computed(
   () =>
     cards.value.length === savedOrder.value.length &&
     cards.value.some((card, i) => card.id !== savedOrder.value[i]),
-)
+);
 
 async function fetchDeck() {
-  isLoading.value = true
-  notFound.value = false
+  isLoading.value = true;
+  notFound.value = false;
   try {
     // There is no GET /api/decks/{id}; the list endpoint is the only source of
     // deck metadata, so the name is looked up from it.
     const [decksRes, cardsRes] = await Promise.all([
       apiFetch('/api/decks'),
       apiFetch(`/api/decks/${props.deckId}/cards`),
-    ])
-    if (!decksRes.ok || !cardsRes.ok) throw new Error('Request failed')
+    ]);
+    if (!decksRes.ok || !cardsRes.ok) throw new Error('Request failed');
 
-    const decks = (await decksRes.json()) as { id: string; name: string }[]
-    const deck = decks.find((d) => d.id === props.deckId)
+    const decks = (await decksRes.json()) as { id: string; name: string }[];
+    const deck = decks.find((d) => d.id === props.deckId);
     if (!deck) {
-      notFound.value = true
-      return
+      notFound.value = true;
+      return;
     }
-    deckName.value = deck.name
-    cards.value = (await cardsRes.json()) as DeckCard[]
-    savedOrder.value = cards.value.map((c) => c.id)
+    deckName.value = deck.name;
+    cards.value = (await cardsRes.json()) as DeckCard[];
+    savedOrder.value = cards.value.map((c) => c.id);
   } catch (err) {
-    console.error('Failed to load deck:', err)
-    notFound.value = true
+    console.error('Failed to load deck:', err);
+    notFound.value = true;
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function onDragStart(index: number) {
-  draggingIndex.value = index
-  orderSaved.value = false
+  draggingIndex.value = index;
+  orderSaved.value = false;
 }
 
 /** Live-reorders as the pointer crosses each row, so the list previews the drop. */
 function onDragEnter(index: number) {
-  const from = draggingIndex.value
-  if (from === null || from === index) return
-  const [moved] = cards.value.splice(from, 1)
-  cards.value.splice(index, 0, moved)
-  draggingIndex.value = index
+  const from = draggingIndex.value;
+  if (from === null || from === index) return;
+  const [moved] = cards.value.splice(from, 1);
+  cards.value.splice(index, 0, moved);
+  draggingIndex.value = index;
 }
 
 function onDragEnd() {
-  draggingIndex.value = null
+  draggingIndex.value = null;
 }
 
 async function saveOrder() {
-  isSavingOrder.value = true
+  isSavingOrder.value = true;
   try {
     const res = await apiFetch(`/api/decks/${props.deckId}/cards/reorder`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cardIds: cards.value.map((c) => c.id) }),
-    })
-    if (!res.ok) throw new Error('Request failed')
-    cards.value = (await res.json()) as DeckCard[]
-    savedOrder.value = cards.value.map((c) => c.id)
-    orderSaved.value = true
+    });
+    if (!res.ok) throw new Error('Request failed');
+    cards.value = (await res.json()) as DeckCard[];
+    savedOrder.value = cards.value.map((c) => c.id);
+    orderSaved.value = true;
   } catch (err) {
-    console.error('Failed to save card order:', err)
+    console.error('Failed to save card order:', err);
   } finally {
-    isSavingOrder.value = false
+    isSavingOrder.value = false;
   }
 }
 
-onMounted(fetchDeck)
+onMounted(fetchDeck);
 </script>
 
 <template>

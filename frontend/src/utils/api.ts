@@ -8,7 +8,7 @@ export const apiFetch = async (url: string, options: RequestInit = {}) => {
 
   const response = await fetch(url, {
     ...options,
-    headers
+    headers,
   });
 
   if (response.status === 401) {

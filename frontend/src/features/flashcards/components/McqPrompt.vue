@@ -1,19 +1,19 @@
 <script setup lang="ts">
 /** Multiple-choice prompt for Learn mode's first round. */
-import AppButton from '@/shared/components/AppButton.vue'
+import AppButton from '@/shared/components/AppButton.vue';
 
 defineProps<{
-  prompt: string
-  options: string[]
+  prompt: string;
+  options: string[];
   /** Set once the user has answered; drives the correct/incorrect styling. */
-  selected: string | null
-  correctAnswer: string
-  disabled: boolean
-}>()
+  selected: string | null;
+  correctAnswer: string;
+  disabled: boolean;
+}>();
 
 defineEmits<{
-  (e: 'select', option: string): void
-}>()
+  (e: 'select', option: string): void;
+}>();
 </script>
 
 <template>

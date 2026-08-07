@@ -6,28 +6,28 @@
  * on submit (see `@/utils/options`), so the user never edits a letter they
  * can't meaningfully change.
  */
-import { computed, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import AppButton from '@/shared/components/AppButton.vue'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import { OPTION_KEYS, toFormOptions, toStoredOptions } from '@/utils/options'
-import { DIFFICULTIES, EXAM_TYPES, type BankQuestion } from '../types'
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import AppButton from '@/shared/components/AppButton.vue';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import { OPTION_KEYS, toFormOptions, toStoredOptions } from '@/utils/options';
+import { DIFFICULTIES, EXAM_TYPES, type BankQuestion } from '../types';
 
 const props = defineProps<{
   /** Present when editing; absent when creating. */
-  question?: BankQuestion | null
-  isSaving?: boolean
-  error?: string | null
-}>()
+  question?: BankQuestion | null;
+  isSaving?: boolean;
+  error?: string | null;
+}>();
 
 const emit = defineEmits<{
-  (e: 'submit', payload: Record<string, unknown>): void
-  (e: 'cancel'): void
-}>()
+  (e: 'submit', payload: Record<string, unknown>): void;
+  (e: 'cancel'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const isEditing = computed(() => Boolean(props.question))
+const isEditing = computed(() => Boolean(props.question));
 
 function blankForm() {
   return {
@@ -41,10 +41,10 @@ function blankForm() {
     explanation: '',
     difficulty: 'medium',
     tags: '',
-  }
+  };
 }
 
-const form = ref(blankForm())
+const form = ref(blankForm());
 
 watch(
   () => props.question,
@@ -62,19 +62,19 @@ watch(
           difficulty: question.difficulty,
           tags: (question.tags ?? []).join(', '),
         }
-      : blankForm()
+      : blankForm();
   },
   { immediate: true },
-)
+);
 
 const isValid = computed(
   () =>
     form.value.questionText.trim().length > 0 &&
     form.value.options.every((option) => option.trim().length > 0),
-)
+);
 
 function submit() {
-  if (!isValid.value) return
+  if (!isValid.value) return;
   emit('submit', {
     examType: form.value.examType,
     part: form.value.part.trim() || null,
@@ -90,7 +90,7 @@ function submit() {
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean),
-  })
+  });
 }
 </script>
 
@@ -149,7 +149,12 @@ function submit() {
 
       <div class="arcade-field">
         <label class="arcade-label" for="qform-passage">{{ t('questionBank.passage') }}</label>
-        <textarea id="qform-passage" v-model="form.passage" rows="3" class="arcade-input"></textarea>
+        <textarea
+          id="qform-passage"
+          v-model="form.passage"
+          rows="3"
+          class="arcade-input"
+        ></textarea>
       </div>
 
       <div class="arcade-field">
@@ -220,7 +225,9 @@ function submit() {
           {{ t('common.cancel') }}
         </AppButton>
         <AppButton type="submit" :disabled="!isValid || isSaving">
-          {{ isSaving ? t('examCreator.saving') : isEditing ? t('common.update') : t('common.save') }}
+          {{
+            isSaving ? t('examCreator.saving') : isEditing ? t('common.update') : t('common.save')
+          }}
         </AppButton>
       </div>
     </form>

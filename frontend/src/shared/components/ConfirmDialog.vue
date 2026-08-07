@@ -1,46 +1,46 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import PixelFrame from './PixelFrame.vue'
-import AppButton from './AppButton.vue'
+import { onMounted, onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import PixelFrame from './PixelFrame.vue';
+import AppButton from './AppButton.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    isOpen: boolean
-    title: string
-    message: string
-    confirmText?: string
-    cancelText?: string
-    variant?: 'primary' | 'danger'
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'primary' | 'danger';
   }>(),
   {
     confirmText: '',
     cancelText: '',
     variant: 'danger',
-  }
-)
+  },
+);
 
 const emit = defineEmits<{
-  (e: 'update:isOpen', value: boolean): void
-  (e: 'confirm'): void
-  (e: 'cancel'): void
-}>()
+  (e: 'update:isOpen', value: boolean): void;
+  (e: 'confirm'): void;
+  (e: 'cancel'): void;
+}>();
 
 function handleCancel() {
-  emit('update:isOpen', false)
-  emit('cancel')
+  emit('update:isOpen', false);
+  emit('cancel');
 }
 
 function handleConfirm() {
-  emit('update:isOpen', false)
-  emit('confirm')
+  emit('update:isOpen', false);
+  emit('confirm');
 }
 
 function handleKeydown(event: KeyboardEvent) {
   if (props.isOpen && event.key === 'Escape') {
-    handleCancel()
+    handleCancel();
   }
 }
 
@@ -48,21 +48,21 @@ watch(
   () => props.isOpen,
   (open) => {
     if (open) {
-      document.body.style.overflow = 'hidden'
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = '';
     }
-  }
-)
+  },
+);
 
 onMounted(() => {
-  window.addEventListener('keydown', handleKeydown)
-})
+  window.addEventListener('keydown', handleKeydown);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown)
-  document.body.style.overflow = ''
-})
+  window.removeEventListener('keydown', handleKeydown);
+  document.body.style.overflow = '';
+});
 </script>
 
 <template>
@@ -92,18 +92,14 @@ onUnmounted(() => {
             <AppButton variant="secondary" class="confirm-btn" @click="handleCancel">
               {{ cancelText || t('common.cancel') }}
             </AppButton>
-            <AppButton
-              :variant="variant"
-              class="confirm-btn"
-              @click="handleConfirm"
-            >
+            <AppButton :variant="variant" class="confirm-btn" @click="handleConfirm">
               {{ confirmText || (variant === 'danger' ? t('common.delete') : t('common.save')) }}
             </AppButton>
           </footer>
         </div>
       </PixelFrame>
     </div>
-  </ Teleport>
+  </Teleport>
 </template>
 
 <style scoped>

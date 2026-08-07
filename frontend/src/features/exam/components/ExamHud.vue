@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import { useExamStore } from '../store/examStore'
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import { useExamStore } from '../store/examStore';
 
-const store = useExamStore()
+const store = useExamStore();
 </script>
 
 <template>
@@ -52,7 +52,9 @@ const store = useExamStore()
   background:
     linear-gradient(90deg, var(--color-accent), var(--amber-light)),
     repeating-linear-gradient(90deg, var(--overlay-scan-line) 0 4px, transparent 4px 8px);
-  transition: width 0.25s linear, background 0.4s ease;
+  transition:
+    width 0.25s linear,
+    background 0.4s ease;
 }
 .hud-bar-fill--low {
   background:

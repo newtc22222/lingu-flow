@@ -1,14 +1,14 @@
 <script setup lang="ts">
 defineProps<{
-  optionKey: string
-  label: string
-  selected: boolean
-  disabled?: boolean
-}>()
+  optionKey: string;
+  label: string;
+  selected: boolean;
+  disabled?: boolean;
+}>();
 
 defineEmits<{
-  (e: 'select'): void
-}>()
+  (e: 'select'): void;
+}>();
 </script>
 
 <template>
@@ -20,7 +20,9 @@ defineEmits<{
     :aria-pressed="selected"
     @click="$emit('select')"
   >
-    <span class="opt-key font-pixel" :class="{ 'opt-key--selected': selected }">{{ optionKey }}</span>
+    <span class="opt-key font-pixel" :class="{ 'opt-key--selected': selected }">{{
+      optionKey
+    }}</span>
     <span class="opt-label">{{ label }}</span>
   </button>
 </template>

@@ -1,43 +1,43 @@
 <script setup lang="ts">
 /** Free-text recall prompt for Learn mode's second round. */
-import { nextTick, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import AppButton from '@/shared/components/AppButton.vue'
+import { nextTick, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import AppButton from '@/shared/components/AppButton.vue';
 
 const props = defineProps<{
-  prompt: string
+  prompt: string;
   /** Null until the answer is checked, then the verdict for this attempt. */
-  verdict: 'correct' | 'incorrect' | null
-  correctAnswer: string
-}>()
+  verdict: 'correct' | 'incorrect' | null;
+  correctAnswer: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'check', answer: string): void
-  (e: 'next'): void
-}>()
+  (e: 'check', answer: string): void;
+  (e: 'next'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const answer = ref('')
-const inputRef = ref<HTMLInputElement | null>(null)
+const answer = ref('');
+const inputRef = ref<HTMLInputElement | null>(null);
 
 // Each new prompt clears the box and takes focus, so the round can be played
 // entirely from the keyboard.
 watch(
   () => props.prompt,
   async () => {
-    answer.value = ''
-    await nextTick()
-    inputRef.value?.focus()
+    answer.value = '';
+    await nextTick();
+    inputRef.value?.focus();
   },
   { immediate: true },
-)
+);
 
 function submit() {
   if (props.verdict === null) {
-    emit('check', answer.value)
+    emit('check', answer.value);
   } else {
-    emit('next')
+    emit('next');
   }
 }
 </script>

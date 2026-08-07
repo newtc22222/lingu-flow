@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "./styles/tokens.css";
+@import 'tailwindcss';
+@import './styles/tokens.css';
 
 body {
   @apply bg-ink text-phosphor font-body m-0 p-0 antialiased h-screen overflow-hidden;

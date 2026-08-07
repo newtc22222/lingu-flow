@@ -1,5 +1,5 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/features/auth/store/authStore'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
+import { useAuthStore } from '@/features/auth/store/authStore';
 
 /**
  * Every top-level screen is a route. Routes are lazy-loaded so the exam
@@ -108,22 +108,22 @@ const routes: RouteRecordRaw[] = [
     path: '/:pathMatch(.*)*',
     redirect: { name: 'dashboard' },
   },
-]
+];
 
 export const router = createRouter({
   history: createWebHistory(),
   routes,
-})
+});
 
 router.beforeEach((to) => {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
 
   if (!to.meta.public && !auth.isAuthenticated) {
-    return { name: 'auth' }
+    return { name: 'auth' };
   }
   // Already signed in? `/auth` has nothing to offer — bounce to the dashboard.
   if (to.name === 'auth' && auth.isAuthenticated) {
-    return { name: 'dashboard' }
+    return { name: 'dashboard' };
   }
-  return true
-})
+  return true;
+});

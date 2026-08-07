@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import AppButton from '@/shared/components/AppButton.vue'
-import ManageListShell from '@/shared/components/ManageListShell.vue'
-import QuestionFilters from '@/shared/components/QuestionFilters.vue'
-import QuestionForm from './components/QuestionForm.vue'
-import { useQuestionBankStore } from './store/questionBankStore'
-import type { BankQuestion } from './types'
+import { onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import AppButton from '@/shared/components/AppButton.vue';
+import ManageListShell from '@/shared/components/ManageListShell.vue';
+import QuestionFilters from '@/shared/components/QuestionFilters.vue';
+import QuestionForm from './components/QuestionForm.vue';
+import { useQuestionBankStore } from './store/questionBankStore';
+import type { BankQuestion } from './types';
 
-const { t } = useI18n()
-const store = useQuestionBankStore()
+const { t } = useI18n();
+const store = useQuestionBankStore();
 
-const editing = ref<BankQuestion | null>(null)
-const isSaving = ref(false)
-const formError = ref<string | null>(null)
+const editing = ref<BankQuestion | null>(null);
+const isSaving = ref(false);
+const formError = ref<string | null>(null);
 
 /**
  * Two-step inline delete rather than a third native `confirm()`.
@@ -21,69 +21,69 @@ const formError = ref<string | null>(null)
  * gap not to be extended, and asks that a third be flagged rather than added.
  * A real ConfirmDialog is filed as its own follow-up.
  */
-const pendingDeleteId = ref<string | null>(null)
+const pendingDeleteId = ref<string | null>(null);
 
 async function refresh() {
-  await Promise.all([store.fetchQuestions(), store.fetchFacets()])
+  await Promise.all([store.fetchQuestions(), store.fetchFacets()]);
 }
 
 // Re-query whenever a filter changes; the facet lists are scoped to exam type.
 watch(
   () => store.filters,
   () => {
-    void store.fetchQuestions()
+    void store.fetchQuestions();
   },
   { deep: true },
-)
+);
 watch(
   () => store.filters.examType,
   () => {
-    void store.fetchFacets()
+    void store.fetchFacets();
   },
-)
+);
 
 function startEdit(question: BankQuestion) {
-  if (!question.isOwned) return
-  editing.value = question
-  formError.value = null
-  pendingDeleteId.value = null
+  if (!question.isOwned) return;
+  editing.value = question;
+  formError.value = null;
+  pendingDeleteId.value = null;
 }
 
 function cancelEdit() {
-  editing.value = null
-  formError.value = null
+  editing.value = null;
+  formError.value = null;
 }
 
 async function save(payload: Record<string, unknown>) {
-  isSaving.value = true
-  formError.value = null
+  isSaving.value = true;
+  formError.value = null;
   try {
     if (editing.value) {
-      await store.updateQuestion(editing.value.id, payload)
-      editing.value = null
+      await store.updateQuestion(editing.value.id, payload);
+      editing.value = null;
     } else {
-      await store.createQuestion(payload)
+      await store.createQuestion(payload);
     }
   } catch (err) {
     // Surfaces the API's own 409 wording, e.g. why an answered question's key
     // is frozen — a generic message would leave the user stuck.
-    formError.value = err instanceof Error ? err.message : t('questionBank.saveFailed')
+    formError.value = err instanceof Error ? err.message : t('questionBank.saveFailed');
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 async function confirmDelete(id: string) {
   try {
-    await store.deleteQuestion(id)
+    await store.deleteQuestion(id);
   } catch (err) {
-    formError.value = err instanceof Error ? err.message : t('questionBank.deleteFailed')
+    formError.value = err instanceof Error ? err.message : t('questionBank.deleteFailed');
   } finally {
-    pendingDeleteId.value = null
+    pendingDeleteId.value = null;
   }
 }
 
-onMounted(refresh)
+onMounted(refresh);
 </script>
 
 <template>
@@ -123,7 +123,9 @@ onMounted(refresh)
       <div class="qb-meta font-label">
         <span class="qb-chip">{{ item.examType.toUpperCase() }}</span>
         <span v-if="item.part" class="qb-chip">{{ item.part }}</span>
-        <span class="qb-chip qb-chip--muted">{{ t(`questionBank.difficulties.${item.difficulty}`) }}</span>
+        <span class="qb-chip qb-chip--muted">{{
+          t(`questionBank.difficulties.${item.difficulty}`)
+        }}</span>
         <span v-if="item.passageGroup" class="qb-chip qb-chip--muted">
           {{ t('questionBank.inSet') }}
         </span>

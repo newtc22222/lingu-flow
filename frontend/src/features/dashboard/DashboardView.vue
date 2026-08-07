@@ -1,66 +1,66 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import { apiFetch } from '@/utils/api'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import StatTile from './components/StatTile.vue'
-import WorldCard, { type LevelProgress } from './components/WorldCard.vue'
+import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import { apiFetch } from '@/utils/api';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import StatTile from './components/StatTile.vue';
+import WorldCard, { type LevelProgress } from './components/WorldCard.vue';
 
 interface WorldProgress {
-  id: string
-  title: string
-  levels: LevelProgress[]
-  progressPercent: number
-  subLabel: string
+  id: string;
+  title: string;
+  levels: LevelProgress[];
+  progressPercent: number;
+  subLabel: string;
 }
 
 interface DashboardProgress {
-  totalXp: number
-  streakDays: number
-  examReadiness: number
-  worlds: WorldProgress[]
+  totalXp: number;
+  streakDays: number;
+  examReadiness: number;
+  worlds: WorldProgress[];
 }
 
-const { t } = useI18n()
-const router = useRouter()
+const { t } = useI18n();
+const router = useRouter();
 
-const isLoading = ref(true)
-const error = ref<string | null>(null)
-const progress = ref<DashboardProgress | null>(null)
+const isLoading = ref(true);
+const error = ref<string | null>(null);
+const progress = ref<DashboardProgress | null>(null);
 
 /** First not-yet-finished level across all worlds, in world order — where "CONTINUE" resumes. */
 const currentLevel = computed(() => {
   for (const world of progress.value?.worlds ?? []) {
-    const level = world.levels.find((l) => l.status === 'current')
-    if (level) return level
+    const level = world.levels.find((l) => l.status === 'current');
+    if (level) return level;
   }
-  return null
-})
+  return null;
+});
 
 async function fetchProgress() {
-  isLoading.value = true
-  error.value = null
+  isLoading.value = true;
+  error.value = null;
   try {
-    const res = await apiFetch('/api/dashboard/progress')
-    if (!res.ok) throw new Error('Request failed')
-    progress.value = (await res.json()) as DashboardProgress
+    const res = await apiFetch('/api/dashboard/progress');
+    if (!res.ok) throw new Error('Request failed');
+    progress.value = (await res.json()) as DashboardProgress;
   } catch (err) {
-    console.error('Failed to fetch dashboard progress:', err)
-    error.value = t('dashboard.error')
+    console.error('Failed to fetch dashboard progress:', err);
+    error.value = t('dashboard.error');
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function handleContinueCta() {
-  void router.push({ name: 'flashcards' })
+  void router.push({ name: 'flashcards' });
 }
 
 onMounted(() => {
-  void fetchProgress()
-})
+  void fetchProgress();
+});
 </script>
 
 <template>

@@ -6,37 +6,33 @@
  * composer consumes it too, and cross-feature imports are forbidden by
  * `.context/ui-guidelines.md`.
  */
-import { useI18n } from 'vue-i18n'
-import AppButton from './AppButton.vue'
-import {
-  DIFFICULTIES,
-  EXAM_TYPES,
-  type QuestionFilterState,
-} from '@/features/question-bank/types'
+import { useI18n } from 'vue-i18n';
+import AppButton from './AppButton.vue';
+import { DIFFICULTIES, EXAM_TYPES, type QuestionFilterState } from '@/features/question-bank/types';
 
 const props = defineProps<{
-  modelValue: QuestionFilterState
-  availableTags: string[]
-  availableParts: string[]
-  hasActiveFilters: boolean
-}>()
+  modelValue: QuestionFilterState;
+  availableTags: string[];
+  availableParts: string[];
+  hasActiveFilters: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: QuestionFilterState): void
-  (e: 'reset'): void
-}>()
+  (e: 'update:modelValue', value: QuestionFilterState): void;
+  (e: 'reset'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 function patch(changes: Partial<QuestionFilterState>) {
-  emit('update:modelValue', { ...props.modelValue, ...changes })
+  emit('update:modelValue', { ...props.modelValue, ...changes });
 }
 
 function toggleTag(tag: string) {
   const tags = props.modelValue.tags.includes(tag)
     ? props.modelValue.tags.filter((existing) => existing !== tag)
-    : [...props.modelValue.tags, tag]
-  patch({ tags })
+    : [...props.modelValue.tags, tag];
+  patch({ tags });
 }
 </script>
 

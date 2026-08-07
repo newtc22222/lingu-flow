@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n'
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n';
 
-const { t, locale } = useI18n()
-const router = useRouter()
+const { t, locale } = useI18n();
+const router = useRouter();
 
-const isCrtEnabled = ref(true)
-const dailyXpGoal = ref(50)
-const saveSuccess = ref(false)
+const isCrtEnabled = ref(true);
+const dailyXpGoal = ref(50);
+const saveSuccess = ref(false);
 
 function switchLocale(next: AppLocale) {
-  setLocale(next)
+  setLocale(next);
 }
 
 function toggleCrt(enabled: boolean) {
-  isCrtEnabled.value = enabled
+  isCrtEnabled.value = enabled;
 }
 
 function handleSave() {
-  saveSuccess.value = true
+  saveSuccess.value = true;
   setTimeout(() => {
-    saveSuccess.value = false
-  }, 3000)
+    saveSuccess.value = false;
+  }, 3000);
 }
 
 function handleCancel() {
-  void router.push({ name: 'profile' })
+  void router.push({ name: 'profile' });
 }
 </script>
 
@@ -100,7 +100,9 @@ function handleCancel() {
           <div class="setting-row setting-row--disabled">
             <div class="setting-label-box">
               <span class="setting-label font-label">{{ t('settings.fields.audioSfx') }}</span>
-              <span class="disabled-badge font-label">[{{ t('settings.options.notAvailable') }}]</span>
+              <span class="disabled-badge font-label"
+                >[{{ t('settings.options.notAvailable') }}]</span
+              >
             </div>
             <div class="toggle-group" role="group">
               <button type="button" disabled class="toggle-btn toggle-btn--disabled font-label">
@@ -136,7 +138,9 @@ function handleCancel() {
           <div class="setting-row setting-row--disabled">
             <div class="setting-label-box">
               <span class="setting-label font-label">{{ t('settings.fields.notifications') }}</span>
-              <span class="disabled-badge font-label">[{{ t('settings.options.notAvailable') }}]</span>
+              <span class="disabled-badge font-label"
+                >[{{ t('settings.options.notAvailable') }}]</span
+              >
             </div>
             <div class="toggle-group" role="group">
               <button type="button" disabled class="toggle-btn toggle-btn--disabled font-label">
@@ -301,7 +305,9 @@ function handleCancel() {
   letter-spacing: var(--tracking-wide);
   padding: var(--space-3) var(--space-5);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .toggle-btn--active {

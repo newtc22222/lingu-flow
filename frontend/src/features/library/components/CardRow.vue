@@ -5,22 +5,22 @@
  * Drag events are forwarded to the parent rather than handled here: the parent
  * owns the card array, so it is the only place that can reorder it.
  */
-import { useI18n } from 'vue-i18n'
-import type { DeckCard } from '../types'
+import { useI18n } from 'vue-i18n';
+import type { DeckCard } from '../types';
 
 defineProps<{
-  card: DeckCard
-  index: number
-  isDragging: boolean
-}>()
+  card: DeckCard;
+  index: number;
+  isDragging: boolean;
+}>();
 
 defineEmits<{
-  (e: 'dragstart'): void
-  (e: 'dragenter'): void
-  (e: 'dragend'): void
-}>()
+  (e: 'dragstart'): void;
+  (e: 'dragenter'): void;
+  (e: 'dragend'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 </script>
 
 <template>

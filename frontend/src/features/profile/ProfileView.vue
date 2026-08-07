@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import { useAuthStore } from '@/features/auth/store/authStore'
-import { apiFetch } from '@/utils/api'
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { apiFetch } from '@/utils/api';
 
-const { t } = useI18n()
-const router = useRouter()
-const auth = useAuthStore()
+const { t } = useI18n();
+const router = useRouter();
+const auth = useAuthStore();
 
-const showLogoutConfirm = ref(false)
-const isLoading = ref(true)
+const showLogoutConfirm = ref(false);
+const isLoading = ref(true);
 
 interface UserProfileData {
-  username: string
-  email: string
-  level: number
-  totalXp: number
-  longestStreak: number
-  cardsLearned: number
-  examsCompleted: number
+  username: string;
+  email: string;
+  level: number;
+  totalXp: number;
+  longestStreak: number;
+  cardsLearned: number;
+  examsCompleted: number;
 }
 
 const profileData = ref<UserProfileData>({
@@ -33,44 +33,44 @@ const profileData = ref<UserProfileData>({
   longestStreak: 14,
   cardsLearned: 480,
   examsCompleted: 24,
-})
+});
 
 async function fetchProfile() {
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    const res = await apiFetch('/api/auth/me')
+    const res = await apiFetch('/api/auth/me');
     if (res.ok) {
-      const data = await res.json()
-      profileData.value.username = data.username || data.email?.split('@')[0] || 'PLAYER_ONE'
-      profileData.value.email = data.email || 'player@linguflow.app'
+      const data = await res.json();
+      profileData.value.username = data.username || data.email?.split('@')[0] || 'PLAYER_ONE';
+      profileData.value.email = data.email || 'player@linguflow.app';
       if (data.xp !== undefined) {
-        profileData.value.totalXp = data.xp
-        profileData.value.level = Math.max(1, Math.floor(data.xp / 1000) + 1)
+        profileData.value.totalXp = data.xp;
+        profileData.value.level = Math.max(1, Math.floor(data.xp / 1000) + 1);
       }
     }
   } catch (err) {
-    console.error('Failed to fetch user profile:', err)
+    console.error('Failed to fetch user profile:', err);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function handleGoToSettings() {
-  void router.push({ name: 'settings' })
+  void router.push({ name: 'settings' });
 }
 
 function handleLogoutClick() {
-  showLogoutConfirm.value = true
+  showLogoutConfirm.value = true;
 }
 
 async function handleConfirmLogout() {
-  auth.logout()
-  await router.push({ name: 'auth' })
+  auth.logout();
+  await router.push({ name: 'auth' });
 }
 
 onMounted(() => {
-  void fetchProfile()
-})
+  void fetchProfile();
+});
 </script>
 
 <template>

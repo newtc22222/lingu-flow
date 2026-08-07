@@ -1,26 +1,27 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import PixelFrame from '@/shared/components/PixelFrame.vue'
-import AppButton from '@/shared/components/AppButton.vue'
-import AnswerOption from './AnswerOption.vue'
-import type { ExamQuestion } from '../store/examStore'
-import { OPTION_KEYS } from '../store/examStore'
+import { useI18n } from 'vue-i18n';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
+import AnswerOption from './AnswerOption.vue';
+import type { ExamQuestion } from '../store/examStore';
+import { OPTION_KEYS } from '../store/examStore';
 
 const props = defineProps<{
-  question: ExamQuestion
-  selectedAnswer?: string
-  disabled?: boolean
-  isLastQuestion: boolean
-}>()
+  question: ExamQuestion;
+  selectedAnswer?: string;
+  disabled?: boolean;
+  isLastQuestion: boolean;
+}>();
 
 defineEmits<{
-  (e: 'select', optionKey: string): void
-  (e: 'submit'): void
-}>()
+  (e: 'select', optionKey: string): void;
+  (e: 'submit'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const questionLabel = () => (props.question.type ? props.question.type.toUpperCase() : 'MULTIPLE CHOICE')
+const questionLabel = () =>
+  props.question.type ? props.question.type.toUpperCase() : 'MULTIPLE CHOICE';
 </script>
 
 <template>

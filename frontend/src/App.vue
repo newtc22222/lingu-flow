@@ -1,72 +1,74 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/features/auth/store/authStore'
-import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n'
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue'
-import AppFooter from '@/shared/components/AppFooter.vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '@/features/auth/store/authStore';
+import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n';
+import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
+import AppFooter from '@/shared/components/AppFooter.vue';
 
-const route = useRoute()
-const router = useRouter()
-const auth = useAuthStore()
-const { t, locale } = useI18n()
+const route = useRoute();
+const router = useRouter();
+const auth = useAuthStore();
+const { t, locale } = useI18n();
 
-const showLogoutConfirm = ref(false)
-const isProfileMenuOpen = ref(false)
+const showLogoutConfirm = ref(false);
+const isProfileMenuOpen = ref(false);
 
 /** Which arcade tab reads as active. */
-const activeTab = computed<'dashboard' | 'exams' | 'flashcards' | 'decks' | 'cards' | 'bank' | 'profile' | null>(() => {
-  const path = route.path
-  if (path.startsWith('/dashboard')) return 'dashboard'
-  if (path.startsWith('/exams')) return 'exams'
-  if (path.startsWith('/flashcards')) return 'flashcards'
-  if (path.startsWith('/decks')) return 'decks'
-  if (path.startsWith('/cards')) return 'cards'
-  if (path.startsWith('/question-bank')) return 'bank'
-  if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile'
-  return null
-})
+const activeTab = computed<
+  'dashboard' | 'exams' | 'flashcards' | 'decks' | 'cards' | 'bank' | 'profile' | null
+>(() => {
+  const path = route.path;
+  if (path.startsWith('/dashboard')) return 'dashboard';
+  if (path.startsWith('/exams')) return 'exams';
+  if (path.startsWith('/flashcards')) return 'flashcards';
+  if (path.startsWith('/decks')) return 'decks';
+  if (path.startsWith('/cards')) return 'cards';
+  if (path.startsWith('/question-bank')) return 'bank';
+  if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile';
+  return null;
+});
 
 /** The nav chrome is for signed-in screens only — `/auth` renders bare. */
-const showNav = computed(() => auth.isAuthenticated && route.name !== 'auth')
+const showNav = computed(() => auth.isAuthenticated && route.name !== 'auth');
 
 function switchLocale(next: AppLocale) {
-  setLocale(next)
+  setLocale(next);
 }
 
 function toggleProfileMenu() {
-  isProfileMenuOpen.value = !isProfileMenuOpen.value
+  isProfileMenuOpen.value = !isProfileMenuOpen.value;
 }
 
 function closeProfileMenu() {
-  isProfileMenuOpen.value = false
+  isProfileMenuOpen.value = false;
 }
 
 function handleLogoutClick() {
-  closeProfileMenu()
-  showLogoutConfirm.value = true
+  closeProfileMenu();
+  showLogoutConfirm.value = true;
 }
 
 async function handleConfirmLogout() {
-  auth.logout()
-  await router.push({ name: 'auth' })
+  auth.logout();
+  await router.push({ name: 'auth' });
 }
 
 function handleDocumentClick(event: MouseEvent) {
-  const target = event.target as HTMLElement
+  const target = event.target as HTMLElement;
   if (!target.closest('.profile-dropdown-container')) {
-    closeProfileMenu()
+    closeProfileMenu();
   }
 }
 
 onMounted(() => {
-  document.addEventListener('click', handleDocumentClick)
-})
+  document.addEventListener('click', handleDocumentClick);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleDocumentClick)
-})
+  document.removeEventListener('click', handleDocumentClick);
+});
 </script>
 
 <template>
@@ -75,9 +77,7 @@ onUnmounted(() => {
     <header v-if="showNav" class="app-header">
       <div class="nav-container">
         <!-- Logo / Wordmark -->
-        <RouterLink :to="{ name: 'dashboard' }" class="nav-logo font-pixel">
-          LINGUFLOW
-        </RouterLink>
+        <RouterLink :to="{ name: 'dashboard' }" class="nav-logo font-pixel"> LINGUFLOW </RouterLink>
 
         <!-- Navigation Tabs -->
         <nav class="nav-tabs" role="tablist">
@@ -154,11 +154,7 @@ onUnmounted(() => {
             </button>
 
             <div v-if="isProfileMenuOpen" class="profile-dropdown font-label">
-              <RouterLink
-                :to="{ name: 'profile' }"
-                class="dropdown-item"
-                @click="closeProfileMenu"
-              >
+              <RouterLink :to="{ name: 'profile' }" class="dropdown-item" @click="closeProfileMenu">
                 {{ t('profile.title') }}
               </RouterLink>
               <RouterLink
@@ -255,7 +251,9 @@ onUnmounted(() => {
   cursor: pointer;
   text-decoration: none;
   text-transform: uppercase;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .nav-tab--active {
@@ -348,7 +346,9 @@ onUnmounted(() => {
   border: none;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .dropdown-item:hover {

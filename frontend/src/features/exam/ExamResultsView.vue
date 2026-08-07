@@ -172,7 +172,6 @@ onMounted(fetchResults);
 
 <template>
   <div class="results-screen">
-
     <!-- Loading -->
     <div v-if="isLoading" class="results-loading">
       <div class="loading-icon" aria-hidden="true">⏳</div>
@@ -187,7 +186,10 @@ onMounted(fetchResults);
           <svg width="140" height="140" class="gauge-svg">
             <circle cx="70" cy="70" r="52" fill="none" stroke-width="10" class="gauge-track" />
             <circle
-              cx="70" cy="70" r="52" fill="none"
+              cx="70"
+              cy="70"
+              r="52"
+              fill="none"
               stroke-width="10"
               stroke-linecap="round"
               :stroke-dasharray="circumference"
@@ -206,10 +208,15 @@ onMounted(fetchResults);
         <!-- Summary Text -->
         <div class="hero-summary">
           <div class="hero-title-row">
-            <span class="hero-flag" aria-hidden="true">{{ EXAM_CONFIG[details.template?.examType]?.flag || '📝' }}</span>
+            <span class="hero-flag" aria-hidden="true">{{
+              EXAM_CONFIG[details.template?.examType]?.flag || '📝'
+            }}</span>
             <h1 class="hero-title font-body">{{ details.template?.name }}</h1>
           </div>
-          <div class="pass-badge font-label" :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'">
+          <div
+            class="pass-badge font-label"
+            :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'"
+          >
             {{ passed ? t('results.passed') : t('results.notPassed') }}
             <span class="pass-badge-sub">
               {{ t('results.passThreshold', { score: details.template?.passingScore }) }}
@@ -244,7 +251,9 @@ onMounted(fetchResults);
 
       <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
       <div class="actions-row">
-        <AppButton variant="secondary" @click="backToExams">{{ t('results.backToExams') }}</AppButton>
+        <AppButton variant="secondary" @click="backToExams">{{
+          t('results.backToExams')
+        }}</AppButton>
         <AppButton variant="primary" @click="retake">{{ t('results.retake') }}</AppButton>
       </div>
 
@@ -281,8 +290,15 @@ onMounted(fetchResults);
             :class="row.isCorrect ? 'review-row--correct' : 'review-row--incorrect'"
           >
             <!-- Question Header (always visible) -->
-            <button type="button" class="review-header" @click="expandedIdx = expandedIdx === idx ? null : idx">
-              <span class="review-mark font-pixel" :class="row.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'">
+            <button
+              type="button"
+              class="review-header"
+              @click="expandedIdx = expandedIdx === idx ? null : idx"
+            >
+              <span
+                class="review-mark font-pixel"
+                :class="row.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'"
+              >
                 {{ row.isCorrect ? '✓' : '✗' }}
               </span>
               <span class="review-body">
@@ -292,7 +308,9 @@ onMounted(fetchResults);
                 <span class="review-meta font-label">
                   <span>
                     {{ t('results.yourAnswer') }}
-                    <strong :class="row.isCorrect ? 'text-correct' : 'text-incorrect'">{{ row.userAnswer || '—' }}</strong>
+                    <strong :class="row.isCorrect ? 'text-correct' : 'text-incorrect'">{{
+                      row.userAnswer || '—'
+                    }}</strong>
                   </span>
                   <span v-if="!row.isCorrect">
                     {{ t('results.correctAnswer') }}
@@ -301,7 +319,9 @@ onMounted(fetchResults);
                   <span>⏱ {{ row.timeTakenSeconds }}S</span>
                 </span>
               </span>
-              <span class="review-chevron font-label" aria-hidden="true">{{ expandedIdx === idx ? '▲' : '▼' }}</span>
+              <span class="review-chevron font-label" aria-hidden="true">{{
+                expandedIdx === idx ? '▲' : '▼'
+              }}</span>
             </button>
 
             <!-- Expanded Detail -->
@@ -329,17 +349,21 @@ onMounted(fetchResults);
                     <span
                       v-if="OPTION_KEYS[oi] === row.question.correctAnswer"
                       class="review-option-tag text-correct font-label"
-                    >{{ t('results.correctTag') }}</span>
+                      >{{ t('results.correctTag') }}</span
+                    >
                     <span
                       v-else-if="OPTION_KEYS[oi] === row.userAnswer && !row.isCorrect"
                       class="review-option-tag text-incorrect font-label"
-                    >{{ t('results.yourAnswerTag') }}</span>
+                      >{{ t('results.yourAnswerTag') }}</span
+                    >
                   </div>
                 </div>
 
                 <!-- Explanation -->
                 <div v-if="row.question.explanation" class="review-explanation">
-                  <div class="review-explanation-label font-label">{{ t('results.explanation') }}</div>
+                  <div class="review-explanation-label font-label">
+                    {{ t('results.explanation') }}
+                  </div>
                   <p class="review-explanation-text font-body">{{ row.question.explanation }}</p>
                 </div>
               </div>
@@ -750,7 +774,9 @@ onMounted(fetchResults);
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: max-height 0.25s ease, opacity 0.2s ease;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
   max-height: 800px;
   overflow: hidden;
 }

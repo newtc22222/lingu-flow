@@ -10,19 +10,19 @@
  * name/description row content) that those stay slotted rather than baked
  * in here.
  */
-import { useI18n } from 'vue-i18n'
-import AppButton from './AppButton.vue'
+import { useI18n } from 'vue-i18n';
+import AppButton from './AppButton.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 defineProps<{
-  title: string
-  countLabel: string
-  count: number
-  isLoading: boolean
-  loadingText: string
-  emptyText: string
-  rows: T[]
+  title: string;
+  countLabel: string;
+  count: number;
+  isLoading: boolean;
+  loadingText: string;
+  emptyText: string;
+  rows: T[];
   /**
    * Optional per-row guard. Return false to disable that row's edit/delete
    * buttons — needed where some rows aren't the viewer's to change (the
@@ -30,13 +30,13 @@ defineProps<{
    * that can only 404 is worse than not offering them). Omitted means every
    * row is editable, which is what the deck and card lists want.
    */
-  canModify?: (item: T) => boolean
-}>()
+  canModify?: (item: T) => boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'edit', item: T): void
-  (e: 'delete', id: string): void
-}>()
+  (e: 'edit', item: T): void;
+  (e: 'delete', id: string): void;
+}>();
 </script>
 
 <template>
@@ -132,7 +132,9 @@ const emit = defineEmits<{
   background: var(--surface-panel);
   border-left: var(--border-width-accent) solid var(--surface-panel-border);
   padding: var(--space-7) var(--space-8);
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 .manage-row:hover {
   border-left-color: var(--color-accent);

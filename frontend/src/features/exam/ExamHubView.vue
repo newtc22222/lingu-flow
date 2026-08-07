@@ -45,9 +45,7 @@ const sessions = ref<ExamSession[]>([]);
 const isLoading = ref(true);
 const selectedType = ref<string>('all');
 
-const templatesById = computed(
-  () => new Map(templates.value.map((tpl) => [tpl.id, tpl])),
-);
+const templatesById = computed(() => new Map(templates.value.map((tpl) => [tpl.id, tpl])));
 
 const EXAM_CONFIG: Record<string, { label: string; flag: string }> = {
   toeic: { label: 'TOEIC', flag: '🇺🇸' },
@@ -230,13 +228,21 @@ onMounted(fetchData);
           <button type="button" class="exam-card" @click="startExam(template.id)">
             <div class="exam-card-top">
               <div class="exam-card-id">
-                <span class="exam-card-flag" aria-hidden="true">{{ EXAM_CONFIG[template.examType]?.flag || '📄' }}</span>
+                <span class="exam-card-flag" aria-hidden="true">{{
+                  EXAM_CONFIG[template.examType]?.flag || '📄'
+                }}</span>
                 <div>
-                  <div class="exam-card-type font-label">{{ EXAM_CONFIG[template.examType]?.label || 'Custom' }}</div>
-                  <div v-if="template.level" class="exam-card-level font-label">{{ template.level }}</div>
+                  <div class="exam-card-type font-label">
+                    {{ EXAM_CONFIG[template.examType]?.label || 'Custom' }}
+                  </div>
+                  <div v-if="template.level" class="exam-card-level font-label">
+                    {{ template.level }}
+                  </div>
                 </div>
               </div>
-              <span v-if="template.isPublic" class="badge-official font-label">{{ t('exam.official') }}</span>
+              <span v-if="template.isPublic" class="badge-official font-label">{{
+                t('exam.official')
+              }}</span>
             </div>
 
             <h3 class="exam-card-name font-body">{{ template.name }}</h3>
@@ -270,7 +276,10 @@ onMounted(fetchData);
           >
             <div class="hub-recent-info">
               <span class="hub-recent-flag" aria-hidden="true">
-                {{ EXAM_CONFIG[templatesById.get(session.examTemplateId)?.examType ?? '']?.flag || '📄' }}
+                {{
+                  EXAM_CONFIG[templatesById.get(session.examTemplateId)?.examType ?? '']?.flag ||
+                  '📄'
+                }}
               </span>
               <div>
                 <div class="hub-recent-name font-body">
@@ -280,8 +289,13 @@ onMounted(fetchData);
               </div>
             </div>
             <div class="hub-recent-result">
-              <span class="hub-recent-count font-label">{{ session.correctCount }}/{{ session.totalCount }}</span>
-              <span class="score-badge font-label" :class="`score-badge--${scoreTier(session.score)}`">
+              <span class="hub-recent-count font-label"
+                >{{ session.correctCount }}/{{ session.totalCount }}</span
+              >
+              <span
+                class="score-badge font-label"
+                :class="`score-badge--${scoreTier(session.score)}`"
+              >
                 {{ session.score }}%
               </span>
               <span class="hub-recent-arrow" aria-hidden="true">→</span>
@@ -534,7 +548,9 @@ onMounted(fetchData);
   border-left: var(--border-width-accent) solid var(--surface-panel-border);
   padding: var(--space-6) var(--space-8);
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 .hub-recent-row:hover {
   border-left-color: var(--color-accent);
