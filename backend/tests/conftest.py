@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.database import Base, get_db
 from app.main import app
-from app.models import User, Deck, Card, ExamTemplate, Question, ExamSession, AnswerRecord  # Register all models
+from app.models import User, Deck, Card, ExamTemplate, Question, ExamSession, AnswerRecord, UserSettings  # Register all models
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 

@@ -15,6 +15,7 @@ from app.routers import (
     media,
     questions,
 )
+from app.routers import settings as settings_router
 from app.seed.exam_seed import seed_builtin_exams
 
 logging.basicConfig(level=logging.INFO)
@@ -69,6 +70,7 @@ app.include_router(exams.router)
 app.include_router(questions.router)
 app.include_router(events.router)
 app.include_router(media.router)
+app.include_router(settings_router.router)
 
 
 if __name__ == "__main__":

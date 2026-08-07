@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
+
 from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.card import Card
     from app.models.exam import ExamTemplate
     from app.models.session import ExamSession
+    from app.models.settings import UserSettings
 
 
 class User(Base):
@@ -51,3 +53,4 @@ class User(Base):
     cards: Mapped[List["Card"]] = relationship("Card", back_populates="user", cascade="all, delete-orphan")
     exam_templates: Mapped[List["ExamTemplate"]] = relationship("ExamTemplate", back_populates="user")
     exam_sessions: Mapped[List["ExamSession"]] = relationship("ExamSession", back_populates="user", cascade="all, delete-orphan")
+    user_settings: Mapped[Optional["UserSettings"]] = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
