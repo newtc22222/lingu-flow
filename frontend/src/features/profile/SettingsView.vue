@@ -1,36 +1,124 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 import PixelFrame from '@/shared/components/PixelFrame.vue';
 import AppButton from '@/shared/components/AppButton.vue';
 import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n';
+import { apiFetch } from '@/utils/api';
 
 const { t, locale } = useI18n();
-const router = useRouter();
 
-const isCrtEnabled = ref(true);
-const dailyXpGoal = ref(50);
+/** Saved state from the server (or defaults). */
+interface SettingsState {
+  locale: AppLocale;
+  crtEnabled: boolean;
+  dailyXpGoal: number;
+  audioSfxEnabled: boolean;
+  notificationsEnabled: boolean;
+}
+
+const savedSettings = ref<SettingsState>({
+  locale: locale.value as AppLocale,
+  crtEnabled: true,
+  dailyXpGoal: 50,
+  audioSfxEnabled: false,
+  notificationsEnabled: false,
+});
+
+/** Buffered draft — only applied on explicit Save. */
+const draftSettings = ref<SettingsState>({ ...savedSettings.value });
+
+const isSaving = ref(false);
 const saveSuccess = ref(false);
+const isLoading = ref(true);
 
-function switchLocale(next: AppLocale) {
-  setLocale(next);
+/** True when the draft differs from saved state. */
+const hasChanges = computed(() => {
+  return (
+    draftSettings.value.locale !== savedSettings.value.locale ||
+    draftSettings.value.crtEnabled !== savedSettings.value.crtEnabled ||
+    draftSettings.value.dailyXpGoal !== savedSettings.value.dailyXpGoal
+  );
+});
+
+async function fetchSettings() {
+  isLoading.value = true;
+  try {
+    const res = await apiFetch('/api/settings');
+    if (res.ok) {
+      const data = await res.json();
+      const loaded: SettingsState = {
+        locale: data.locale ?? locale.value,
+        crtEnabled: data.crtEnabled ?? true,
+        dailyXpGoal: data.dailyXpGoal ?? 50,
+        audioSfxEnabled: data.audioSfxEnabled ?? false,
+        notificationsEnabled: data.notificationsEnabled ?? false,
+      };
+      savedSettings.value = { ...loaded };
+      draftSettings.value = { ...loaded };
+    }
+  } catch (err) {
+    console.error('Failed to fetch settings:', err);
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-function toggleCrt(enabled: boolean) {
-  isCrtEnabled.value = enabled;
+async function handleSave() {
+  isSaving.value = true;
+  saveSuccess.value = false;
+  try {
+    const res = await apiFetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        locale: draftSettings.value.locale,
+        crtEnabled: draftSettings.value.crtEnabled,
+        dailyXpGoal: draftSettings.value.dailyXpGoal,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const persisted: SettingsState = {
+        locale: data.locale ?? draftSettings.value.locale,
+        crtEnabled: data.crtEnabled ?? draftSettings.value.crtEnabled,
+        dailyXpGoal: data.dailyXpGoal ?? draftSettings.value.dailyXpGoal,
+        audioSfxEnabled: data.audioSfxEnabled ?? false,
+        notificationsEnabled: data.notificationsEnabled ?? false,
+      };
+      savedSettings.value = { ...persisted };
+      draftSettings.value = { ...persisted };
+
+      // Apply locale change only after successful save
+      setLocale(persisted.locale);
+
+      saveSuccess.value = true;
+      setTimeout(() => {
+        saveSuccess.value = false;
+      }, 3000);
+    }
+  } catch (err) {
+    console.error('Failed to save settings:', err);
+  } finally {
+    isSaving.value = false;
+  }
 }
 
-function handleSave() {
-  saveSuccess.value = true;
-  setTimeout(() => {
-    saveSuccess.value = false;
-  }, 3000);
+function handleReset() {
+  draftSettings.value = { ...savedSettings.value };
 }
 
-function handleCancel() {
-  void router.push({ name: 'profile' });
+function setDraftLocale(code: AppLocale) {
+  draftSettings.value.locale = code;
 }
+
+function setDraftCrt(enabled: boolean) {
+  draftSettings.value.crtEnabled = enabled;
+}
+
+onMounted(() => {
+  void fetchSettings();
+});
 </script>
 
 <template>
@@ -47,7 +135,7 @@ function handleCancel() {
 
         <!-- Notification Banner -->
         <div v-if="saveSuccess" class="settings-banner font-label">
-          ✔ SETTINGS SAVED SUCCESSFULLY
+          ✔ {{ t('settings.savedMessage') }}
         </div>
 
         <!-- Section 1: Language & Display -->
@@ -56,7 +144,7 @@ function handleCancel() {
             {{ t('settings.sections.languageAndTheme') }}
           </h2>
 
-          <!-- Language Selector -->
+          <!-- Language Selector (buffered) -->
           <div class="setting-row">
             <span class="setting-label font-label">{{ t('settings.fields.language') }}</span>
             <div class="toggle-group" role="group">
@@ -65,31 +153,31 @@ function handleCancel() {
                 :key="code"
                 type="button"
                 class="toggle-btn font-label"
-                :class="{ 'toggle-btn--active': locale === code }"
-                @click="switchLocale(code)"
+                :class="{ 'toggle-btn--active': draftSettings.locale === code }"
+                @click="setDraftLocale(code)"
               >
                 {{ code.toUpperCase() }}
               </button>
             </div>
           </div>
 
-          <!-- CRT Scanlines -->
+          <!-- CRT Scanlines (buffered) -->
           <div class="setting-row">
             <span class="setting-label font-label">{{ t('settings.fields.crtScanlines') }}</span>
             <div class="toggle-group" role="group">
               <button
                 type="button"
                 class="toggle-btn font-label"
-                :class="{ 'toggle-btn--active': isCrtEnabled }"
-                @click="toggleCrt(true)"
+                :class="{ 'toggle-btn--active': draftSettings.crtEnabled }"
+                @click="setDraftCrt(true)"
               >
                 {{ t('settings.options.on') }}
               </button>
               <button
                 type="button"
                 class="toggle-btn font-label"
-                :class="{ 'toggle-btn--active': !isCrtEnabled }"
-                @click="toggleCrt(false)"
+                :class="{ 'toggle-btn--active': !draftSettings.crtEnabled }"
+                @click="setDraftCrt(false)"
               >
                 {{ t('settings.options.off') }}
               </button>
@@ -118,7 +206,7 @@ function handleCancel() {
             {{ t('settings.sections.learningGoals') }}
           </h2>
 
-          <!-- Daily XP Goal -->
+          <!-- Daily XP Goal (buffered) -->
           <div class="setting-field">
             <label class="setting-label font-label" for="daily-xp">
               {{ t('settings.fields.dailyGoal') }}
@@ -126,7 +214,7 @@ function handleCancel() {
             <div class="input-wrapper">
               <input
                 id="daily-xp"
-                v-model.number="dailyXpGoal"
+                v-model.number="draftSettings.dailyXpGoal"
                 type="text"
                 class="arcade-input setting-input font-pixel"
               />
@@ -150,27 +238,13 @@ function handleCancel() {
           </div>
         </section>
 
-        <!-- Section 3: Account & Security -->
-        <section class="settings-section">
-          <h2 class="section-title font-pixel">
-            {{ t('settings.sections.accountAndSecurity') }}
-          </h2>
-
-          <div class="setting-row">
-            <span class="setting-label font-label">{{ t('settings.fields.password') }}</span>
-            <AppButton variant="edit" class="password-btn">
-              {{ t('settings.options.changePassword') }}
-            </AppButton>
-          </div>
-        </section>
-
         <!-- Action Buttons -->
         <footer class="settings-actions">
-          <AppButton variant="secondary" class="action-btn" @click="handleCancel">
-            {{ t('settings.options.cancel') }}
+          <AppButton variant="secondary" class="action-btn" :disabled="!hasChanges" @click="handleReset">
+            {{ t('settings.options.reset') }}
           </AppButton>
-          <AppButton variant="primary" class="action-btn" @click="handleSave">
-            {{ t('settings.options.save') }}
+          <AppButton variant="primary" class="action-btn" :disabled="!hasChanges || isSaving" @click="handleSave">
+            {{ isSaving ? t('common.loading') : t('settings.options.save') }}
           </AppButton>
         </footer>
       </div>
@@ -345,10 +419,6 @@ function handleCancel() {
 .input-suffix {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
-}
-
-.password-btn {
-  font-size: var(--font-size-xs);
 }
 
 .settings-actions {

@@ -1,18 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 import PixelFrame from '@/shared/components/PixelFrame.vue';
 import AppButton from '@/shared/components/AppButton.vue';
-import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
-import { useAuthStore } from '@/features/auth/store/authStore';
 import { apiFetch } from '@/utils/api';
 
 const { t } = useI18n();
-const router = useRouter();
-const auth = useAuthStore();
 
-const showLogoutConfirm = ref(false);
 const isLoading = ref(true);
 
 interface UserProfileData {
@@ -55,19 +49,6 @@ async function fetchProfile() {
   }
 }
 
-function handleGoToSettings() {
-  void router.push({ name: 'settings' });
-}
-
-function handleLogoutClick() {
-  showLogoutConfirm.value = true;
-}
-
-async function handleConfirmLogout() {
-  auth.logout();
-  await router.push({ name: 'auth' });
-}
-
 onMounted(() => {
   void fetchProfile();
 });
@@ -102,6 +83,11 @@ onMounted(() => {
             </span>
           </div>
         </div>
+
+        <!-- Edit Profile Button (top-right of info block) -->
+        <AppButton variant="secondary" class="edit-profile-btn">
+          {{ t('profile.editProfile') }}
+        </AppButton>
       </div>
     </PixelFrame>
 
@@ -161,28 +147,16 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- Bottom Action Buttons -->
-    <section class="profile-actions">
-      <AppButton variant="danger" class="action-btn" @click="handleLogoutClick">
-        {{ t('nav.logout') }}
-      </AppButton>
-      <AppButton variant="secondary" class="action-btn">
-        {{ t('profile.editProfile') }}
-      </AppButton>
-      <AppButton variant="primary" class="action-btn" @click="handleGoToSettings">
-        {{ t('profile.systemSettings') }}
-      </AppButton>
+    <!-- Account & Security Section (moved from Settings) -->
+    <section class="security-section">
+      <h2 class="security-title font-pixel">{{ t('settings.sections.accountAndSecurity') }}</h2>
+      <div class="security-row">
+        <span class="security-label font-label">{{ t('settings.fields.password') }}</span>
+        <AppButton variant="edit" class="password-btn">
+          {{ t('settings.options.changePassword') }}
+        </AppButton>
+      </div>
     </section>
-
-    <!-- Logout Confirm Modal -->
-    <ConfirmDialog
-      v-model:is-open="showLogoutConfirm"
-      :title="t('nav.logoutConfirmTitle')"
-      :message="t('nav.logoutConfirmMessage')"
-      :confirm-text="t('nav.logoutConfirm')"
-      variant="danger"
-      @confirm="handleConfirmLogout"
-    />
   </div>
 </template>
 
@@ -204,6 +178,7 @@ onMounted(() => {
   align-items: center;
   gap: var(--space-8);
   flex-wrap: wrap;
+  position: relative;
 }
 
 .avatar-box {
@@ -283,6 +258,12 @@ onMounted(() => {
   color: var(--surface-panel-border);
 }
 
+.edit-profile-btn {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -321,6 +302,7 @@ onMounted(() => {
 }
 
 .text-info {
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- one-off tertiary accent */
   color: #62c0ff;
 }
 
@@ -380,15 +362,37 @@ onMounted(() => {
   line-height: 1.4;
 }
 
-.profile-actions {
+.security-section {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: var(--space-5);
-  flex-wrap: wrap;
-  margin-top: var(--space-4);
 }
 
-.action-btn {
-  min-width: 140px;
+.security-title {
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  letter-spacing: var(--tracking-normal);
+}
+
+.security-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-panel);
+  border: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-5) var(--space-6);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.security-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.password-btn {
+  font-size: var(--font-size-xs);
 }
 </style>
