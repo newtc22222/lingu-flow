@@ -59,6 +59,16 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/features/library/CardManagementView.vue'),
   },
   {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('@/features/profile/ProfileView.vue'),
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('@/features/profile/SettingsView.vue'),
+  },
+  {
     path: '/questions',
     name: 'question-bank',
     component: () => import('@/features/question-bank/QuestionBankView.vue'),

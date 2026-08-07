@@ -84,6 +84,56 @@
     "level": "Level {index}",
     "levelLocked": "Level {index}, locked"
   },
+  "profile": {
+    "title": "USER PROFILE",
+    "level": "LV {level}",
+    "rank": "RANK: ARCADE MASTER 🏆",
+    "memberSince": "MEMBER SINCE AUG 2026",
+    "stats": {
+      "totalXp": "TOTAL XP",
+      "longestStreak": "LONGEST STREAK",
+      "longestStreakDays": "🔥 {count} DAYS",
+      "cardsLearned": "CARDS LEARNED",
+      "cardsCount": "🃏 {count} CARDS",
+      "examsCompleted": "EXAMS COMPLETED",
+      "examsCount": "📝 {count} EXAMS"
+    },
+    "achievementsTitle": "ACHIEVEMENTS & MEDALS",
+    "achievements": {
+      "streakMaster": "STREAK MASTER",
+      "streakMasterDesc": "10 days continuous study streak",
+      "speedDemon": "SPEED DEMON",
+      "speedDemonDesc": "100 cards reviewed in 5 minutes",
+      "perfectScore": "PERFECT SCORE",
+      "perfectScoreDesc": "100% on TOEIC practice exam"
+    },
+    "editProfile": "EDIT PROFILE",
+    "systemSettings": "SYSTEM SETTINGS"
+  },
+  "settings": {
+    "title": "SYSTEM SETTINGS",
+    "sections": {
+      "languageAndTheme": "LANGUAGE & DISPLAY",
+      "learningGoals": "LEARNING GOALS",
+      "accountAndSecurity": "ACCOUNT & SECURITY"
+    },
+    "fields": {
+      "language": "Language",
+      "crtScanlines": "CRT Scanlines Effect",
+      "audioSfx": "8-Bit Sound SFX",
+      "dailyGoal": "Daily XP Goal",
+      "notifications": "Reminder Notifications",
+      "password": "Password"
+    },
+    "options": {
+      "on": "ON",
+      "off": "OFF",
+      "changePassword": "CHANGE PASSWORD",
+      "save": "SAVE SETTINGS",
+      "cancel": "CANCEL",
+      "notAvailable": "NOT AVAILABLE"
+    }
+  },
   "flashcards": {
     "loading": "▸ LOADING CARDS…",
     "empty": "NO CARDS DUE FOR REVIEW TODAY.",

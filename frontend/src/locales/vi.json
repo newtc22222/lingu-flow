@@ -84,6 +84,56 @@
     "level": "Cấp độ {index}",
     "levelLocked": "Cấp độ {index}, chưa mở khóa"
   },
+  "profile": {
+    "title": "HỒ SƠ NGƯỜI DÙNG",
+    "level": "CẤP {level}",
+    "rank": "HẠNG: CAO THỦ ARCADE 🏆",
+    "memberSince": "THÀNH VIÊN TỪ T8/2026",
+    "stats": {
+      "totalXp": "TỔNG XP",
+      "longestStreak": "CHUỖI DÀI NHẤT",
+      "longestStreakDays": "🔥 {count} NGÀY",
+      "cardsLearned": "THẺ ĐÃ HỌC",
+      "cardsCount": "🃏 {count} THẺ",
+      "examsCompleted": "BÀI THI HOÀN THÀNH",
+      "examsCount": "📝 {count} BÀI THI"
+    },
+    "achievementsTitle": "THÀNH TÍCH & HUY CHƯƠNG",
+    "achievements": {
+      "streakMaster": "CAO THỦ CHUỖI",
+      "streakMasterDesc": "Chuỗi 10 ngày học liên tục",
+      "speedDemon": "THẦN TỐC",
+      "speedDemonDesc": "100 thẻ trong 5 phút",
+      "perfectScore": "ĐIỂM TUYỆT ĐỐI",
+      "perfectScoreDesc": "100% Bài thi thử TOEIC"
+    },
+    "editProfile": "CHỈNH SỬA HỒ SƠ",
+    "systemSettings": "CÀI ĐẶT HỆ THỐNG"
+  },
+  "settings": {
+    "title": "CÀI ĐẶT HỆ THỐNG",
+    "sections": {
+      "languageAndTheme": "NGÔN NGỮ & GIAO DIỆN",
+      "learningGoals": "MỤC TIÊU HỌC TẬP",
+      "accountAndSecurity": "TÀI KHOẢN & BẢO MẬT"
+    },
+    "fields": {
+      "language": "Ngôn Ngữ",
+      "crtScanlines": "Hiệu ứng CRT (Scanlines)",
+      "audioSfx": "Âm thanh 8-bit",
+      "dailyGoal": "Mục tiêu XP / Ngày",
+      "notifications": "Thông báo nhắc nhở",
+      "password": "Mật khẩu"
+    },
+    "options": {
+      "on": "BẬT",
+      "off": "TẮT",
+      "changePassword": "ĐỔI MẬT KHẨU",
+      "save": "LƯU CÀI ĐẶT",
+      "cancel": "HỦY",
+      "notAvailable": "CHƯA HỖ TRỢ"
+    }
+  },
   "flashcards": {
     "loading": "▸ ĐANG TẢI THẺ…",
     "empty": "KHÔNG CÒN THẺ NÀO CẦN ÔN HÔM NAY.",
