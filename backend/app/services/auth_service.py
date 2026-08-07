@@ -13,6 +13,7 @@ from app.core.security import (
     get_user_id_from_token,
     verify_password,
 )
+from app.core.timeutils import utcnow
 from app.models.user import User
 from app.schemas.auth import (
     AuthTokenResponse,
@@ -24,6 +25,7 @@ from app.schemas.auth import (
     RegisterRequest,
     UserResponse,
 )
+from app.services.guest_service import purge_guest_user
 
 settings = get_settings()
 
@@ -118,24 +120,48 @@ class AuthService:
                 detail="Invalid credentials",
             )
 
+        # The browser is switching from a guest session to an existing account,
+        # so the guest row is now unreachable garbage — drop it now rather than
+        # leaving it for the retention sweep a week later. ORM delete so the
+        # decks/cards/sessions relationship cascades fire on SQLite too.
+        if req.guest_token:
+            guest_user = await self.get_guest_user_from_token(db, req.guest_token)
+            if guest_user and guest_user.id != user.id:
+                await purge_guest_user(db, guest_user)
+
+        user.last_active = utcnow()
+        await db.commit()
+        await db.refresh(user)
+
         token = create_access_token(user.id)
         return AuthTokenResponse(
             token=token, user=UserResponse.model_validate(user)
         )
 
     async def guest_login(
-        self, db: AsyncSession, req: GuestLoginRequest
+        self, db: AsyncSession, req: GuestLoginRequest, client_ip: Optional[str] = None
     ) -> AuthTokenResponse:
-        """Create a new guest account or return existing guest session."""
+        """Create a new guest account or return existing guest session.
+
+        The browser's guest token is the only identity here. `client_ip` is
+        recorded as metadata and deliberately not part of the lookup — shared
+        NAT would let strangers resume each other's guest account, and a user
+        changing network would lose theirs.
+        """
         if req.guest_token:
             guest_user = await self.get_guest_user_from_token(db, req.guest_token)
             if guest_user:
+                if client_ip:
+                    guest_user.last_ip = client_ip
+                guest_user.last_active = utcnow()
+                await db.commit()
+                await db.refresh(guest_user)
                 token = create_access_token(guest_user.id)
                 return AuthTokenResponse(
                     token=token, user=UserResponse.model_validate(guest_user)
                 )
 
-        user = User(is_guest=True)
+        user = User(is_guest=True, last_ip=client_ip)
         db.add(user)
         await db.commit()
         await db.refresh(user)

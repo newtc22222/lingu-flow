@@ -1,14 +1,34 @@
 import uuid
+from datetime import timedelta
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.config import get_settings
 from app.core.security import decode_access_token
+from app.core.timeutils import as_aware_utc, utcnow
 from app.database import get_db
 from app.models.user import User
 
 security = HTTPBearer(auto_error=False)
+settings = get_settings()
+
+
+def _touch_last_active(user: User) -> None:
+    """Refresh `last_active`, which the guest cleanup job sweeps on.
+
+    Only writes once the stored value is older than the throttle window —
+    otherwise every authenticated read would turn into a write. No commit here:
+    `get_db` commits at the end of the request, so this rides along with it.
+    """
+    now = utcnow()
+    previous = as_aware_utc(user.last_active)
+    if previous is not None and now - previous < timedelta(
+        minutes=settings.LAST_ACTIVE_THROTTLE_MINUTES
+    ):
+        return
+    user.last_active = now
 
 
 async def get_current_user(
@@ -58,6 +78,12 @@ async def get_current_user(
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Activity bookkeeping must never be the reason a real request fails.
+    try:
+        _touch_last_active(user)
+    except Exception:  # pragma: no cover - defensive
+        pass
 
     return user
 

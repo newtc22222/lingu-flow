@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
+
+    # Guest lifecycle. Keep GUEST_RETENTION_DAYS aligned with the token TTL above:
+    # a shorter window would delete guests who still hold a valid token.
+    GUEST_RETENTION_DAYS: int = 7
+    # How stale last_active may get before an authenticated request rewrites it.
+    # Purely a write-amplification guard — every request would otherwise be a write.
+    LAST_ACTIVE_THROTTLE_MINUTES: int = 15
     
     # OAuth & AI Providers (Optional in dev)
     GOOGLE_CLIENT_ID: str = ""

@@ -40,9 +40,12 @@ async function handleSubmit() {
   try {
     const guestToken = localStorage.getItem('guest_token')
     const endpoint = mode.value === 'login' ? '/api/auth/login' : '/api/auth/register'
+    // Both modes send the guest token, but the server does different things
+    // with it: signup promotes the guest in place (keeping their decks), while
+    // login abandons the guest and deletes that row.
     const body =
       mode.value === 'login'
-        ? { email: email.value, password: password.value }
+        ? { email: email.value, password: password.value, guestToken: guestToken || undefined }
         : {
             username: username.value,
             email: email.value,

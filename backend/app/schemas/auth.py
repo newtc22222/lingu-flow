@@ -15,6 +15,10 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    # Present when the browser was mid-guest-session. Unlike register/google
+    # (which promote the guest in place), logging in to an existing account
+    # abandons the guest, so the server deletes that row.
+    guest_token: Optional[str] = Field(default=None, alias="guestToken")
 
     model_config = ConfigDict(populate_by_name=True)
 

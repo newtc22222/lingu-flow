@@ -25,9 +25,17 @@ class User(Base):
     google_id: Mapped[Optional[str]] = mapped_column(String, unique=True, index=True, nullable=True)
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     daily_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Indexed because the guest cleanup job sweeps on (is_guest, last_active).
     last_active: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+        nullable=False,
     )
+    # Audit/abuse metadata only — never an identity key. Guests are identified by
+    # their token, since NAT puts unrelated people behind a single address.
+    # 45 chars covers IPv6, including the IPv4-mapped ::ffff:255.255.255.255 form.
+    last_ip: Mapped[Optional[str]] = mapped_column(String(45), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )
