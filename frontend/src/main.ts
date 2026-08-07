@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { inject } from '@vercel/analytics';
+import { injectSpeedInsights } from '@vercel/speed-insights';
 
 import '@fontsource/press-start-2p';
 import '@fontsource/ibm-plex-sans/400.css';
@@ -17,6 +18,7 @@ import { i18n } from './i18n';
 import { router } from './router';
 
 inject();
+injectSpeedInsights();
 
 // Pinia must be installed before the router: the `beforeEach` auth guard
 // resolves `useAuthStore()`, which needs an active Pinia instance.
