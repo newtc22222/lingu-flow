@@ -166,10 +166,19 @@
   --border-width-accent: 3px;
   --focus-ring-width: 2px; /* focus-visible outline width, used on nearly every interactive element */
 
+  /* ---- Scrollbar (cabinet rail) ----
+     Square pixel rail, not OS-default or rounded SaaS thin bars.
+     Track = recessed page groove; thumb idle = panel border; hover = amber accent. */
+  --scrollbar-size: var(--space-4); /* 8px — chunky enough to read as a control */
+  --scrollbar-track: var(--surface-page);
+  --scrollbar-thumb: var(--surface-panel-border);
+  --scrollbar-thumb-hover: var(--color-accent);
+  --scrollbar-thumb-active: var(--amber-light);
+
   /* ---- Step 3.5 additions (Aug 2026) ----
      --font-size-md-plus fills the gap between --font-size-md (13px) and
      --font-size-lg (15px) that 4 unrelated components had independently
-     landed on as a raw 14px literal (.arcade-input, CardManagementView's
+     landed on as a raw 14px literal (.arcade-input, the card form's
      row text, ExamHud's lives counter, and QuestionCard's reading-passage
      text — the last one wasn't caught in the original token-extraction
      audit). --tracking-wider covers the one orphaned 3px letter-spacing

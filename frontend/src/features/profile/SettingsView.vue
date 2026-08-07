@@ -31,6 +31,12 @@ const draftSettings = ref<SettingsState>({ ...savedSettings.value });
 const isSaving = ref(false);
 const saveSuccess = ref(false);
 const isLoading = ref(true);
+/**
+ * Surfaces a failed load/save. Without this a non-OK response fell through
+ * silently and the Save button just looked dead — a 500 from /api/settings was
+ * indistinguishable from "the language switch doesn't work".
+ */
+const errorMessage = ref('');
 
 /** True when the draft differs from saved state. */
 const hasChanges = computed(() => {
@@ -43,9 +49,12 @@ const hasChanges = computed(() => {
 
 async function fetchSettings() {
   isLoading.value = true;
+  errorMessage.value = '';
   try {
     const res = await apiFetch('/api/settings');
-    if (res.ok) {
+    if (!res.ok) {
+      errorMessage.value = t('common.requestFailed', { status: res.status });
+    } else {
       const data = await res.json();
       const loaded: SettingsState = {
         locale: data.locale ?? locale.value,
@@ -56,7 +65,7 @@ async function fetchSettings() {
       };
       savedSettings.value = { ...loaded };
       draftSettings.value = { ...loaded };
-      
+
       // Apply the loaded locale immediately so the UI reflects the backend state
       if (loaded.locale !== locale.value) {
         locale.value = loaded.locale;
@@ -65,6 +74,7 @@ async function fetchSettings() {
     }
   } catch (err) {
     console.error('Failed to fetch settings:', err);
+    errorMessage.value = t('settings.loadFailed');
   } finally {
     isLoading.value = false;
   }
@@ -73,6 +83,7 @@ async function fetchSettings() {
 async function handleSave() {
   isSaving.value = true;
   saveSuccess.value = false;
+  errorMessage.value = '';
   try {
     const res = await apiFetch('/api/settings', {
       method: 'PUT',
@@ -83,29 +94,34 @@ async function handleSave() {
         dailyXpGoal: draftSettings.value.dailyXpGoal,
       }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      const persisted: SettingsState = {
-        locale: data.locale ?? draftSettings.value.locale,
-        crtEnabled: data.crtEnabled ?? draftSettings.value.crtEnabled,
-        dailyXpGoal: data.dailyXpGoal ?? draftSettings.value.dailyXpGoal,
-        audioSfxEnabled: data.audioSfxEnabled ?? false,
-        notificationsEnabled: data.notificationsEnabled ?? false,
-      };
-      savedSettings.value = { ...persisted };
-      draftSettings.value = { ...persisted };
-
-      // Apply locale change explicitly to the local i18n instance and globally
-      locale.value = persisted.locale;
-      setLocale(persisted.locale);
-
-      saveSuccess.value = true;
-      setTimeout(() => {
-        saveSuccess.value = false;
-      }, 3000);
+    if (!res.ok) {
+      // Leave the draft intact so the user can retry without re-picking.
+      errorMessage.value = t('common.requestFailed', { status: res.status });
+      return;
     }
+
+    const data = await res.json();
+    const persisted: SettingsState = {
+      locale: data.locale ?? draftSettings.value.locale,
+      crtEnabled: data.crtEnabled ?? draftSettings.value.crtEnabled,
+      dailyXpGoal: data.dailyXpGoal ?? draftSettings.value.dailyXpGoal,
+      audioSfxEnabled: data.audioSfxEnabled ?? false,
+      notificationsEnabled: data.notificationsEnabled ?? false,
+    };
+    savedSettings.value = { ...persisted };
+    draftSettings.value = { ...persisted };
+
+    // Apply locale change explicitly to the local i18n instance and globally
+    locale.value = persisted.locale;
+    setLocale(persisted.locale);
+
+    saveSuccess.value = true;
+    setTimeout(() => {
+      saveSuccess.value = false;
+    }, 3000);
   } catch (err) {
     console.error('Failed to save settings:', err);
+    errorMessage.value = t('settings.saveFailed');
   } finally {
     isSaving.value = false;
   }
@@ -143,6 +159,15 @@ onMounted(() => {
         <!-- Notification Banner -->
         <div v-if="saveSuccess" class="settings-banner font-label">
           ✔ {{ t('settings.savedMessage') }}
+        </div>
+
+        <!-- Failure Banner -->
+        <div
+          v-if="errorMessage"
+          role="alert"
+          class="settings-banner settings-banner--error font-label"
+        >
+          ✕ {{ errorMessage }}
         </div>
 
         <!-- Section 1: Language & Display -->
@@ -247,10 +272,20 @@ onMounted(() => {
 
         <!-- Action Buttons -->
         <footer class="settings-actions">
-          <AppButton variant="secondary" class="action-btn" :disabled="!hasChanges" @click="handleReset">
+          <AppButton
+            variant="secondary"
+            class="action-btn"
+            :disabled="!hasChanges"
+            @click="handleReset"
+          >
             {{ t('settings.options.reset') }}
           </AppButton>
-          <AppButton variant="primary" class="action-btn" :disabled="!hasChanges || isSaving" @click="handleSave">
+          <AppButton
+            variant="primary"
+            class="action-btn"
+            :disabled="!hasChanges || isSaving"
+            @click="handleSave"
+          >
             {{ isSaving ? t('common.loading') : t('settings.options.save') }}
           </AppButton>
         </footer>
@@ -323,6 +358,11 @@ onMounted(() => {
   padding: var(--space-4) var(--space-6);
   color: var(--status-success);
   font-size: var(--font-size-sm);
+}
+
+.settings-banner--error {
+  border-left-color: var(--status-danger);
+  color: var(--status-danger);
 }
 
 .settings-section {

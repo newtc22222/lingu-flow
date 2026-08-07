@@ -134,7 +134,9 @@
       "reset": "ĐẶT LẠI",
       "notAvailable": "CHƯA HỖ TRỢ"
     },
-    "savedMessage": "ĐÃ LƯU CÀI ĐẶT THÀNH CÔNG"
+    "savedMessage": "ĐÃ LƯU CÀI ĐẶT THÀNH CÔNG",
+    "saveFailed": "KHÔNG THỂ LƯU CÀI ĐẶT. VUI LÒNG THỬ LẠI.",
+    "loadFailed": "KHÔNG THỂ TẢI CÀI ĐẶT. VUI LÒNG THỬ LẠI."
   },
   "flashcards": {
     "loading": "▸ ĐANG TẢI THẺ…",
@@ -196,12 +198,50 @@
     "empty": "BỘ THẺ NÀY CHƯA CÓ THẺ NÀO.",
     "term": "THUẬT NGỮ",
     "definition": "ĐỊNH NGHĨA",
-    "reorderHint": "Kéo thả để sắp xếp lại thứ tự thẻ.",
+    "reorderHint": "Kéo thả hoặc dùng Alt + ↑/↓ để sắp xếp, rồi lưu.",
     "saveOrder": "LƯU THỨ TỰ",
     "orderSaved": "ĐÃ LƯU THỨ TỰ",
     "startLearn": "▶ HỌC",
-    "startMatch": "▶ GHÉP THẺ",
-    "studyDeck": "▶ ÔN TẬP"
+    "startMatch": "▶ GHÉP THẺ"
+  },
+  "library": {
+    "unfiledName": "CHƯA PHÂN LOẠI",
+    "unfiledDescription": "Thẻ chưa thuộc bộ nào.",
+    "search": "TÌM KIẾM",
+    "searchPlaceholder": "Nhấn / để tìm…",
+    "searchNoResults": "KHÔNG CÓ KẾT QUẢ CHO “{query}”.",
+    "clearSearch": "XÓA TÌM KIẾM",
+    "backToDecks": "← BỘ THẺ",
+    "addCard": "+ THÊM THẺ",
+    "reorderDisabled": "Không thể sắp xếp thẻ chưa phân loại.",
+    "reorderWhileFiltered": "Xóa từ khóa tìm kiếm để sắp xếp lại.",
+    "confirmDeleteDeckTitle": "XÓA BỘ THẺ",
+    "confirmDeleteCardTitle": "XÓA THẺ",
+    "deleteDeckWarning": "Xóa bộ thẻ này cũng xóa {count} thẻ bên trong. Không thể hoàn tác.",
+    "legend": {
+      "title": "Phím tắt",
+      "navigate": "Di chuyển",
+      "open": "Mở",
+      "edit": "Sửa",
+      "new": "Tạo mới",
+      "delete": "Xóa",
+      "search": "Tìm kiếm",
+      "reorder": "Đổi thứ tự",
+      "saveOrder": "Lưu thứ tự",
+      "cancel": "Thoát"
+    },
+    "a11y": {
+      "deckList": "Danh sách bộ thẻ",
+      "cardList": "Danh sách thẻ",
+      "moved": "Đã chuyển “{name}” tới vị trí {index} trên {total}.",
+      "reorderBoundary": "Đã ở đầu hoặc cuối danh sách.",
+      "deckCreated": "Đã tạo bộ thẻ.",
+      "deckUpdated": "Đã cập nhật bộ thẻ.",
+      "deckDeleted": "Đã xóa bộ thẻ.",
+      "cardCreated": "Đã tạo thẻ.",
+      "cardUpdated": "Đã cập nhật thẻ.",
+      "cardDeleted": "Đã xóa thẻ."
+    }
   },
   "cards": {
     "title": "QUẢN LÝ THẺ",
@@ -296,10 +336,14 @@
     "title": "NGÂN HÀNG CÂU HỎI",
     "countLabel": "CÂU",
     "loading": "▸ ĐANG TẢI CÂU HỎI…",
-    "empty": "CHƯA CÓ CÂU HỎI NÀO. TẠO CÂU HỎI ĐẦU TIÊN Ở TRÊN.",
+    "empty": "CHƯA CÓ CÂU HỎI NÀO. TẠO CÂU HỎI ĐẦU TIÊN TRONG Ô SOẠN.",
     "emptyFiltered": "KHÔNG CÓ CÂU HỎI NÀO KHỚP BỘ LỌC.",
     "createTitle": "TẠO CÂU HỎI MỚI",
     "editTitle": "CHỈNH SỬA CÂU HỎI",
+    "composeBay": "SOẠN",
+    "scanBay": "LỌC",
+    "resultsLabel": "KẾT QUẢ",
+    "confirmDeleteTitle": "XÓA CÂU HỎI",
     "examType": "LOẠI ĐỀ",
     "anyExamType": "Tất cả loại đề",
     "part": "PHẦN",

@@ -10,12 +10,17 @@ import { useI18n } from 'vue-i18n';
 import AppButton from './AppButton.vue';
 import { DIFFICULTIES, EXAM_TYPES, type QuestionFilterState } from '@/features/question-bank/types';
 
-const props = defineProps<{
-  modelValue: QuestionFilterState;
-  availableTags: string[];
-  availableParts: string[];
-  hasActiveFilters: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    modelValue: QuestionFilterState;
+    availableTags: string[];
+    availableParts: string[];
+    hasActiveFilters: boolean;
+    /** Denser layout for a height-limited bay (Question Bank). Composer leaves default. */
+    compact?: boolean;
+  }>(),
+  { compact: false },
+);
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: QuestionFilterState): void;
@@ -37,7 +42,7 @@ function toggleTag(tag: string) {
 </script>
 
 <template>
-  <div class="qf">
+  <div class="qf" :class="{ 'qf--compact': compact }">
     <div class="qf-row">
       <div class="arcade-field qf-field">
         <label class="arcade-label" for="qf-exam-type">{{ t('questionBank.examType') }}</label>
@@ -123,6 +128,20 @@ function toggleTag(tag: string) {
   flex-direction: column;
   gap: var(--space-7);
   margin-bottom: var(--space-9);
+}
+.qf--compact {
+  gap: var(--space-5);
+  margin-bottom: 0;
+}
+.qf--compact .qf-row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-5);
+}
+.qf--compact .qf-field,
+.qf--compact .qf-field--wide {
+  min-width: 0;
+  width: 100%;
 }
 .qf-row {
   display: flex;

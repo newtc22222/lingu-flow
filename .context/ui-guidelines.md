@@ -91,9 +91,9 @@ Reference usage (`DeckManagementView.vue` — the simpler of the two real consum
 </ManageListShell>
 ```
 
-`CardManagementView.vue` is the reference for the fuller case: a 2-column form with a live preview pane (still just goes in `#form` — the shell doesn't care what's inside it) and an extra header button via `#header-extra`.
+`DeckDetailView.vue` is the reference for the fuller case: a 2-column card form with a live preview pane (still just goes in `#form` — the shell doesn't care what's inside it), search + add-card via `#header-extra`, and optional `rowNavigation` / `draggableRows` for keyboard and drag reorder.
 
-`@edit` receives the full row item; `@delete` receives just the id. Keep your own `confirm()`/API-call logic in the `edit`/`delete` handlers in the parent — the shell only renders and emits, it doesn't know about your delete-confirmation copy or your API.
+`@edit` receives the full row item; `@delete` receives just the id. Keep your own `ConfirmDialog` + API-call logic in the `edit`/`delete` handlers in the parent — the shell only renders and emits, it doesn't know about your delete-confirmation copy or your API.
 
 ---
 
@@ -109,7 +109,9 @@ Reference usage (`DeckManagementView.vue` — the simpler of the two real consum
 
 ### Native `confirm()` for destructive actions
 
-`CardManagementView.vue` and `DeckManagementView.vue` both gate their delete actions behind the browser's native `confirm()` — the only two such call sites in the app. This is a **known gap, not a pattern to extend**: no `ConfirmDialog`/modal component exists anywhere in the codebase (confirmed by a repo-wide search — there is no modal/dialog pattern of any kind to reuse). Don't add a third `confirm()` call site as a quick fix for a new destructive action; that just grows the debt. This is a backlog item — building a real confirmation dialog is out of scope for now, but new destructive-action UI should not silently work around the gap by copying the `confirm()` pattern either. Flag it and ask before shipping a third instance.
+Use `shared/components/ConfirmDialog.vue` for any destructive confirmation (logout, delete deck, delete card, etc.). Do **not** call the browser's native `confirm()` — it is unstyled, blocks the main thread, and cannot match the arcade design system. `ConfirmDialog` is documented in `frontend/COMPONENTS.md` (props: `isOpen`/`title`/`message`/`confirmText`/`cancelText`/`variant`; emits `update:isOpen`/`confirm`/`cancel`).
+
+Note: `ConfirmDialog` currently has no focus trap or autofocus; library views restore focus in their confirm/cancel handlers. Prefer extending that shared component over inventing a third confirm pattern.
 
 ---
 
@@ -117,8 +119,8 @@ Reference usage (`DeckManagementView.vue` — the simpler of the two real consum
 
 The flat `src/components/` folder no longer exists — the migration it represented is finished. There is exactly one convention now:
 
-- **`features/<domain>/{<Name>View.vue, components/, store/, types.ts}`** — every top-level route component uses a `...View.vue` suffix (`AuthView`, `DashboardView`, `ExamView`, `ExamHubView`, `ExamComposerView`, `ExamResultsView`, `FlashcardsView`, `LearnView`, `MatchView`, `CardManagementView`, `DeckManagementView`, `DeckDetailView`, `QuestionBankView`). Domain-private components live in that feature's `components/` subfolder.
-- **`shared/components/`** — only for primitives with consumers in more than one feature (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`).
+- **`features/<domain>/{<Name>View.vue, components/, store/, types.ts}`** — every top-level route component uses a `...View.vue` suffix (`AuthView`, `DashboardView`, `ExamView`, `ExamHubView`, `ExamComposerView`, `ExamResultsView`, `FlashcardsView`, `LearnView`, `MatchView`, `DeckManagementView`, `DeckDetailView`, `QuestionBankView`). Domain-private components live in that feature's `components/` subfolder.
+- **`shared/components/`** — only for primitives with consumers in more than one feature (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`, `ConfirmDialog`).
 
 Don't reintroduce a top-level `components/` folder. If a feature-private component gains a second feature's consumer, promote it to `shared/components/` rather than importing across feature boundaries.
 

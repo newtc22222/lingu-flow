@@ -47,16 +47,23 @@ const routes: RouteRecordRaw[] = [
     name: 'decks',
     component: () => import('@/features/library/DeckManagementView.vue'),
   },
+  // Declared BEFORE the dynamic record so it always wins the match.
+  {
+    path: '/decks/unfiled',
+    name: 'deck-unfiled',
+    component: () => import('@/features/library/DeckDetailView.vue'),
+    props: () => ({ deckId: null }),
+  },
   {
     path: '/decks/:deckId',
     name: 'deck-detail',
     component: () => import('@/features/library/DeckDetailView.vue'),
     props: true,
   },
+  // Retired in favour of the deck workspace.
   {
     path: '/cards',
-    name: 'cards',
-    component: () => import('@/features/library/CardManagementView.vue'),
+    redirect: { name: 'decks' },
   },
   {
     path: '/profile',
@@ -72,6 +79,7 @@ const routes: RouteRecordRaw[] = [
     path: '/questions',
     name: 'question-bank',
     component: () => import('@/features/question-bank/QuestionBankView.vue'),
+    meta: { fullBleed: true },
   },
   {
     path: '/exams',

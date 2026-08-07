@@ -134,7 +134,9 @@
       "reset": "RESET",
       "notAvailable": "NOT AVAILABLE"
     },
-    "savedMessage": "SETTINGS SAVED SUCCESSFULLY"
+    "savedMessage": "SETTINGS SAVED SUCCESSFULLY",
+    "saveFailed": "COULD NOT SAVE SETTINGS. PLEASE TRY AGAIN.",
+    "loadFailed": "COULD NOT LOAD SETTINGS. PLEASE TRY AGAIN."
   },
   "flashcards": {
     "loading": "▸ LOADING CARDS…",
@@ -196,12 +198,50 @@
     "empty": "THIS DECK HAS NO CARDS YET.",
     "term": "TERM",
     "definition": "DEFINITION",
-    "reorderHint": "Drag and drop to reorder cards.",
+    "reorderHint": "Drag, or use Alt + ↑/↓ to reorder, then save.",
     "saveOrder": "SAVE ORDER",
     "orderSaved": "ORDER SAVED",
     "startLearn": "▶ LEARN",
-    "startMatch": "▶ MATCH",
-    "studyDeck": "▶ STUDY"
+    "startMatch": "▶ MATCH"
+  },
+  "library": {
+    "unfiledName": "UNFILED",
+    "unfiledDescription": "Cards that aren't in any deck.",
+    "search": "SEARCH",
+    "searchPlaceholder": "Press / to search…",
+    "searchNoResults": "NO RESULTS FOR “{query}”.",
+    "clearSearch": "CLEAR SEARCH",
+    "backToDecks": "← DECKS",
+    "addCard": "+ ADD CARD",
+    "reorderDisabled": "Unfiled cards can't be reordered.",
+    "reorderWhileFiltered": "Clear the search to reorder.",
+    "confirmDeleteDeckTitle": "DELETE DECK",
+    "confirmDeleteCardTitle": "DELETE CARD",
+    "deleteDeckWarning": "Deleting this deck also deletes its {count} cards. This can't be undone.",
+    "legend": {
+      "title": "Keyboard shortcuts",
+      "navigate": "Navigate",
+      "open": "Open",
+      "edit": "Edit",
+      "new": "New",
+      "delete": "Delete",
+      "search": "Search",
+      "reorder": "Reorder",
+      "saveOrder": "Save order",
+      "cancel": "Dismiss"
+    },
+    "a11y": {
+      "deckList": "Deck list",
+      "cardList": "Card list",
+      "moved": "Moved “{name}” to position {index} of {total}.",
+      "reorderBoundary": "Already at the start or end of the list.",
+      "deckCreated": "Deck created.",
+      "deckUpdated": "Deck updated.",
+      "deckDeleted": "Deck deleted.",
+      "cardCreated": "Card created.",
+      "cardUpdated": "Card updated.",
+      "cardDeleted": "Card deleted."
+    }
   },
   "cards": {
     "title": "MANAGE CARDS",
@@ -296,10 +336,14 @@
     "title": "QUESTION BANK",
     "countLabel": "QUESTIONS",
     "loading": "▸ LOADING QUESTIONS…",
-    "empty": "NO QUESTIONS YET. CREATE YOUR FIRST ONE ABOVE.",
+    "empty": "NO QUESTIONS YET. CREATE YOUR FIRST ONE IN COMPOSE.",
     "emptyFiltered": "NO QUESTIONS MATCH THESE FILTERS.",
     "createTitle": "CREATE NEW QUESTION",
     "editTitle": "EDIT QUESTION",
+    "composeBay": "COMPOSE",
+    "scanBay": "SCAN",
+    "resultsLabel": "RESULTS",
+    "confirmDeleteTitle": "DELETE QUESTION",
     "examType": "EXAM TYPE",
     "anyExamType": "Any exam type",
     "part": "PART",

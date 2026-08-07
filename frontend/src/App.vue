@@ -19,15 +19,14 @@ const isMobileMenuOpen = ref(false);
 
 /** Which arcade tab reads as active. */
 const activeTab = computed<
-  'dashboard' | 'exams' | 'flashcards' | 'decks' | 'cards' | 'bank' | 'profile' | null
+  'dashboard' | 'exams' | 'flashcards' | 'decks' | 'bank' | 'profile' | null
 >(() => {
   const path = route.path;
   if (path.startsWith('/dashboard')) return 'dashboard';
   if (path.startsWith('/exams')) return 'exams';
   if (path.startsWith('/flashcards')) return 'flashcards';
   if (path.startsWith('/decks')) return 'decks';
-  if (path.startsWith('/cards')) return 'cards';
-  if (path.startsWith('/question-bank')) return 'bank';
+  if (path.startsWith('/questions')) return 'bank';
   if (path.startsWith('/profile') || path.startsWith('/settings')) return 'profile';
   return null;
 });
@@ -74,7 +73,7 @@ function handleDocumentClick(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick);
-  
+
   if (auth.isAuthenticated) {
     apiFetch('/api/settings')
       .then((res) => {
@@ -247,11 +246,7 @@ onUnmounted(() => {
         >
           👤 {{ t('profile.title') }}
         </RouterLink>
-        <RouterLink
-          :to="{ name: 'settings' }"
-          class="mobile-menu-item"
-          @click="closeMobileMenu"
-        >
+        <RouterLink :to="{ name: 'settings' }" class="mobile-menu-item" @click="closeMobileMenu">
           ⚙ {{ t('profile.systemSettings') }}
         </RouterLink>
         <button
@@ -402,7 +397,9 @@ onUnmounted(() => {
   border: none;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .mobile-menu-item:hover,

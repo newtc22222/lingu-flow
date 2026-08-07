@@ -73,7 +73,7 @@ Fully tokenized — every variant uses `var(--space-*)`, `var(--font-size-*)`, `
 
 ### Consumers
 
-`features/exam/ExamCreatorView.vue` (×2), `ExamHubView.vue`, `ExamResultsView.vue` (×2 — a retake button was added alongside back-to-exams), `features/exam/components/QuestionCard.vue`, `features/auth/AuthView.vue` (×2), `features/dashboard/DashboardView.vue` (×2), `features/flashcards/FlashcardsView.vue` (×2, `primary`/`danger`), `features/library/CardManagementView.vue` and `DeckManagementView.vue` (via themselves + `ManageListShell`).
+`features/exam/ExamCreatorView.vue` (×2), `ExamHubView.vue`, `ExamResultsView.vue` (×2 — a retake button was added alongside back-to-exams), `features/exam/components/QuestionCard.vue`, `features/auth/AuthView.vue` (×2), `features/dashboard/DashboardView.vue` (×2), `features/flashcards/FlashcardsView.vue` (×2, `primary`/`danger`), `features/library/DeckManagementView.vue` and `DeckDetailView.vue` (via themselves + `ManageListShell` + form components).
 
 Phase 1.5 additions: `features/library/DeckDetailView.vue`, `features/flashcards/LearnView.vue`, `MatchView.vue`, and `components/McqPrompt.vue` (which renders one `AppButton` per option).
 
@@ -116,7 +116,7 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 ### Consumers
 
-`App.vue` (logout warning).
+`App.vue` (logout warning), `DeckManagementView.vue` (delete deck), `DeckDetailView.vue` (delete card), `QuestionBankView.vue` (delete question).
 
 ---
 
@@ -126,31 +126,42 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 ### Props
 
-| Prop          | Type                                | Purpose                                                                                                                                                                                                                                                                                                                                                         |
-| ------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`       | `string`                            | header `<h2>` text                                                                                                                                                                                                                                                                                                                                              |
-| `countLabel`  | `string`                            | badge suffix (`"THẺ"` / `"BỘ"`)                                                                                                                                                                                                                                                                                                                                 |
-| `count`       | `number`                            | badge count                                                                                                                                                                                                                                                                                                                                                     |
-| `isLoading`   | `boolean`                           | gates loading-text vs. list/empty rendering                                                                                                                                                                                                                                                                                                                     |
-| `loadingText` | `string`                            | shown while `isLoading`                                                                                                                                                                                                                                                                                                                                         |
-| `emptyText`   | `string`                            | shown when `rows.length === 0`                                                                                                                                                                                                                                                                                                                                  |
-| `rows`        | `T[]`                               | the list to render                                                                                                                                                                                                                                                                                                                                              |
-| `canModify`   | `(item: T) => boolean` _(optional)_ | **Phase 1.6 addition.** Per-row guard; return false to disable that row's edit/delete buttons. Added for the question bank, where seeded questions have no owner and can never be edited — without it the shell offered actions whose only possible outcome was a silent 404. Omitting it leaves every row editable, so the deck and card lists are unaffected. |
+| Prop            | Type                                | Purpose                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `title`         | `string`                            | header `<h2>` text                                                                                                                                                                                                                                                                                                                                                                   |
+| `countLabel`    | `string`                            | badge suffix (`"THẺ"` / `"BỘ"`)                                                                                                                                                                                                                                                                                                                                                      |
+| `count`         | `number`                            | badge count                                                                                                                                                                                                                                                                                                                                                                          |
+| `isLoading`     | `boolean`                           | gates loading-text vs. list/empty rendering                                                                                                                                                                                                                                                                                                                                          |
+| `loadingText`   | `string`                            | shown while `isLoading`                                                                                                                                                                                                                                                                                                                                                              |
+| `emptyText`     | `string`                            | shown when `rows.length === 0`                                                                                                                                                                                                                                                                                                                                                       |
+| `rows`          | `T[]`                               | the list to render                                                                                                                                                                                                                                                                                                                                                                   |
+| `canModify`     | `(item: T) => boolean` _(optional)_ | **Phase 1.6 addition.** Per-row guard; return false to disable that row's edit/delete buttons. Added for the question bank, where seeded questions have no owner and can never be edited — without it the shell offered actions whose only possible outcome was a silent 404. Omitting it leaves every row editable. Also used by the deck rack to freeze the synthetic Unfiled row. |
+| `rowNavigation` | `boolean`                           | **Library remake.** Default `false`. When true, the list is an ARIA layout-grid with roving tabindex (`data-roving-item` on each row); action buttons get `tabindex="-1"`. Logic stays in the parent (`useRovingList`); the shell only renders attributes and forwards events.                                                                                                       |
+| `activeIndex`   | `number`                            | Which row holds the tab stop when `rowNavigation` is on (controlled by the parent). Default `-1`.                                                                                                                                                                                                                                                                                    |
+| `listLabel`     | `string`                            | `aria-label` on the grid when `rowNavigation` is on. Default `''`.                                                                                                                                                                                                                                                                                                                   |
+| `draggableRows` | `boolean`                           | Default `false`. When true, each `<li>` is `draggable` and emits drag lifecycle events. Parent owns the array.                                                                                                                                                                                                                                                                       |
+
+**Tripwire:** a fifth opt-in flag means split into chrome + a thin `SortableRows` wrapper — do not add a sixth prop.
 
 ### Emits
 
-| Event    | Payload         | Purpose                                      |
-| -------- | --------------- | -------------------------------------------- |
-| `edit`   | `T` (full item) | parent opens its own edit form with the item |
-| `delete` | `string` (id)   | parent runs its own `confirm()` + API call   |
+| Event           | Payload            | Purpose                                                      |
+| --------------- | ------------------ | ------------------------------------------------------------ |
+| `edit`          | `T` (full item)    | parent opens its own edit form with the item                 |
+| `delete`        | `string` (id)      | parent runs its own ConfirmDialog + API call                 |
+| `row-activate`  | `(item: T, index)` | double-click / activate (Enter handled by parent composable) |
+| `row-focus`     | `index`            | row received focus or click — sync roving index              |
+| `row-dragstart` | `index`            | drag started on a draggable row                              |
+| `row-dragenter` | `index`            | drag entered another row (live reorder preview)              |
+| `row-dragend`   | —                  | drag finished                                                |
 
 ### Slots
 
-| Slot           | Scope         | Purpose                                                                                                                                                                                     |
-| -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `header-extra` | —             | optional content after the count badge (only `CardManagementView` uses this, for its "← QUAY LẠI" close button — `DeckManagementView` has no equivalent, so the slot renders nothing there) |
-| `form`         | —             | the create/edit form area, entirely owned by the parent                                                                                                                                     |
-| `row`          | `{ item: T }` | the row's info content (left of the edit/delete buttons)                                                                                                                                    |
+| Slot           | Scope                        | Purpose                                                                      |
+| -------------- | ---------------------------- | ---------------------------------------------------------------------------- |
+| `header-extra` | —                            | optional content after the count badge (search field, add-card button, etc.) |
+| `form`         | —                            | the create/edit form area, entirely owned by the parent                      |
+| `row`          | `{ item: T, index: number }` | the row's info content (left of the edit/delete buttons)                     |
 
 ### Anatomy
 
@@ -177,11 +188,11 @@ Fully tokenized — carries forward every `var(--space-*)`/`var(--font-size-*)`/
 
 ### Consumers
 
-`CardManagementView.vue`, `DeckManagementView.vue`, and (Phase 1.6) `features/question-bank/QuestionBankView.vue`.
+`DeckManagementView.vue` (rack), `DeckDetailView.vue` (workspace), and `features/question-bank/QuestionBankView.vue`. (`CardManagementView` was removed; card CRUD lives in the deck workspace.)
 
-### Delete confirmation — three consumers, two patterns
+### Delete confirmation
 
-Deck and Card still gate delete behind native `confirm()`. `QuestionBankView` deliberately does **not** add a third: `ui-guidelines.md` names those two a known gap not to be extended and asks that a third be flagged rather than added, so it renders a two-step inline confirm inside the `row` slot instead. Building a real `shared/components/ConfirmDialog.vue` and retrofitting all three is filed as its own issue.
+Library views use `ConfirmDialog`. `QuestionBankView` still uses an inline two-step confirm in the row slot — prefer migrating it to `ConfirmDialog` when next touched.
 
 ---
 
@@ -205,7 +216,13 @@ Controlled via `v-model` on a `QuestionFilterState`; emits `reset`. Part and tag
 
 The four option inputs hold **bare** text. The stored `"A. "` prefix is stripped on load and re-applied on submit via `@/utils/options`, so the user never edits a letter they can't meaningfully change. That helper re-derives the letter from the index, so reordering options can't leave a stale label; the backend normalizes identically.
 
-Used both standalone (bank) and inline inside the composer's create-new flow.
+Prop `framed` (default `true`): wraps in `PixelFrame`. Pass `framed={false}` when a parent bay owns the frame (Question Bank dual-bay console).
+
+Used both standalone (bank, unframed inside Compose bay) and inline inside the composer's create-new flow (framed).
+
+## Question Bank console layout
+
+`QuestionBankView.vue` is a **full-bleed, full-width** operator console (not `ManageListShell`): **left** COMPOSE form (amber), **right** SCAN filters + RESULTS list stacked. Form and list scroll independently inside the viewport. Route sets `meta.fullBleed`. Delete uses `ConfirmDialog`.
 
 ---
 
@@ -219,19 +236,38 @@ Its destructive action is **detach**, labelled "remove from exam" — the questi
 
 ## CardRow
 
-`frontend/src/features/library/components/CardRow.vue` — one draggable term/definition row in `DeckDetailView`'s reorder list. Renders the card's index, front/back text, and an optional thumbnail when `imageUrl` is set.
+`frontend/src/features/library/components/CardRow.vue` — **row content only** for a card inside `ManageListShell` (deck workspace). Renders handle glyph, zero-padded index, optional ▲/▼ reorder controls, term/definition cells, and thumbnail. The shell owns the `<li>`, drag listeners, and focus ring.
 
 ### Props
 
-| Prop         | Type       | Purpose                                              |
-| ------------ | ---------- | ---------------------------------------------------- |
-| `card`       | `DeckCard` | the card to render (see `features/library/types.ts`) |
-| `index`      | `number`   | zero-based position, displayed as `index + 1`        |
-| `isDragging` | `boolean`  | dims the row while it's the one being dragged        |
+| Prop            | Type       | Purpose                                                     |
+| --------------- | ---------- | ----------------------------------------------------------- |
+| `card`          | `DeckCard` | the card to render (see `features/library/types.ts`)        |
+| `index`         | `number`   | zero-based position, displayed as zero-padded `01`/`02`/…   |
+| `isDragging`    | `boolean`  | dims the row while it's the one being dragged               |
+| `isReorderable` | `boolean`  | when false, hides handle and ▲/▼ (Unfiled / filtered lists) |
 
 ### Emits
 
-`dragstart`, `dragenter`, `dragend` — forwarded straight up. **The component deliberately does not reorder anything itself**: the parent owns the card array, so it is the only place that can mutate order. Keep it that way if you extend this.
+`move-up`, `move-down` — parent reorders. **The component deliberately does not reorder anything itself.**
+
+---
+
+## CardForm
+
+`frontend/src/features/library/components/CardForm.vue` — create/edit form for a card with live `MarkdownRenderer` preview. Props: `card`, `decks`, `defaultDeckId`, `isSaving`, `error`, `showDeckSelect?`. Emits `submit(payload)` / `cancel`. Exposes `focusFirstField()` for `N`/`E` shortcuts. Reset deck select to `defaultDeckId` on create so a card made inside a deck lands in that deck.
+
+## DeckForm
+
+`frontend/src/features/library/components/DeckForm.vue` — create/edit form for a deck (name + description). Props: `deck`, `isSaving`, `error`. Emits `submit` / `cancel`. Exposes `focusFirstField()`.
+
+## KeycapLegend
+
+`frontend/src/features/library/components/KeycapLegend.vue` — keyboard shortcut discoverability strip. Props: `items: { keys: string[]; label: string }[]`, `legendLabel` (group accessible name; not named `ariaLabel` because Vue treats `aria-*` specially on component props). Contains **no** key values or copy of its own — callers pass literal glyphs and already-translated labels. Caps use `font-label`; labels use `font-body`. Hidden below 768px.
+
+## useRovingList
+
+`frontend/src/features/library/composables/useRovingList.ts` — roving-focus key handler for library lists (arrow navigate, Home/End/PgUp/PgDn, cell drill, Enter/E/N/Del/`/`/S, Alt+arrows, Escape ladder, IME guard). Feature-private; promote to `shared/composables/` when a second feature imports it.
 
 ---
 

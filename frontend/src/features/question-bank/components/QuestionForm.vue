@@ -5,6 +5,9 @@
  * The four option inputs hold BARE text; the positional "A. " prefix is applied
  * on submit (see `@/utils/options`), so the user never edits a letter they
  * can't meaningfully change.
+ *
+ * `framed` (default true): wraps in PixelFrame for ExamComposer / standalone.
+ * Pass `framed={false}` when a parent bay already provides the frame.
  */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -13,12 +16,15 @@ import PixelFrame from '@/shared/components/PixelFrame.vue';
 import { OPTION_KEYS, toFormOptions, toStoredOptions } from '@/utils/options';
 import { DIFFICULTIES, EXAM_TYPES, type BankQuestion } from '../types';
 
-const props = defineProps<{
-  /** Present when editing; absent when creating. */
-  question?: BankQuestion | null;
-  isSaving?: boolean;
-  error?: string | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    question?: BankQuestion | null;
+    isSaving?: boolean;
+    error?: string | null;
+    framed?: boolean;
+  }>(),
+  { framed: true, isSaving: false, error: null, question: null },
+);
 
 const emit = defineEmits<{
   (e: 'submit', payload: Record<string, unknown>): void;
@@ -95,8 +101,12 @@ function submit() {
 </script>
 
 <template>
-  <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="qform-frame">
-    <form class="qform" @submit.prevent="submit">
+  <component
+    :is="framed ? PixelFrame : 'div'"
+    v-bind="framed ? { frameColor: 'amber', surface: 'cabinet', ringWidth: 3 } : {}"
+    :class="framed ? 'qform-frame' : 'qform-embedded-wrap'"
+  >
+    <form class="qform" :class="{ 'qform--embedded': !framed }" @submit.prevent="submit">
       <h3 class="qform-title font-label">
         {{ isEditing ? t('questionBank.editTitle') : t('questionBank.createTitle') }}
       </h3>
@@ -231,18 +241,25 @@ function submit() {
         </AppButton>
       </div>
     </form>
-  </PixelFrame>
+  </component>
 </template>
 
 <style scoped>
 .qform-frame {
   margin-bottom: var(--space-11);
 }
+.qform-embedded-wrap {
+  min-width: 0;
+}
 .qform {
   padding: var(--space-10);
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
+}
+.qform--embedded {
+  padding: var(--space-7);
+  gap: var(--space-6);
 }
 .qform-title {
   font-size: var(--font-size-base);

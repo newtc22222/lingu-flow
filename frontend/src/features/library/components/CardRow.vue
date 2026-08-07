@@ -1,40 +1,68 @@
 <script setup lang="ts">
 /**
- * One draggable term/definition row in the deck detail list.
+ * Row *content* for a card inside ManageListShell (or a plain list).
  *
- * Drag events are forwarded to the parent rather than handled here: the parent
- * owns the card array, so it is the only place that can reorder it.
+ * The shell owns the <li>, drag listeners, and focus ring. This component
+ * only renders the handle, index, term/definition cells, and optional
+ * reorder controls. Parent owns the card array and is the only place that
+ * can reorder it.
  */
 import { useI18n } from 'vue-i18n';
 import type { DeckCard } from '../types';
 
-defineProps<{
-  card: DeckCard;
-  index: number;
-  isDragging: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    card: DeckCard;
+    index: number;
+    isDragging?: boolean;
+    /** When false, hide the grab handle and drop grab cursor (Unfiled / filtered). */
+    isReorderable?: boolean;
+  }>(),
+  {
+    isDragging: false,
+    isReorderable: true,
+  },
+);
 
-defineEmits<{
-  (e: 'dragstart'): void;
-  (e: 'dragenter'): void;
-  (e: 'dragend'): void;
+const emit = defineEmits<{
+  (e: 'move-up'): void;
+  (e: 'move-down'): void;
 }>();
 
 const { t } = useI18n();
 </script>
 
 <template>
-  <li
+  <div
     class="card-row"
-    :class="{ 'card-row--dragging': isDragging }"
-    draggable="true"
-    @dragstart="$emit('dragstart')"
-    @dragenter.prevent="$emit('dragenter')"
-    @dragover.prevent
-    @dragend="$emit('dragend')"
+    :class="{
+      'card-row--dragging': isDragging,
+      'card-row--static': !isReorderable,
+    }"
   >
-    <span class="card-row-handle font-label" aria-hidden="true">⠿</span>
-    <span class="card-row-index font-label">{{ index + 1 }}</span>
+    <span v-if="isReorderable" class="card-row-handle font-label" aria-hidden="true">⠿</span>
+    <span class="card-row-index font-label">{{ String(index + 1).padStart(2, '0') }}</span>
+
+    <div v-if="isReorderable" class="card-row-controls">
+      <button
+        type="button"
+        class="card-row-control font-label"
+        :aria-label="t('common.moveUp')"
+        tabindex="-1"
+        @click.stop="emit('move-up')"
+      >
+        ▲
+      </button>
+      <button
+        type="button"
+        class="card-row-control font-label"
+        :aria-label="t('common.moveDown')"
+        tabindex="-1"
+        @click.stop="emit('move-down')"
+      >
+        ▼
+      </button>
+    </div>
 
     <div class="card-row-body">
       <div class="card-row-cell">
@@ -50,7 +78,7 @@ const { t } = useI18n();
     </div>
 
     <img v-if="card.imageUrl" :src="card.imageUrl" alt="" class="card-row-image" />
-  </li>
+  </div>
 </template>
 
 <style scoped>
@@ -58,27 +86,47 @@ const { t } = useI18n();
   display: flex;
   align-items: center;
   gap: var(--space-6);
-  padding: var(--space-6) var(--space-8);
-  border-left: var(--border-width-accent) solid var(--surface-panel-border);
-  border-bottom: var(--space-1) solid var(--surface-page);
-  cursor: grab;
+  min-width: 0;
 }
-.card-row:hover {
-  background: var(--state-hover-surface);
-  border-left-color: var(--color-accent);
+.card-row--static {
+  cursor: default;
 }
 .card-row--dragging {
   opacity: 0.5;
-  cursor: grabbing;
 }
 .card-row-handle {
   color: var(--text-secondary);
   font-size: var(--font-size-lg);
+  flex-shrink: 0;
 }
 .card-row-index {
   min-width: 24px;
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.card-row-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+.card-row-control {
+  background: transparent;
+  border: var(--space-1) solid var(--surface-panel-border);
+  color: var(--text-secondary);
+  font-size: var(--font-size-2xs);
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+}
+.card-row-control:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+.card-row-control:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 .card-row-body {
   flex: 1;
@@ -118,9 +166,5 @@ const { t } = useI18n();
   height: 44px;
   object-fit: cover;
   flex-shrink: 0;
-}
-.card-row:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-focus-ring);
-  outline-offset: 2px;
 }
 </style>
