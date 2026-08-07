@@ -12,7 +12,8 @@
     "logoutConfirmTitle": "XÁC NHẬN ĐĂNG XUẤT",
     "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất khỏi phiên làm việc?",
     "logoutConfirm": "ĐĂNG XUẤT",
-    "language": "NGÔN NGỮ"
+    "language": "NGÔN NGỮ",
+    "menu": "MENU"
   },
   "common": {
     "loading": "ĐANG TẢI…",
@@ -130,9 +131,10 @@
       "off": "TẮT",
       "changePassword": "ĐỔI MẬT KHẨU",
       "save": "LƯU CÀI ĐẶT",
-      "cancel": "HỦY",
+      "reset": "ĐẶT LẠI",
       "notAvailable": "CHƯA HỖ TRỢ"
-    }
+    },
+    "savedMessage": "ĐÃ LƯU CÀI ĐẶT THÀNH CÔNG"
   },
   "flashcards": {
     "loading": "▸ ĐANG TẢI THẺ…",

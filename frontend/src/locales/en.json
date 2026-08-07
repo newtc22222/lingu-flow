@@ -12,7 +12,8 @@
     "logoutConfirmTitle": "LOG OUT CONFIRMATION",
     "logoutConfirmMessage": "Are you sure you want to log out of your session?",
     "logoutConfirm": "LOG OUT",
-    "language": "LANGUAGE"
+    "language": "LANGUAGE",
+    "menu": "MENU"
   },
   "common": {
     "loading": "LOADING…",
@@ -130,9 +131,10 @@
       "off": "OFF",
       "changePassword": "CHANGE PASSWORD",
       "save": "SAVE SETTINGS",
-      "cancel": "CANCEL",
+      "reset": "RESET",
       "notAvailable": "NOT AVAILABLE"
-    }
+    },
+    "savedMessage": "SETTINGS SAVED SUCCESSFULLY"
   },
   "flashcards": {
     "loading": "▸ LOADING CARDS…",

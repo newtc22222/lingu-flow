@@ -3,17 +3,17 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/features/auth/store/authStore';
-import { SUPPORTED_LOCALES, setLocale, type AppLocale } from '@/i18n';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
 import AppFooter from '@/shared/components/AppFooter.vue';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const showLogoutConfirm = ref(false);
 const isProfileMenuOpen = ref(false);
+const isMobileMenuOpen = ref(false);
 
 /** Which arcade tab reads as active. */
 const activeTab = computed<
@@ -33,10 +33,6 @@ const activeTab = computed<
 /** The nav chrome is for signed-in screens only — `/auth` renders bare. */
 const showNav = computed(() => auth.isAuthenticated && route.name !== 'auth');
 
-function switchLocale(next: AppLocale) {
-  setLocale(next);
-}
-
 function toggleProfileMenu() {
   isProfileMenuOpen.value = !isProfileMenuOpen.value;
 }
@@ -45,8 +41,17 @@ function closeProfileMenu() {
   isProfileMenuOpen.value = false;
 }
 
+function toggleMobileMenu() {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+}
+
+function closeMobileMenu() {
+  isMobileMenuOpen.value = false;
+}
+
 function handleLogoutClick() {
   closeProfileMenu();
+  closeMobileMenu();
   showLogoutConfirm.value = true;
 }
 
@@ -59,6 +64,9 @@ function handleDocumentClick(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (!target.closest('.profile-dropdown-container')) {
     closeProfileMenu();
+  }
+  if (!target.closest('.mobile-menu') && !target.closest('.hamburger-btn')) {
+    closeMobileMenu();
   }
 }
 
@@ -76,10 +84,10 @@ onUnmounted(() => {
     <!-- Top Navigation Header -->
     <header v-if="showNav" class="app-header">
       <div class="nav-container">
-        <!-- Logo / Wordmark -->
+        <!-- Logo / Wordmark (Left) -->
         <RouterLink :to="{ name: 'dashboard' }" class="nav-logo font-pixel"> LINGUFLOW </RouterLink>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs (Center, hidden on mobile) -->
         <nav class="nav-tabs" role="tablist">
           <RouterLink
             :to="{ name: 'dashboard' }"
@@ -116,33 +124,12 @@ onUnmounted(() => {
           >
             {{ t('nav.questionBank') }}
           </RouterLink>
-          <RouterLink
-            :to="{ name: 'profile' }"
-            class="nav-tab font-label"
-            :class="{ 'nav-tab--active': activeTab === 'profile' }"
-          >
-            {{ t('profile.title') }}
-          </RouterLink>
         </nav>
 
         <!-- Right Utility Controls -->
         <div class="nav-utils">
-          <div class="lang-switch" role="group" :aria-label="t('nav.language')">
-            <button
-              v-for="code in SUPPORTED_LOCALES"
-              :key="code"
-              type="button"
-              class="lang-btn font-label"
-              :class="{ 'lang-btn--active': locale === code }"
-              :aria-pressed="locale === code"
-              @click="switchLocale(code)"
-            >
-              {{ code.toUpperCase() }}
-            </button>
-          </div>
-
-          <!-- Profile Choice Dropdown Menu -->
-          <div class="profile-dropdown-container">
+          <!-- Profile Choice Dropdown Menu (Desktop) -->
+          <div class="profile-dropdown-container desktop-only">
             <button
               type="button"
               class="profile-btn font-label"
@@ -174,7 +161,85 @@ onUnmounted(() => {
               </button>
             </div>
           </div>
+
+          <!-- Hamburger Menu Toggle (Mobile) -->
+          <button
+            type="button"
+            class="hamburger-btn mobile-only font-label"
+            :aria-label="t('nav.menu')"
+            @click.stop="toggleMobileMenu"
+          >
+            <span v-if="!isMobileMenuOpen">☰</span>
+            <span v-else>✕</span>
+          </button>
         </div>
+      </div>
+
+      <!-- Mobile Navigation Menu -->
+      <div v-if="isMobileMenuOpen" class="mobile-menu font-label">
+        <RouterLink
+          :to="{ name: 'dashboard' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'dashboard' }"
+          @click="closeMobileMenu"
+        >
+          {{ t('nav.dashboard') }}
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'exams' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'exams' }"
+          @click="closeMobileMenu"
+        >
+          {{ t('nav.examMode') }}
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'flashcards' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'flashcards' }"
+          @click="closeMobileMenu"
+        >
+          {{ t('nav.flashcards') }}
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'decks' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'decks' }"
+          @click="closeMobileMenu"
+        >
+          {{ t('nav.manageDecks') }}
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'question-bank' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'bank' }"
+          @click="closeMobileMenu"
+        >
+          {{ t('nav.questionBank') }}
+        </RouterLink>
+        <div class="mobile-menu-divider" />
+        <RouterLink
+          :to="{ name: 'profile' }"
+          class="mobile-menu-item"
+          :class="{ 'mobile-menu-item--active': activeTab === 'profile' }"
+          @click="closeMobileMenu"
+        >
+          👤 {{ t('profile.title') }}
+        </RouterLink>
+        <RouterLink
+          :to="{ name: 'settings' }"
+          class="mobile-menu-item"
+          @click="closeMobileMenu"
+        >
+          ⚙ {{ t('profile.systemSettings') }}
+        </RouterLink>
+        <button
+          type="button"
+          class="mobile-menu-item mobile-menu-item--danger"
+          @click="handleLogoutClick"
+        >
+          [{{ t('nav.logout') }}]
+        </button>
       </div>
     </header>
 
@@ -220,7 +285,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  flex-wrap: wrap;
 }
 
 .nav-logo {
@@ -228,6 +292,7 @@ onUnmounted(() => {
   color: var(--color-accent);
   letter-spacing: var(--tracking-normal);
   text-decoration: none;
+  flex-shrink: 0;
 }
 
 .nav-logo:hover {
@@ -235,9 +300,8 @@ onUnmounted(() => {
 }
 
 .nav-tabs {
-  display: flex;
+  display: none;
   gap: var(--space-2);
-  flex-wrap: wrap;
 }
 
 .nav-tab {
@@ -272,30 +336,76 @@ onUnmounted(() => {
   gap: var(--space-6);
 }
 
-.lang-switch {
-  display: flex;
-  gap: var(--space-1);
+/* Desktop profile dropdown — hidden on mobile */
+.desktop-only {
+  display: none;
 }
 
-.lang-btn {
-  background: var(--surface-panel-border);
-  border: none;
-  color: var(--text-secondary);
-  font-size: var(--font-size-2xs);
-  letter-spacing: var(--tracking-tight);
+/* Hamburger — shown on mobile only */
+.mobile-only {
+  display: block;
+}
+
+.hamburger-btn {
+  background: none;
+  border: 1px solid var(--surface-panel-border);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
+  line-height: 1;
 }
 
-.lang-btn--active {
-  background: var(--state-selected-bg);
-  color: var(--text-on-accent);
+.hamburger-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
-.lang-btn:hover:not(.lang-btn--active) {
+/* Mobile slide-down menu */
+.mobile-menu {
+  background: var(--surface-panel);
+  border-top: 1px solid var(--surface-panel-border);
+  padding: var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu-item {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
+  text-decoration: none;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mobile-menu-item:hover,
+.mobile-menu-item--active {
+  background: var(--state-hover-surface);
+  color: var(--color-accent);
+}
+
+.mobile-menu-item--danger {
+  color: var(--status-danger);
+}
+
+.mobile-menu-item--danger:hover {
+  background: var(--status-danger-subtle);
   color: var(--text-primary);
 }
 
+.mobile-menu-divider {
+  height: 1px;
+  background: var(--surface-panel-border);
+  margin: var(--space-2) var(--space-8);
+}
+
+/* Profile dropdown (desktop) */
 .profile-dropdown-container {
   position: relative;
 }
@@ -371,12 +481,29 @@ onUnmounted(() => {
   margin: var(--space-1) 0;
 }
 
+/* Focus visible states */
 .nav-tab:focus-visible,
-.lang-btn:focus-visible,
 .profile-btn:focus-visible,
-.dropdown-item:focus-visible {
+.dropdown-item:focus-visible,
+.hamburger-btn:focus-visible,
+.mobile-menu-item:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
   outline-offset: 2px;
+}
+
+/* Responsive breakpoint: show desktop nav on md+ */
+@media (min-width: 768px) {
+  .nav-tabs {
+    display: flex;
+  }
+
+  .desktop-only {
+    display: block;
+  }
+
+  .mobile-only {
+    display: none;
+  }
 }
 
 .arcade-app {
