@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -67,9 +66,23 @@ class Settings(BaseSettings):
             "change-me",
             "secret",
         }
-        env = os.getenv("ENVIRONMENT", "development")
-        if env == "production" and (not secret or secret in dev_fallbacks):
-            raise ValueError("JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!")
+        # Read the resolved *field*, not the process env: `ENVIRONMENT` is
+        # declared above `JWT_SECRET`, so pydantic-settings has already merged
+        # process env over `.env` by now. `os.getenv` saw only the former, so a
+        # deploy that declared production purely in `backend/.env` booted on the
+        # committed dev secret below.
+        env = (info.data.get("ENVIRONMENT") or "development").strip().lower()
+        if env == "production":
+            if not secret or secret in dev_fallbacks:
+                raise ValueError(
+                    "JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!"
+                )
+            # HS256 secrets should be long enough to resist brute force; 32 bytes
+            # is the minimum we accept (matches common guidance for JWT HMAC keys).
+            if len(secret.encode("utf-8")) < 32:
+                raise ValueError(
+                    "JWT_SECRET must be at least 32 bytes in production!"
+                )
         if not secret:
             return "lingu_dev_jwt_secret_key_change_in_production_99"
         return secret

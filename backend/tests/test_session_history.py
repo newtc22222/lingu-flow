@@ -147,25 +147,30 @@ async def test_deleted_question_still_renders_in_past_results(client: AsyncClien
 
 @pytest.mark.asyncio
 async def test_public_routes_redact_answer_keys(client: AsyncClient):
-    """Bank listing, bank detail, and template composition routes must not leak correctAnswer to non-owners."""
+    """Bank listing and bank detail routes must not leak correctAnswer to non-owners."""
     headers = await _register(client, "author")
     template_id = await _template(client, headers)
     question_id = await _add_question(client, headers, template_id, "Redacted")
-    
+
     # 1. Bank listing (unauthenticated)
     listing = (await client.get("/api/questions")).json()
     assert len(listing) > 0
     assert all("correctAnswer" not in q for q in listing)
-    
+
     # 2. Bank detail (unauthenticated)
     detail = (await client.get(f"/api/questions/{question_id}")).json()
     assert "correctAnswer" not in detail
     assert "explanation" not in detail
-    
-    # 3. Template composition (unauthenticated)
-    composition = (await client.get(f"/api/exams/templates/{template_id}/questions")).json()
-    assert len(composition) == 1
-    assert "correctAnswer" not in composition[0]
+
+    # 3. This private template's composition is not readable at all by a
+    # non-owner now — it is not merely redacted. The redaction guarantee on the
+    # composition route is pinned on the only path a non-owner can still reach,
+    # a public built-in: see
+    # test_exam_visibility.test_public_template_stays_readable_without_answer_keys.
+    anon_composition = await client.get(
+        f"/api/exams/templates/{template_id}/questions"
+    )
+    assert anon_composition.status_code == 404
 
     # The owner still sees them
     owner_detail = (await client.get(f"/api/questions/{question_id}", headers=headers)).json()

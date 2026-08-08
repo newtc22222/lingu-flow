@@ -90,8 +90,11 @@ async def test_exam_question_management(client: AsyncClient):
     assert q_data["part"] == "reading"
     assert "examTemplateId" not in q_data
 
-    # Get questions for template
-    q_list_res = await client.get(f"/api/exams/templates/{t_id}/questions")
+    # Get questions for template (as the owner — a private template is not
+    # readable anonymously; see test_exam_visibility.py)
+    q_list_res = await client.get(
+        f"/api/exams/templates/{t_id}/questions", headers=headers
+    )
     assert q_list_res.status_code == 200
     questions = q_list_res.json()
     assert len(questions) == 1
@@ -142,14 +145,25 @@ async def test_full_exam_session_flow(client: AsyncClient):
     s_id = session_data["id"]
     assert session_data["status"] == "in-progress"
 
-    # 3. Submit answer (correct = B)
+    # 3. Submit answer (correct = B). Mid-exam responses must not reveal
+    # correctness — that would be an answer-key oracle.
     ans_res = await client.put(
         f"/api/exams/sessions/{s_id}/answer",
         json={"questionId": q_id, "userAnswer": "B", "timeTakenSeconds": 14},
         headers=headers,
     )
     assert ans_res.status_code == 200
-    assert ans_res.json()["isCorrect"] is True
+    ans_body = ans_res.json()
+    assert ans_body["success"] is True
+    assert ans_body["userAnswer"] == "B"
+    assert "isCorrect" not in ans_body
+
+    # Mid-exam details keep the saved answer but withhold isCorrect.
+    mid_details = (
+        await client.get(f"/api/exams/sessions/{s_id}/details", headers=headers)
+    ).json()
+    assert mid_details["userAnswers"][q_id]["userAnswer"] == "B"
+    assert "isCorrect" not in mid_details["userAnswers"][q_id]
 
     # 4. Finish session
     finish_res = await client.put(f"/api/exams/sessions/{s_id}/finish", headers=headers)

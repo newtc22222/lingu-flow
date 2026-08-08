@@ -182,6 +182,23 @@ def build_question_response(
     return response
 
 
+def build_session_question_response(
+    question: Any, reveal_keys: bool
+) -> Union["QuestionResponse", "QuestionResponsePublic"]:
+    """
+    Serialize a question as it appears inside one exam sitting.
+
+    Gated on the *session* (owner + completed, decided by
+    `ExamService.get_session_details`), not on who authored the question:
+    built-in questions have `user_id = NULL`, so reusing
+    `build_question_response` here would strip the key out of every seeded
+    exam's results page.
+    """
+    if reveal_keys:
+        return QuestionResponse.model_validate(question)
+    return QuestionResponsePublic.model_validate(question)
+
+
 def build_template_question_response(
     question: Any, order_index: int, current_user_id: Optional[uuid.UUID]
 ) -> Union["TemplateQuestionResponse", "TemplateQuestionResponsePublic"]:
@@ -248,7 +265,9 @@ class SubmitAnswerRequest(BaseModel):
 class SessionDetailsResponse(BaseModel):
     session: ExamSessionResponse
     template: ExamTemplateResponse
-    questions: List[QuestionResponse]
+    # Keyed shape while reviewing a completed sitting, key-free while it is still
+    # in progress — see `build_session_question_response`.
+    questions: List[Union[QuestionResponse, QuestionResponsePublic]]
     user_answers: Dict[str, Any] = Field(alias="userAnswers")
 
     model_config = ConfigDict(populate_by_name=True)

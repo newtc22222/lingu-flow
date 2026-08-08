@@ -9,7 +9,6 @@ from app.routers import (
     cards,
     dashboard,
     decks,
-    events,
     exams,
     health,
     media,
@@ -68,7 +67,6 @@ app.include_router(dashboard.router)
 app.include_router(decks.router)
 app.include_router(exams.router)
 app.include_router(questions.router)
-app.include_router(events.router)
 app.include_router(media.router)
 app.include_router(settings_router.router)
 
