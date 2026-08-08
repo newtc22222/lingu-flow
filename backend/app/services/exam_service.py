@@ -94,7 +94,7 @@ class ExamService:
             total_questions=0,
         )
         db.add(template)
-        await db.commit()
+        await db.flush()
         await db.refresh(template)
         return template
 
@@ -131,7 +131,7 @@ class ExamService:
         if req.tags is not None:
             template.tags = req.tags
 
-        await db.commit()
+        await db.flush()
         await db.refresh(template)
         return template
 
@@ -151,7 +151,7 @@ class ExamService:
             return False
 
         await db.delete(template)
-        await db.commit()
+        await db.flush()
         return True
 
     # ─── COMPOSITION ─────────────────────────────────────────────
@@ -301,7 +301,7 @@ class ExamService:
         await db.flush()
         await self._sync_total_questions(db, template_id)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(question)
         return question
 
@@ -358,7 +358,7 @@ class ExamService:
 
         await db.flush()
         await self._sync_total_questions(db, template_id)
-        await db.commit()
+        await db.flush()
         return await self.get_questions_with_order(db, template_id)
 
     async def reorder_questions(
@@ -395,7 +395,7 @@ class ExamService:
         for index, question_id in enumerate(question_ids):
             by_question[question_id].order_index = index
 
-        await db.commit()
+        await db.flush()
         return await self.get_questions_with_order(db, template_id)
 
     async def detach_question(
@@ -422,7 +422,7 @@ class ExamService:
         await db.delete(link)
         await db.flush()
         await self._sync_total_questions(db, template_id)
-        await db.commit()
+        await db.flush()
         return True
 
     # ─── QUESTIONS ───────────────────────────────────────────────
@@ -481,7 +481,11 @@ class ExamService:
             status="in-progress",
         )
         db.add(session)
-        await db.commit()
+        # Flush only so session.id is durable inside this transaction; do NOT
+        # commit here. Answer records must land in the same unit of work as the
+        # session row (get_db / job owns the commit). A mid-request commit used
+        # to leave orphan sessions with total_count > 0 and zero AnswerRecords.
+        await db.flush()
         await db.refresh(session)
 
         # Pre-create one empty answer record per question. This set doubles as
@@ -499,7 +503,7 @@ class ExamService:
             for index, q in enumerate(questions)
         ]
         db.add_all(answer_records)
-        await db.commit()
+        await db.flush()
 
         return session
 
@@ -636,7 +640,7 @@ class ExamService:
         record.is_correct = is_correct
         record.time_taken_seconds = req.time_taken_seconds
 
-        await db.commit()
+        await db.flush()
         await db.refresh(record)
         return {
             "question_id": record.question_id,
@@ -667,6 +671,6 @@ class ExamService:
         session.score = round(score, 1)
         session.finished_at = datetime.now(timezone.utc)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(session)
         return session

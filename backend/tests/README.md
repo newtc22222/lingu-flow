@@ -55,7 +55,7 @@ If Postgres is unreachable, the suite **skips** rather than hard-failing (so loc
 | `test_seed_key_unique_constraint` | Unique `seed_key` index |
 | `test_soft_delete_keeps_answer_history_resolvable` | Soft-delete does not erase answer history |
 | `test_delete_template_removes_links_not_questions` | Template delete drops junction only |
-| `test_create_session_is_atomic_under_midway_failure` | Dual-commit orphan probe — **xfail until A5 / #48** |
+| `test_create_session_is_atomic_under_midway_failure` | Midway failure after session flush leaves no orphan session (F-04) |
 
 ## CI
 

@@ -143,7 +143,7 @@ class QuestionService:
             difficulty=req.difficulty,
         )
         db.add(question)
-        await db.commit()
+        await db.flush()
         await db.refresh(question)
         return question
 
@@ -201,7 +201,7 @@ class QuestionService:
         if req.tags is not None:
             question.tags = req.tags
 
-        await db.commit()
+        await db.flush()
         await db.refresh(question)
         return question
 
@@ -248,7 +248,7 @@ class QuestionService:
         for template_id in set(affected):
             await sync_total_questions(db, template_id)
 
-        await db.commit()
+        await db.flush()
         return True
 
     async def list_tags(

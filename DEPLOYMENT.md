@@ -42,10 +42,11 @@ This guide describes how to deploy LinguFlow using the modern, decoupled target 
    - `R2_SECRET_ACCESS_KEY`: Cloudflare R2 Secret Access Key
    - `R2_BUCKET_NAME`: `linguflow-media`
    - `R2_ENDPOINT_URL`: `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`
-5. Set the **Custom Start Command**:
+5. Set the **Custom Start Command** (must migrate **and seed** before serving — FastAPI lifespan no longer seeds):
    ```bash
-   alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+   alembic upgrade head && python -m app.seed.exam_seed && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
    ```
+   Prefer leaving **Start Command empty** so the image uses `backend/entrypoint.sh` (same migrate → seed → uvicorn sequence). A start command that only runs `alembic` + `uvicorn` will boot with an empty built-in exam bank.
 6. Generate a public domain under Railway service **Settings > Networking** (e.g. `https://linguflow-backend-production.up.railway.app`).
 
 ---
@@ -101,6 +102,7 @@ This guide describes how to deploy LinguFlow using the modern, decoupled target 
 ## 5. Verification Steps
 
 1. **Frontend Typecheck & Build**: Run `npm run build` inside `frontend/`.
-2. **Backend Startup**: Run `uvicorn app.main:app --port 8000` inside `backend/` (with `.env` set up).
+2. **Backend Startup**: For a production-like boot, use `./entrypoint.sh` or `alembic upgrade head && python -m app.seed.exam_seed && uvicorn app.main:app --port 8000` inside `backend/` (with `.env` set up). Plain `uvicorn` alone does not seed built-in exams.
+
 3. **Health Check**: Call `GET /api/health` on your deployed backend.
 4. **Media Presigned Endpoint**: Test `POST /api/media/presign-upload` with JSON body `{"filename": "test.jpg", "content_type": "image/jpeg"}`.
