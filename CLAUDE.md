@@ -29,7 +29,8 @@ Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bum
 
 **Tests & quality gates**
 
-- Backend: `backend/tests/` under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), ~104 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **Always run the relevant pytest modules after backend changes** — do not skip the suite.
+- Backend: `backend/tests/` under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), ~104+ tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **Always run the relevant pytest modules after backend changes** — do not skip the suite.
+- Postgres integrity (cascades, real commits, Alembic schema): `@pytest.mark.postgres` under `backend/tests/postgres/`. Auto-skips without a live DB. Run with `POSTGRES_TEST_URL=... pytest -m postgres` — see `backend/tests/README.md`. CI: `.github/workflows/backend-tests.yml`.
 - Frontend: no unit suite yet (no vitest/jest). Gates are `npm run build` (`vue-tsc -b` then Vite), `npm run lint:js` (ESLint + custom token rule), `npm run lint:style` (stylelint), and Prettier (`format` / `format:check`).
 
 Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`, `0003_question_bank`, `0004_guest_lifecycle`, `0005_user_settings`).
