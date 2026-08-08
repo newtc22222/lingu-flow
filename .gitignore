@@ -21,15 +21,4 @@
 
 # Mock files
 **/mocks/
-plans/00-executive-summary.md
-plans/01-current-state.md
-plans/02-requirements-and-capacity.md
-plans/03-security-hardening.md
-plans/04-data-integrity-transactions.md
-plans/05-reliability-and-ops.md
-plans/06-performance-and-scale.md
-plans/07-frontend-quality.md
-plans/08-product-roadmap.md
-plans/09-implementation-backlog.md
-plans/KICKOFF-PROMPT-a7-docs-skills.md
-plans/README.md
+plans/
