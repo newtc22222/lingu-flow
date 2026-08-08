@@ -27,19 +27,27 @@ When adding an endpoint a component already calls, check the call site for the s
 
 Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bumping the version updates the template row **in place** so its id survives for past sessions. Never match seed content by `name`.
 
-Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 103 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
+**Tests & quality gates**
 
-Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`, `0003_question_bank`).
+- Backend: `backend/tests/` under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), ~104 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **Always run the relevant pytest modules after backend changes** — do not skip the suite.
+- Frontend: no unit suite yet (no vitest/jest). Gates are `npm run build` (`vue-tsc -b` then Vite), `npm run lint:js` (ESLint + custom token rule), `npm run lint:style` (stylelint), and Prettier (`format` / `format:check`).
 
-**Stale docs — do not trust without cross-checking code:**
+Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`, `0003_question_bank`, `0004_guest_lifecycle`, `0005_user_settings`).
 
-- `DEPLOYMENT.md` and `api/index.ts` describe deploying `backend/src/app` (Express) via a Vercel serverless function — `backend/src` no longer exists (it's `backend/app`, FastAPI, not designed as a single Vercel function handler). This deployment path is broken until reworked for the Python backend.
-- Root `.env.example` still lists `MONGO_URI` (Node-era). The real backend env vars are in `backend/.env.example` (`DATABASE_URL`, `JWT_SECRET`, etc.).
-- `README.md` and `docker-compose.yml` reflect the current (Python/Postgres) reality and are trustworthy.
+**Residual risks (not “broken deploy” myths)**
+
+- Silent FE `??` / wrong field-name fallbacks still hide contract drift — when touching an endpoint a component already calls, check the call site.
+- Node/Express/Mongo migration is **complete**. Do not reintroduce Express-on-Vercel, `api/index.ts`, or Mongo env vars.
+- Trustworthy docs: `DEPLOYMENT.md` (primary prod), `docker-compose.yml` (local full stack), `backend/.env.example` (full API env list). Root `.env.example` is compose-oriented; see `backend/.env.example` for OAuth/R2/etc.
+
+## Deployment topology
+
+- **Primary production:** Vercel (Vue SPA) + Railway (FastAPI + Postgres) + Cloudflare R2 — see `DEPLOYMENT.md` and `frontend/vercel.json` (rewrites `/api/*` to Railway).
+- **Local / demo full stack:** `docker-compose.yml` (postgres, backend, frontend).
 
 ## Commands
 
-### Docker (full stack)
+### Docker (local full stack)
 
 ```bash
 docker-compose up --build
@@ -58,7 +66,7 @@ python -m uvicorn app.main:app --port 8000 --reload
 
 Or from repo root: `npm run dev:backend` (assumes a `backend/venv` already exists on Windows).
 
-Database migrations (Alembic, config at `backend/alembic.ini`, no migrations committed yet):
+Database migrations (Alembic, config at `backend/alembic.ini`):
 
 ```bash
 cd backend
@@ -72,10 +80,12 @@ alembic upgrade head
 npm install
 npm run dev       # Vite dev server; proxies /api -> http://localhost:8000 (see vite.config.ts)
 npm run build      # runs `vue-tsc -b` (typecheck) then `vite build`
+npm run lint:js
+npm run lint:style
 npm run preview
 ```
 
-The root `package.json` has **no dependencies at all** — it is a pure delegator (`dev:frontend`, `dev:backend`, `build:frontend`, `format:frontend`) and never needs `npm install`. Each half is standalone: Python deps live in `backend/venv` (`pip install -r backend/requirements.txt`), Node deps in `frontend/node_modules` (`npm install` from `frontend/`). No npm workspaces, despite what `DEPLOYMENT.md` implies.
+The root `package.json` has **no dependencies at all** — it is a pure delegator (`dev:frontend`, `dev:backend`, `build:frontend`, `format:frontend`) and never needs `npm install`. Each half is standalone: Python deps live in `backend/venv` (`pip install -r backend/requirements.txt`), Node deps in `frontend/node_modules` (`npm install` from `frontend/`). No npm workspaces.
 
 Prettier runs only in `frontend/` (`npm run format` / `format:check`, config at `frontend/.prettierrc.json`). `backend/` is pure Python with no Node config — format it with Ruff/Black.
 
@@ -86,7 +96,7 @@ Prettier runs only in `frontend/` (`npm run format` / `format:check`, config at 
 - `main.py` — FastAPI app factory, CORS, router registration, lifespan (opens/disposes the async SQLAlchemy engine).
 - `config.py` — Pydantic Settings (`Settings`), loaded from `backend/.env` via `get_settings()` (lru-cached). `JWT_SECRET` falls back to a dev default outside `ENVIRONMENT=production`, where it's required.
 - `database.py` — Async SQLAlchemy engine/session (`asyncpg` driver), `Base` declarative class, `get_db()` FastAPI dependency yielding an `AsyncSession` with commit/rollback handling.
-- `routers/`, `models/`, `schemas/`, `services/`, `core/` — empty scaffolding; new features should add modules here following FastAPI's router → service → model layering (router handles HTTP, service holds business logic, model is the SQLAlchemy table, schema is the Pydantic I/O shape).
+- `routers/`, `models/`, `schemas/`, `services/`, `core/` — populated modules. New features add modules here following FastAPI's router → service → model layering (router handles HTTP, service holds business logic, model is the SQLAlchemy table, schema is the Pydantic I/O shape).
 - New routers must be included in `main.py` (`app.include_router(...)`) and generally prefixed `/api/...` to match the frontend and the Vite proxy.
 
 ### Frontend (`frontend/src/`)
@@ -103,10 +113,6 @@ Prettier runs only in `frontend/` (`npm run format` / `format:check`, config at 
 **Frontend layout (restructure completed in Phase 1.5):** the flat `frontend/src/components/` folder is gone. Everything lives in `frontend/src/features/<domain>/{<Name>View.vue, components/, store/, types.ts}` — `auth`, `dashboard`, `exam`, `flashcards`, `library` — with cross-feature primitives in `frontend/src/shared/components/` (`AppButton`, `ManageListShell`, `PixelFrame`, `MarkdownRenderer`). Don't reintroduce a top-level `components/` folder; promote a component to `shared/` rather than importing across feature boundaries.
 
 Note that `.stylelintrc.json` exempts specific files by path and those globs **do not follow renames** — check them whenever you move a component.
-
-### Deployment
-
-`docker-compose.yml` is the current known-good multi-container setup (Postgres + FastAPI + Nginx-served Vue build) and should be treated as the reference for how the three services fit together. The Vercel path (`vercel.json`, `api/index.ts`) predates the Python migration and needs rework before it can be relied on.
 
 ## UI Development
 

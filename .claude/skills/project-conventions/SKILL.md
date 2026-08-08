@@ -1,6 +1,6 @@
 ---
 name: project-conventions
-description: Background knowledge of LinguFlow's backend layering and mid-migration API contract rules. Not user-invocable; Claude should apply it automatically whenever touching backend/app or a frontend component that calls /api/...
+description: Background knowledge of LinguFlow's backend layering, API contract rules, and quality gates. Not user-invocable; Claude should apply it automatically whenever touching backend/app or a frontend component that calls /api/...
 user-invocable: false
 ---
 
@@ -17,19 +17,30 @@ Follow router → service → model → schema strictly:
 
 Every new router **must** be registered in `backend/app/main.py` via `app.include_router(...)`, generally prefixed `/api/...`.
 
-## The frontend is the API spec (until stated otherwise)
+## API contract
 
-The Vue frontend (`frontend/src/`) was built against the old Node.js/Express/MongoDB API and was not touched by the Python rewrite (commit `a9fec74`). When implementing any backend endpoint, treat the frontend's actual `fetch`/`apiFetch` call sites as the ground truth for request/response shape — not assumptions, not the old Node code. Check per-endpoint whether the frontend's Mongo-style `_id` should be kept (schema alias) or migrated to `id` (also update the frontend).
+**Backend Pydantic schemas** (`backend/app/schemas/`) are the source of truth for request/response shapes (camelCase aliases for the frontend).
 
-The frontend itself is also mid-migration: it's moving from a flat `frontend/src/components/` folder to `frontend/src/features/<domain>/` (see the `vue-guide` skill for the full layout and current design-system conventions). When grepping for a call site, check `features/**` first — some `components/*.vue` files are dead code left behind by that move, not live call sites.
+When adding or changing an endpoint a Vue component already calls:
 
-## Known-stale references — never trust without cross-checking code
+- Still **read the call site** under `frontend/src/features/**` (and `utils/api.ts`). Silent `??` / wrong field-name fallbacks (`duration` vs `durationMinutes`, `timeLimit` vs `timeLimitMinutes`) can hide drift without throwing.
+- Prefer `id` in new frontend code. Some exam-related schemas still emit a computed `_id` alongside `id` (Mongo-era holdover); do not reintroduce `_id` reads in new FE code.
 
-- `DEPLOYMENT.md` / `api/index.ts` — describe deploying `backend/src` (Express) on Vercel; `backend/src` no longer exists.
-- Root `.env.example` — still lists `MONGO_URI`; real backend vars are in `backend/.env.example`.
+Phase 1.5/1.6 largely aligned FE/BE contracts. The residual risk is silent fallbacks, not “treat Mongo shapes as the only spec.”
 
-`README.md`, `docker-compose.yml`, and `AGENTS.md` (a thin pointer to `CLAUDE.md`) are current and trustworthy.
+## Deploy & env
 
-## Project state
+- **Primary production:** Vercel (Vue SPA) + Railway (FastAPI + Postgres) + Cloudflare R2 — see `DEPLOYMENT.md` and `frontend/vercel.json`.
+- **Local / demo full stack:** `docker-compose.yml`.
+- Root `.env.example` is compose-oriented. Full backend vars (R2, OAuth, etc.) live in `backend/.env.example`.
 
-No test suite (no pytest/vitest configured) and no lint/format tooling (no ESLint/Prettier/Ruff) exist yet — don't assume `npm test` or a linter will catch mistakes; verify manually or via the `api-contract-reviewer` subagent.
+Trustworthy: `DEPLOYMENT.md`, `docker-compose.yml`, `backend/.env.example`, `CLAUDE.md` / `AGENTS.md`.
+
+## Quality gates (do not skip)
+
+- **Backend:** `cd backend && ./venv/Scripts/python.exe -m pytest` (~104 tests, SQLite in-memory via `client` / `db_session` in `conftest.py`). Run the relevant modules after any backend change.
+- **Frontend:** ESLint (`npm run lint:js`, includes custom token palette rule), stylelint (`npm run lint:style`), Prettier (`format` / `format:check`), and `vue-tsc` via `npm run build`. **No vitest/jest yet** — those gates are the FE verification path.
+
+## Frontend layout
+
+Phase 1.5 restructure is **done**. UI lives under `frontend/src/features/<domain>/` with cross-feature primitives in `frontend/src/shared/components/`. Do not reintroduce a top-level `frontend/src/components/` folder. See the `vue-guide` skill for design-system conventions.

@@ -24,7 +24,6 @@ Detailed architecture, database models, API specs, and algorithms are published 
 - **Spaced Repetition System (SRS)**: Robust SM-2 algorithm to schedule cards optimally.
 - **In-Place Guest Account Migration**: Guest users can convert to permanent accounts at any time without losing any deck or card data.
 - **33 Built-in Practice Questions**: Pre-seeded exams for TOEIC Part 5, IELTS Academic Reading, HSK Level 2, and JLPT N5.
-- **Real-Time Updates**: Server-Sent Events (SSE) stream for real-time progress events.
 - **Presigned Cloudflare R2 Uploads**: Secure media file storage using S3 presigned PUT/GET URLs.
 
 ---
