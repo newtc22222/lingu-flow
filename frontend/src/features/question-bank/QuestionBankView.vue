@@ -366,8 +366,7 @@ onMounted(refresh);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
   text-align: center;
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- match ManageListShell status */
-  padding: 30px 0;
+  padding: var(--space-11) 0;
   margin: 0;
 }
 

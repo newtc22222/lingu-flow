@@ -46,6 +46,7 @@ const routes: RouteRecordRaw[] = [
     path: '/decks',
     name: 'decks',
     component: () => import('@/features/library/DeckManagementView.vue'),
+    meta: { fullBleed: true },
   },
   // Declared BEFORE the dynamic record so it always wins the match.
   {
@@ -53,12 +54,14 @@ const routes: RouteRecordRaw[] = [
     name: 'deck-unfiled',
     component: () => import('@/features/library/DeckDetailView.vue'),
     props: () => ({ deckId: null }),
+    meta: { fullBleed: true },
   },
   {
     path: '/decks/:deckId',
     name: 'deck-detail',
     component: () => import('@/features/library/DeckDetailView.vue'),
     props: true,
+    meta: { fullBleed: true },
   },
   // Retired in favour of the deck workspace.
   {
@@ -85,6 +88,7 @@ const routes: RouteRecordRaw[] = [
     path: '/exams',
     name: 'exams',
     component: () => import('@/features/exam/ExamHubView.vue'),
+    meta: { fullBleed: true },
   },
   {
     path: '/exams/create',
@@ -104,6 +108,7 @@ const routes: RouteRecordRaw[] = [
     name: 'exam-session',
     component: () => import('@/features/exam/ExamView.vue'),
     props: true,
+    meta: { fullBleed: true },
   },
   {
     path: '/exams/results/:sessionId',
