@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { apiFetch } from '@/utils/api';
-import PixelFrame from '@/shared/components/PixelFrame.vue';
 import AppButton from '@/shared/components/AppButton.vue';
 
 /**
@@ -74,14 +73,6 @@ const reviewRows = computed(() =>
     };
   }),
 );
-
-const EXAM_CONFIG: Record<string, { flag: string }> = {
-  toeic: { flag: '🇺🇸' },
-  ielts: { flag: '🇬🇧' },
-  hsk: { flag: '🇨🇳' },
-  jlpt: { flag: '🇯🇵' },
-  custom: { flag: '⚙️' },
-};
 
 const OPTION_KEYS = ['A', 'B', 'C', 'D'];
 
@@ -172,92 +163,78 @@ onMounted(fetchResults);
 
 <template>
   <div class="results-screen">
-    <!-- Loading -->
     <div v-if="isLoading" class="results-loading">
-      <div class="loading-icon" aria-hidden="true">⏳</div>
       <p class="font-label">{{ t('results.loading') }}</p>
     </div>
 
     <template v-else-if="details">
-      <!-- ── Hero Score Section ──────────────────────────────────────────────── -->
-      <div class="hero">
-        <!-- Circular Score Gauge -->
-        <div class="hero-gauge">
-          <svg width="140" height="140" class="gauge-svg">
-            <circle cx="70" cy="70" r="52" fill="none" stroke-width="10" class="gauge-track" />
-            <circle
-              cx="70"
-              cy="70"
-              r="52"
-              fill="none"
-              stroke-width="10"
-              stroke-linecap="round"
-              :stroke-dasharray="circumference"
-              :stroke-dashoffset="strokeDashoffset"
-              :class="['gauge-fill', passed ? 'gauge-fill--pass' : 'gauge-fill--fail']"
-            />
-          </svg>
-          <div class="gauge-center">
-            <span class="gauge-score font-label" :class="`gauge-score--${scoreTier}`">
-              {{ Math.round(details.session.score) }}%
-            </span>
-            <span class="gauge-label font-label">{{ t('results.score') }}</span>
+      <div class="results-top">
+        <div class="hero">
+          <div class="hero-gauge">
+            <svg width="140" height="140" class="gauge-svg">
+              <circle cx="70" cy="70" r="52" fill="none" stroke-width="10" class="gauge-track" />
+              <circle
+                cx="70"
+                cy="70"
+                r="52"
+                fill="none"
+                stroke-width="10"
+                stroke-linecap="round"
+                :stroke-dasharray="circumference"
+                :stroke-dashoffset="strokeDashoffset"
+                :class="['gauge-fill', passed ? 'gauge-fill--pass' : 'gauge-fill--fail']"
+              />
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-score font-label" :class="`gauge-score--${scoreTier}`">
+                {{ Math.round(details.session.score) }}%
+              </span>
+              <span class="gauge-label font-label">{{ t('results.score') }}</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Summary Text -->
-        <div class="hero-summary">
-          <div class="hero-title-row">
-            <span class="hero-flag" aria-hidden="true">{{
-              EXAM_CONFIG[details.template?.examType]?.flag || '📝'
-            }}</span>
+          <div class="hero-summary">
+            <div class="hero-type font-label">
+              {{ (details.template?.examType || 'custom').toUpperCase() }}
+            </div>
             <h1 class="hero-title font-body">{{ details.template?.name }}</h1>
-          </div>
-          <div
-            class="pass-badge font-label"
-            :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'"
-          >
-            {{ passed ? t('results.passed') : t('results.notPassed') }}
-            <span class="pass-badge-sub">
-              {{ t('results.passThreshold', { score: details.template?.passingScore }) }}
-            </span>
-          </div>
-          <div class="hero-stats">
-            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+            <div
+              class="pass-badge font-label"
+              :class="passed ? 'pass-badge--pass' : 'pass-badge--fail'"
+            >
+              {{ passed ? t('results.passed') : t('results.notPassed') }}
+              <span class="pass-badge-sub">
+                {{ t('results.passThreshold', { score: details.template?.passingScore }) }}
+              </span>
+            </div>
+            <div class="hero-stats">
               <div class="hero-stat">
                 <span class="hero-stat-value font-label">
                   {{ details.session.correctCount }}/{{ details.session.totalCount }}
                 </span>
                 <span class="hero-stat-label font-label">{{ t('results.correct') }}</span>
               </div>
-            </PixelFrame>
-            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
               <div class="hero-stat">
                 <span class="hero-stat-value font-label">{{ timeTaken }}</span>
                 <span class="hero-stat-label font-label">{{ t('results.timeTaken') }}</span>
               </div>
-            </PixelFrame>
-            <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
               <div class="hero-stat">
                 <span class="hero-stat-value font-label">
                   {{ details.session.timeLimitMinutes }} {{ t('common.minutes') }}
                 </span>
                 <span class="hero-stat-label font-label">{{ t('results.timeLimit') }}</span>
               </div>
-            </PixelFrame>
+            </div>
+            <div class="actions-row">
+              <AppButton variant="secondary" @click="backToExams">{{
+                t('results.backToExams')
+              }}</AppButton>
+              <AppButton variant="primary" @click="retake">{{ t('results.retake') }}</AppButton>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Action Buttons ─────────────────────────────────────────────────── -->
-      <div class="actions-row">
-        <AppButton variant="secondary" @click="backToExams">{{
-          t('results.backToExams')
-        }}</AppButton>
-        <AppButton variant="primary" @click="retake">{{ t('results.retake') }}</AppButton>
-      </div>
-
-      <!-- ── Question Review ─────────────────────────────────────────────────── -->
       <div class="review">
         <template v-if="tagBreakdown.length">
           <h2 class="review-title font-body">{{ t('results.byCategory') }}</h2>
@@ -296,10 +273,10 @@ onMounted(fetchResults);
               @click="expandedIdx = expandedIdx === idx ? null : idx"
             >
               <span
-                class="review-mark font-pixel"
+                class="review-mark font-label"
                 :class="row.isCorrect ? 'review-mark--correct' : 'review-mark--incorrect'"
               >
-                {{ row.isCorrect ? '✓' : '✗' }}
+                {{ row.isCorrect ? 'OK' : 'X' }}
               </span>
               <span class="review-body">
                 <span class="review-question font-body">
@@ -309,14 +286,14 @@ onMounted(fetchResults);
                   <span>
                     {{ t('results.yourAnswer') }}
                     <strong :class="row.isCorrect ? 'text-correct' : 'text-incorrect'">{{
-                      row.userAnswer || '—'
+                      row.userAnswer || t('results.unanswered')
                     }}</strong>
                   </span>
                   <span v-if="!row.isCorrect">
                     {{ t('results.correctAnswer') }}
                     <strong class="text-correct">{{ row.question.correctAnswer }}</strong>
                   </span>
-                  <span>⏱ {{ row.timeTakenSeconds }}S</span>
+                  <span>{{ row.timeTakenSeconds }}S</span>
                 </span>
               </span>
               <span class="review-chevron font-label" aria-hidden="true">{{
@@ -377,10 +354,16 @@ onMounted(fetchResults);
 
 <style scoped>
 .results-screen {
-  height: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- full-bleed console padding */
+  padding: 20px var(--space-9) var(--space-8);
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  gap: var(--space-6);
+  overflow: hidden;
 }
 .results-loading {
   flex: 1;
@@ -391,35 +374,26 @@ onMounted(fetchResults);
   gap: var(--space-6);
   color: var(--text-secondary);
 }
-.loading-icon {
-  font-size: var(--font-size-display);
-  animation: results-spin 1.2s linear infinite;
-}
-@keyframes results-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .loading-icon {
-    animation: none;
-  }
+.results-top {
+  flex-shrink: 0;
 }
 
 .hero {
   background: var(--surface-panel);
-  border-bottom: var(--space-1) solid var(--surface-panel-border);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
-  padding: 36px var(--space-10);
+  border: var(--space-1) solid var(--surface-panel-border);
+  border-left: var(--border-width-accent) solid var(--color-accent);
+  padding: var(--space-9) var(--space-10);
   display: flex;
   flex-wrap: wrap;
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
-  gap: 32px;
+  gap: var(--space-10);
   align-items: center;
-  justify-content: center;
-  max-width: 900px;
-  margin: 0 auto;
   width: 100%;
+}
+.hero-type {
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-label-accent);
+  margin-bottom: var(--space-2);
 }
 .hero-gauge {
   position: relative;
@@ -478,20 +452,11 @@ onMounted(fetchResults);
   flex: 1;
   min-width: 260px;
 }
-.hero-title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-.hero-flag {
-  font-size: var(--font-size-2xl);
-}
 .hero-title {
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0;
+  margin: 0 0 var(--space-4);
 }
 .pass-badge {
   display: inline-flex;
@@ -501,7 +466,7 @@ onMounted(fetchResults);
   font-weight: 700;
   padding: var(--space-3) var(--space-7);
   border: var(--space-1) solid;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 .pass-badge--pass {
   color: var(--status-success);
@@ -523,13 +488,16 @@ onMounted(fetchResults);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 .hero-stat {
-  padding: var(--space-6);
-  text-align: center;
+  padding: var(--space-5) var(--space-6);
+  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  background: var(--surface-page);
+  border-left: var(--border-width-accent) solid var(--surface-panel-border);
 }
 .hero-stat-value {
   font-size: var(--font-size-lg);
@@ -544,20 +512,18 @@ onMounted(fetchResults);
 
 .actions-row {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-6);
-  padding: var(--space-8) var(--space-10);
-  border-bottom: var(--space-1) solid var(--surface-panel-border);
-  max-width: 900px;
-  margin: 0 auto;
-  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-5);
+  flex-wrap: wrap;
 }
 .review {
-  max-width: 900px;
-  margin: 0 auto;
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
-  padding: var(--space-10);
-  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
 .review-title {
   font-size: var(--font-size-lg);

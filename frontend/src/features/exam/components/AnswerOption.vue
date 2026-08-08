@@ -20,7 +20,7 @@ defineEmits<{
     :aria-pressed="selected"
     @click="$emit('select')"
   >
-    <span class="opt-key font-pixel" :class="{ 'opt-key--selected': selected }">{{
+    <span class="opt-key font-label" :class="{ 'opt-key--selected': selected }">{{
       optionKey
     }}</span>
     <span class="opt-label">{{ label }}</span>

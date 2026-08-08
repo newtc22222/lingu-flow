@@ -1,12 +1,14 @@
 <script setup lang="ts">
+/**
+ * Exam lobby — full-bleed catalog + history console.
+ * TAKE opens briefing (session route); does not start the clock here.
+ */
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { apiFetch } from '@/utils/api';
-import PixelFrame from '@/shared/components/PixelFrame.vue';
 import AppButton from '@/shared/components/AppButton.vue';
 
-/** Mirrors `ExamTemplateResponse` in `backend/app/schemas/exam.py`. */
 interface ExamTemplate {
   id: string;
   name: string;
@@ -17,16 +19,9 @@ interface ExamTemplate {
   passingScore: number;
   level: string;
   isPublic: boolean;
-  /** Rolled up server-side from the template's questions — parts live on
-   *  questions, but the hub filters templates by them. */
   parts: string[];
 }
 
-/**
- * Mirrors `ExamSessionResponse`. Note `examTemplateId` is a bare UUID — the
- * backend does not embed the template, so the exam name/type shown in the
- * recent-sessions list is joined against `templates` client-side below.
- */
 interface ExamSession {
   id: string;
   examTemplateId: string;
@@ -43,47 +38,46 @@ const router = useRouter();
 const templates = ref<ExamTemplate[]>([]);
 const sessions = ref<ExamSession[]>([]);
 const isLoading = ref(true);
+const loadError = ref('');
 const selectedType = ref<string>('all');
+const selectedPart = ref<string>('all');
 
 const templatesById = computed(() => new Map(templates.value.map((tpl) => [tpl.id, tpl])));
 
-const EXAM_CONFIG: Record<string, { label: string; flag: string }> = {
-  toeic: { label: 'TOEIC', flag: '🇺🇸' },
-  ielts: { label: 'IELTS', flag: '🇬🇧' },
-  hsk: { label: 'HSK', flag: '🇨🇳' },
-  jlpt: { label: 'JLPT', flag: '🇯🇵' },
-  custom: { label: 'Custom', flag: '⚙️' },
+const TYPE_LABELS: Record<string, string> = {
+  toeic: 'TOEIC',
+  ielts: 'IELTS',
+  hsk: 'HSK',
+  jlpt: 'JLPT',
+  custom: 'CUSTOM',
 };
 
 const typeFilters = computed(() => [
-  { key: 'all', label: t('exam.allExams'), icon: '📚' },
-  { key: 'toeic', label: 'TOEIC', icon: '🇺🇸' },
-  { key: 'ielts', label: 'IELTS', icon: '🇬🇧' },
-  { key: 'hsk', label: 'HSK', icon: '🇨🇳' },
-  { key: 'jlpt', label: 'JLPT', icon: '🇯🇵' },
-  { key: 'custom', label: t('exam.custom'), icon: '⚙️' },
+  { key: 'all', label: t('exam.allExams') },
+  { key: 'toeic', label: 'TOEIC' },
+  { key: 'ielts', label: 'IELTS' },
+  { key: 'hsk', label: 'HSK' },
+  { key: 'jlpt', label: 'JLPT' },
+  { key: 'custom', label: t('exam.custom') },
 ]);
 
-const selectedPart = ref<string>('all');
-
-/** Parts offered by whatever the exam-type filter currently leaves visible. */
 const availableParts = computed(() => {
   const scoped =
     selectedType.value === 'all'
       ? templates.value
-      : templates.value.filter((t) => t.examType === selectedType.value);
-  return [...new Set(scoped.flatMap((t) => t.parts ?? []))].sort();
+      : templates.value.filter((tpl) => tpl.examType === selectedType.value);
+  return [...new Set(scoped.flatMap((tpl) => tpl.parts ?? []))].sort();
 });
 
 const filteredTemplates = computed(() =>
-  templates.value.filter((t) => {
-    if (selectedType.value !== 'all' && t.examType !== selectedType.value) return false;
-    if (selectedPart.value !== 'all' && !(t.parts ?? []).includes(selectedPart.value)) return false;
+  templates.value.filter((tpl) => {
+    if (selectedType.value !== 'all' && tpl.examType !== selectedType.value) return false;
+    if (selectedPart.value !== 'all' && !(tpl.parts ?? []).includes(selectedPart.value))
+      return false;
     return true;
   }),
 );
 
-/** Changing exam type can strip the chosen part from the options. */
 function selectType(key: string) {
   selectedType.value = key;
   if (!availableParts.value.includes(selectedPart.value)) selectedPart.value = 'all';
@@ -98,19 +92,25 @@ const stats = computed(() => {
   return { total: completed.length, avgScore, bestScore };
 });
 
-const recentSessions = computed(() => sessions.value.slice(0, 5));
+const recentSessions = computed(() => sessions.value.slice(0, 8));
 
 const fetchData = async () => {
   isLoading.value = true;
+  loadError.value = '';
   try {
     const [templatesRes, sessionsRes] = await Promise.all([
       apiFetch('/api/exams/templates'),
       apiFetch('/api/exams/sessions'),
     ]);
+    if (!templatesRes.ok || !sessionsRes.ok) {
+      throw new Error(
+        t('common.requestFailed', { status: templatesRes.status || sessionsRes.status }),
+      );
+    }
     templates.value = await templatesRes.json();
     sessions.value = await sessionsRes.json();
   } catch (err) {
-    console.error('Failed to load exams:', err);
+    loadError.value = err instanceof Error ? err.message : t('exam.loadFailed');
   } finally {
     isLoading.value = false;
   }
@@ -125,8 +125,9 @@ const formatDate = (dateStr: string) =>
 
 const scoreTier = (score: number) => (score >= 80 ? 'good' : score >= 60 ? 'mid' : 'bad');
 
-const startExam = (templateId: string) =>
+const takeExam = (templateId: string) =>
   router.push({ name: 'exam-session', params: { templateId } });
+const editExam = (templateId: string) => router.push({ name: 'exam-edit', params: { templateId } });
 const createExam = () => router.push({ name: 'exam-create' });
 const viewSession = (sessionId: string) =>
   router.push({ name: 'exam-results', params: { sessionId } });
@@ -135,46 +136,32 @@ onMounted(fetchData);
 </script>
 
 <template>
-  <div class="exam-hub">
-    <!-- Header -->
-    <div class="hub-header">
-      <div class="hub-heading">
-        <span class="hub-icon" aria-hidden="true">🎓</span>
-        <!-- font-label, not font-pixel: the VI title carries diacritics and
-             Press Start 2P has no glyphs for them (see tokens.css). -->
-        <h1 class="hub-title font-label">{{ t('exam.title') }}</h1>
+  <div class="lobby">
+    <header class="lobby-header">
+      <div class="lobby-heading">
+        <h1 class="lobby-title font-body">{{ t('exam.title') }}</h1>
+        <p class="lobby-tagline font-body">{{ t('exam.tagline') }}</p>
       </div>
-      <p class="hub-tagline font-label">{{ t('exam.tagline') }}</p>
-
-      <AppButton class="hub-create-btn" @click="createExam">
-        {{ t('exam.createCustom') }}
-      </AppButton>
-
-      <!-- Stats Row -->
-      <div class="hub-stats">
-        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
-          <div class="stat-inner">
-            <span class="stat-label font-label">{{ t('exam.taken') }}</span>
-            <span class="stat-value font-label">{{ stats.total }}</span>
-          </div>
-        </PixelFrame>
-        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
-          <div class="stat-inner">
-            <span class="stat-label font-label">{{ t('exam.avgScore') }}</span>
-            <span class="stat-value font-label">{{ stats.avgScore }}%</span>
-          </div>
-        </PixelFrame>
-        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
-          <div class="stat-inner">
-            <span class="stat-label font-label">{{ t('exam.bestScore') }}</span>
-            <span class="stat-value font-label stat-value--green">{{ stats.bestScore }}%</span>
-          </div>
-        </PixelFrame>
+      <div class="lobby-header-right">
+        <div class="lobby-stats font-label">
+          <span class="lobby-stat">
+            <span class="lobby-stat-k">{{ t('exam.taken') }}</span>
+            <span class="lobby-stat-v">{{ stats.total }}</span>
+          </span>
+          <span class="lobby-stat">
+            <span class="lobby-stat-k">{{ t('exam.avgScore') }}</span>
+            <span class="lobby-stat-v">{{ stats.avgScore }}%</span>
+          </span>
+          <span class="lobby-stat">
+            <span class="lobby-stat-k">{{ t('exam.bestScore') }}</span>
+            <span class="lobby-stat-v lobby-stat-v--best">{{ stats.bestScore }}%</span>
+          </span>
+        </div>
+        <AppButton @click="createExam">{{ t('exam.createCustom') }}</AppButton>
       </div>
-    </div>
+    </header>
 
-    <!-- Filter Tabs -->
-    <div class="hub-filters">
+    <div class="lobby-filters">
       <button
         v-for="f in typeFilters"
         :key="f.key"
@@ -183,442 +170,407 @@ onMounted(fetchData);
         :class="{ 'filter-tab--active': selectedType === f.key }"
         @click="selectType(f.key)"
       >
-        <span aria-hidden="true">{{ f.icon }}</span> {{ f.label }}
+        {{ f.label }}
       </button>
-    </div>
-
-    <div v-if="availableParts.length" class="hub-filters hub-filters--parts">
-      <span class="hub-parts-label font-label">{{ t('questionBank.part') }}</span>
-      <button
-        type="button"
-        class="filter-tab font-label"
-        :class="{ 'filter-tab--active': selectedPart === 'all' }"
-        @click="selectedPart = 'all'"
-      >
-        {{ t('questionBank.anyPart') }}
-      </button>
-      <button
-        v-for="part in availableParts"
-        :key="part"
-        type="button"
-        class="filter-tab font-label"
-        :class="{ 'filter-tab--active': selectedPart === part }"
-        @click="selectedPart = part"
-      >
-        {{ part }}
-      </button>
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="isLoading" class="hub-skeleton-grid">
-      <div v-for="i in 4" :key="i" class="hub-skeleton"></div>
-    </div>
-
-    <template v-else>
-      <!-- Exam Cards Grid -->
-      <div v-if="filteredTemplates.length" class="hub-grid">
-        <PixelFrame
-          v-for="template in filteredTemplates"
-          :key="template.id"
-          frame-color="amber"
-          surface="cabinet"
-          :ring-width="3"
-          class="exam-card-frame"
+      <template v-if="availableParts.length">
+        <span class="filter-sep" aria-hidden="true">|</span>
+        <button
+          type="button"
+          class="filter-tab font-label"
+          :class="{ 'filter-tab--active': selectedPart === 'all' }"
+          @click="selectedPart = 'all'"
         >
-          <button type="button" class="exam-card" @click="startExam(template.id)">
-            <div class="exam-card-top">
-              <div class="exam-card-id">
-                <span class="exam-card-flag" aria-hidden="true">{{
-                  EXAM_CONFIG[template.examType]?.flag || '📄'
+          {{ t('questionBank.anyPart') }}
+        </button>
+        <button
+          v-for="part in availableParts"
+          :key="part"
+          type="button"
+          class="filter-tab font-label"
+          :class="{ 'filter-tab--active': selectedPart === part }"
+          @click="selectedPart = part"
+        >
+          {{ part }}
+        </button>
+      </template>
+    </div>
+
+    <p v-if="loadError" class="lobby-error font-body" role="alert">
+      {{ loadError }}
+      <AppButton variant="secondary" @click="fetchData">{{ t('exam.retry') }}</AppButton>
+    </p>
+
+    <div class="lobby-body">
+      <section class="lobby-catalog" :aria-label="t('exam.catalog')">
+        <h2 class="lobby-section-label font-label">{{ t('exam.catalog') }}</h2>
+
+        <div v-if="isLoading" class="lobby-status font-label">{{ t('common.loading') }}</div>
+
+        <div v-else-if="filteredTemplates.length" class="catalog-scroll">
+          <article v-for="tpl in filteredTemplates" :key="tpl.id" class="catalog-row">
+            <div class="catalog-main">
+              <div class="catalog-chips font-label">
+                <span class="chip">{{ TYPE_LABELS[tpl.examType] || tpl.examType }}</span>
+                <span v-if="tpl.level" class="chip chip--muted">{{ tpl.level }}</span>
+                <span v-if="tpl.isPublic" class="chip chip--official">{{
+                  t('exam.official')
                 }}</span>
-                <div>
-                  <div class="exam-card-type font-label">
-                    {{ EXAM_CONFIG[template.examType]?.label || 'Custom' }}
-                  </div>
-                  <div v-if="template.level" class="exam-card-level font-label">
-                    {{ template.level }}
-                  </div>
-                </div>
               </div>
-              <span v-if="template.isPublic" class="badge-official font-label">{{
-                t('exam.official')
-              }}</span>
+              <h3 class="catalog-name font-body">{{ tpl.name }}</h3>
+              <p v-if="tpl.description" class="catalog-desc font-body">{{ tpl.description }}</p>
+              <div class="catalog-meta font-label">
+                <span>{{ tpl.durationMinutes }} {{ t('common.minutes') }}</span>
+                <span>{{ tpl.totalQuestions }} {{ t('common.questions') }}</span>
+                <span>{{ t('exam.pass', { score: tpl.passingScore }) }}</span>
+              </div>
             </div>
-
-            <h3 class="exam-card-name font-body">{{ template.name }}</h3>
-            <p class="exam-card-desc font-body">{{ template.description }}</p>
-
-            <div class="exam-card-meta font-label">
-              <span>⏱ {{ template.durationMinutes }} {{ t('common.minutes') }}</span>
-              <span>❓ {{ template.totalQuestions }}</span>
-              <span>{{ t('exam.pass', { score: template.passingScore }) }}</span>
+            <div class="catalog-actions">
+              <AppButton v-if="!tpl.isPublic" variant="secondary" @click="editExam(tpl.id)">
+                {{ t('exam.editExam') }}
+              </AppButton>
+              <AppButton @click="takeExam(tpl.id)">{{ t('exam.take') }}</AppButton>
             </div>
-          </button>
-        </PixelFrame>
-      </div>
+          </article>
+        </div>
 
-      <!-- Empty state -->
-      <div v-else class="hub-empty font-label">
-        <div class="hub-empty-icon" aria-hidden="true">📭</div>
-        <p>{{ t('exam.noExams') }}</p>
-        <p class="hub-empty-sub">{{ t('exam.noExamsSub') }}</p>
-      </div>
+        <div v-else class="lobby-empty font-body">
+          <p>{{ t('exam.noExams') }}</p>
+          <p class="lobby-empty-sub">{{ t('exam.noExamsSub') }}</p>
+          <AppButton @click="createExam">{{ t('exam.createCustom') }}</AppButton>
+        </div>
+      </section>
 
-      <!-- Recent History -->
-      <div v-if="recentSessions.length" class="hub-recent">
-        <h2 class="hub-recent-title font-body">{{ t('exam.recentSessions') }}</h2>
-        <ul class="hub-recent-list">
-          <li
+      <section class="lobby-history" :aria-label="t('exam.history')">
+        <h2 class="lobby-section-label font-label">{{ t('exam.history') }}</h2>
+        <div v-if="!isLoading && recentSessions.length" class="history-scroll">
+          <button
             v-for="session in recentSessions"
             :key="session.id"
-            class="hub-recent-row"
+            type="button"
+            class="history-row"
             @click="viewSession(session.id)"
           >
-            <div class="hub-recent-info">
-              <span class="hub-recent-flag" aria-hidden="true">
-                {{
-                  EXAM_CONFIG[templatesById.get(session.examTemplateId)?.examType ?? '']?.flag ||
-                  '📄'
-                }}
-              </span>
-              <div>
-                <div class="hub-recent-name font-body">
-                  {{ templatesById.get(session.examTemplateId)?.name || t('exam.unknownExam') }}
-                </div>
-                <div class="hub-recent-date font-label">{{ formatDate(session.startedAt) }}</div>
+            <div class="history-info">
+              <div class="history-name font-body">
+                {{ templatesById.get(session.examTemplateId)?.name || t('exam.unknownExam') }}
               </div>
+              <div class="history-date font-label">{{ formatDate(session.startedAt) }}</div>
             </div>
-            <div class="hub-recent-result">
-              <span class="hub-recent-count font-label"
-                >{{ session.correctCount }}/{{ session.totalCount }}</span
-              >
-              <span
-                class="score-badge font-label"
-                :class="`score-badge--${scoreTier(session.score)}`"
-              >
+            <div class="history-result font-label">
+              <span>{{ session.correctCount }}/{{ session.totalCount }}</span>
+              <span class="score-badge" :class="`score-badge--${scoreTier(session.score)}`">
                 {{ session.score }}%
               </span>
-              <span class="hub-recent-arrow" aria-hidden="true">→</span>
             </div>
-          </li>
-        </ul>
-      </div>
-    </template>
+          </button>
+        </div>
+        <p v-else-if="!isLoading" class="lobby-status font-label">—</p>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.exam-hub {
+.lobby {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- full-bleed console padding */
+  padding: 20px var(--space-9) var(--space-8);
   display: flex;
   flex-direction: column;
-}
-.hub-header {
-  margin-bottom: var(--space-11);
-}
-.hub-heading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  margin-bottom: var(--space-2);
-}
-.hub-icon {
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- isolated emoji-icon size, not part of the type scale */
-  font-size: 28px;
-}
-.hub-title {
-  font-size: var(--font-size-lg);
-  color: var(--color-accent);
-  margin: 0;
-}
-.hub-tagline {
-  color: var(--text-secondary);
-  font-size: var(--font-size-base);
-  letter-spacing: var(--tracking-tight);
-  margin: 0 0 var(--space-8);
-}
-.hub-create-btn {
-  margin-bottom: var(--space-9);
-}
-.hub-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-6);
-  max-width: 480px;
+  overflow: hidden;
 }
-.stat-inner {
-  padding: var(--space-7);
+
+.lobby-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-7);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
-.stat-label {
-  display: block;
-  font-weight: 700;
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-3);
-}
-.stat-value {
+.lobby-title {
+  margin: 0 0 var(--space-2);
   font-size: var(--font-size-xl);
   font-weight: 700;
   color: var(--color-accent);
 }
-.stat-value--green {
+.lobby-tagline {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--text-secondary);
+}
+.lobby-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  flex-wrap: wrap;
+}
+.lobby-stats {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+.lobby-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  background: var(--surface-page);
+  border: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-3) var(--space-5);
+  min-width: 72px;
+}
+.lobby-stat-k {
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
+}
+.lobby-stat-v {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.lobby-stat-v--best {
   color: var(--status-success);
 }
 
-.hub-filters {
+.lobby-filters {
   display: flex;
-  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-bottom: var(--space-10);
+  gap: var(--space-3);
+  align-items: center;
+  flex-shrink: 0;
 }
 .filter-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-5) var(--space-7);
-  font-size: var(--font-size-sm);
-  letter-spacing: var(--tracking-tight);
-  background: var(--surface-panel);
-  color: var(--text-secondary);
+  background: transparent;
   border: var(--space-1) solid var(--surface-panel-border);
+  color: var(--text-secondary);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  padding: var(--space-2) var(--space-5);
   cursor: pointer;
-}
-.filter-tab:hover:not(.filter-tab--active) {
-  color: var(--text-primary);
-  border-color: var(--muted);
+  text-transform: uppercase;
 }
 .filter-tab--active {
   background: var(--state-selected-bg);
   border-color: var(--state-selected-bg);
   color: var(--text-on-accent);
+  font-weight: 700;
+}
+.filter-tab:hover:not(.filter-tab--active) {
+  color: var(--text-primary);
+  border-color: var(--color-accent);
+}
+.filter-tab:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+.filter-sep {
+  color: var(--text-disabled);
+  font-size: var(--font-size-sm);
 }
 
-.hub-filters--parts {
+.lobby-error {
+  color: var(--status-danger);
+  font-size: var(--font-size-md);
+  margin: 0;
+  display: flex;
   align-items: center;
-  margin-top: calc(-1 * var(--space-5));
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
-.hub-parts-label {
-  font-size: var(--font-size-2xs);
-  letter-spacing: var(--tracking-normal);
-  color: var(--text-secondary);
-}
-.hub-skeleton-grid {
+
+.lobby-body {
+  flex: 1 1 0;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-8);
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+  overflow: hidden;
 }
-.hub-skeleton {
-  height: 180px;
-  background: var(--surface-panel);
-  border: var(--space-1) solid var(--surface-panel-border);
-  animation: hub-pulse 1.4s ease-in-out infinite;
-}
-@keyframes hub-pulse {
-  50% {
-    opacity: 0.5;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hub-skeleton {
-    animation: none;
+@media (min-width: 900px) {
+  .lobby-body {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
 }
 
-.hub-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-8);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
-  margin-bottom: 32px;
+.lobby-section-label {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
+  flex-shrink: 0;
 }
-.exam-card {
-  width: 100%;
-  height: 100%;
-  background: none;
-  border: none;
-  padding: var(--space-8);
-  text-align: left;
-  color: inherit;
-  cursor: pointer;
+
+.lobby-catalog,
+.lobby-history {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  transition: background 0.12s;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
-.exam-card:hover {
-  background: var(--state-hover-surface);
+
+.catalog-scroll,
+.history-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
-.exam-card-top {
+
+.catalog-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-7);
+  background: var(--surface-panel);
+  border-left: var(--border-width-accent) solid var(--surface-panel-border);
+  padding: var(--space-7) var(--space-8);
+  flex-wrap: wrap;
 }
-.exam-card-id {
+.catalog-row:hover {
+  border-left-color: var(--color-accent);
+  background: var(--state-hover-surface);
+}
+.catalog-main {
+  min-width: 0;
+  flex: 1;
+}
+.catalog-chips {
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
-.exam-card-flag {
-  font-size: var(--font-size-2xl);
-}
-.exam-card-type {
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  letter-spacing: var(--tracking-normal);
-  color: var(--text-label-accent);
-}
-.exam-card-level {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  margin-top: var(--space-1);
-}
-.badge-official {
+.chip {
   font-size: var(--font-size-2xs);
   letter-spacing: var(--tracking-normal);
-  color: var(--status-success);
-  border: var(--space-1) solid var(--status-success);
-  padding: var(--space-1) var(--space-3);
-  white-space: nowrap;
+  color: var(--text-label-accent);
+  border: var(--space-1) solid var(--surface-panel-border);
+  padding: var(--space-1) var(--space-4);
 }
-.exam-card-name {
+.chip--muted {
+  color: var(--text-secondary);
+}
+.chip--official {
+  color: var(--status-success);
+  border-color: var(--status-success-subtle);
+}
+.catalog-name {
+  margin: 0 0 var(--space-2);
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0;
 }
-.exam-card-desc {
-  font-size: var(--font-size-base);
+.catalog-desc {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
-  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.exam-card-meta {
+.catalog-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-5);
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  padding-top: var(--space-4);
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - isolated 1px border, no repeated pattern, see design-tokens.json notes */
-  border-top: 1px solid var(--surface-panel-border);
-}
-
-.hub-empty {
-  text-align: center;
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- approved Step 2 - layout one-off, see design-tokens.json notes */
-  padding: 60px 0;
-  color: var(--text-secondary);
-}
-.hub-empty-icon {
-  font-size: var(--font-size-display);
-  margin-bottom: var(--space-5);
-}
-.hub-empty-sub {
+  gap: var(--space-6);
   font-size: var(--font-size-sm);
-  margin-top: var(--space-2);
+  color: var(--text-secondary);
+}
+.catalog-actions {
+  display: flex;
+  gap: var(--space-4);
+  flex-shrink: 0;
+  align-items: center;
 }
 
-.hub-recent-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 var(--space-6);
-}
-.hub-recent-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.hub-recent-row {
+.history-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
+  gap: var(--space-6);
+  width: 100%;
+  text-align: left;
   background: var(--surface-panel);
+  border: none;
   border-left: var(--border-width-accent) solid var(--surface-panel-border);
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-6) var(--space-7);
   cursor: pointer;
-  transition:
-    border-color 0.12s,
-    background 0.12s;
+  color: inherit;
 }
-.hub-recent-row:hover {
+.history-row:hover {
   border-left-color: var(--color-accent);
   background: var(--state-hover-surface);
 }
-.hub-recent-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  min-width: 0;
+.history-row:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
-.hub-recent-flag {
-  font-size: var(--font-size-lg);
-}
-.hub-recent-name {
+.history-name {
   font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--text-primary);
 }
-.hub-recent-date {
-  font-size: var(--font-size-xs);
+.history-date {
+  font-size: var(--font-size-2xs);
   color: var(--text-secondary);
   margin-top: var(--space-1);
+  letter-spacing: var(--tracking-normal);
 }
-.hub-recent-result {
+.history-result {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
   flex-shrink: 0;
 }
-.hub-recent-count {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
 .score-badge {
-  font-size: var(--font-size-sm);
   font-weight: 700;
-  /* stylelint-disable-next-line scale-unlimited/declaration-strict-value -- isolated badge padding, not part of the spacing scale */
-  padding: 3px 9px;
-  border: var(--space-1) solid;
+  padding: var(--space-1) var(--space-3);
+  border: var(--space-1) solid var(--surface-panel-border);
 }
 .score-badge--good {
   color: var(--status-success);
-  border-color: var(--status-success);
-  background: var(--status-success-subtle);
+  border-color: var(--status-success-subtle);
 }
 .score-badge--mid {
   color: var(--status-caution);
-  border-color: var(--status-caution);
-  background: var(--status-caution-subtle);
+  border-color: var(--status-caution-subtle);
 }
 .score-badge--bad {
   color: var(--status-danger);
-  border-color: var(--status-danger);
-  background: var(--status-danger-subtle);
-}
-.hub-recent-arrow {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
+  border-color: var(--status-danger-subtle);
 }
 
-.filter-tab:focus-visible,
-.hub-recent-row:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-focus-ring);
-  outline-offset: 2px;
+.lobby-status {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  margin: 0;
+  padding: var(--space-8) 0;
 }
-.exam-card:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-focus-ring);
-  outline-offset: -2px;
+.lobby-empty {
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  padding: var(--space-9) 0;
+}
+.lobby-empty-sub {
+  margin: 0;
+  color: var(--text-disabled);
+}
+.lobby-empty p {
+  margin: 0;
 }
 </style>

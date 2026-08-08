@@ -1,14 +1,45 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
 import PixelFrame from '@/shared/components/PixelFrame.vue';
+import AppButton from '@/shared/components/AppButton.vue';
 import { useExamStore } from '../store/examStore';
 
+defineProps<{
+  title: string;
+  canSubmit?: boolean;
+  isSubmitting?: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'submit'): void;
+}>();
+
+const { t } = useI18n();
 const store = useExamStore();
 </script>
 
 <template>
   <div class="hud">
+    <div class="hud-top">
+      <p class="hud-title font-body">{{ title }}</p>
+      <div class="hud-actions">
+        <span class="hud-progress font-label">
+          {{ store.answeredCount }}/{{ store.questions.length }}
+        </span>
+        <span class="hud-time font-label" :class="{ 'hud-time--low': store.isLowTime }">
+          {{ store.timeDisplay }}
+        </span>
+        <AppButton
+          variant="danger"
+          :disabled="!canSubmit || isSubmitting || store.isLocked"
+          @click="emit('submit')"
+        >
+          {{ isSubmitting ? t('exam.submitting') : t('exam.submit') }}
+        </AppButton>
+      </div>
+    </div>
     <div class="hud-bar">
-      <PixelFrame frame-color="cabinet-light" surface="ink" :ring-width="4">
+      <PixelFrame frame-color="cabinet-light" surface="ink" :ring-width="3">
         <div class="hud-bar-track" role="timer" :aria-label="`${store.timeDisplay} remaining`">
           <div
             class="hud-bar-fill"
@@ -18,31 +49,45 @@ const store = useExamStore();
         </div>
       </PixelFrame>
     </div>
-    <div class="hud-time font-label" :class="{ 'hud-time--low': store.isLowTime }">
-      {{ store.timeDisplay }}
-    </div>
-    <!-- The lives/hearts counter lived here until Phase 1.5: it was driven by
-         `session.maxLives`, a field the API never returned, so it rendered a
-         constant 3/3 that no answer could ever decrement. Removed rather than
-         faked — there is no lives concept in the exam scoring model. -->
-    <div class="hud-progress font-label">
-      {{ store.answeredCount }}/{{ store.questions.length }}
-    </div>
   </div>
 </template>
 
 <style scoped>
 .hud {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex-shrink: 0;
+}
+.hud-top {
+  display: flex;
   align-items: center;
-  gap: var(--space-8);
-  margin-bottom: var(--space-10);
+  justify-content: space-between;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+.hud-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50%;
+}
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
 }
 .hud-bar {
-  flex: 1;
+  width: 100%;
 }
 .hud-bar-track {
-  height: 20px;
+  height: var(--space-8);
   background: var(--surface-page);
   position: relative;
   overflow: hidden;
@@ -67,6 +112,7 @@ const store = useExamStore();
   min-width: 64px;
   text-align: right;
   color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 .hud-time--low {
   color: var(--status-danger);
@@ -75,6 +121,7 @@ const store = useExamStore();
   font-size: var(--font-size-md-plus);
   color: var(--text-secondary);
   letter-spacing: var(--tracking-normal);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
