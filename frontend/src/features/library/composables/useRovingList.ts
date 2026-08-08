@@ -18,6 +18,8 @@ export interface RovingListOptions<T> {
   onNew?: () => void;
   onSearch?: () => void;
   onSave?: () => void;
+  /** `?` — opens the hotkeys legend. */
+  onHelp?: () => void;
   /** Alt+arrows; return false if the move was rejected (boundary / disabled). */
   onMove?: (from: number, to: number) => boolean;
   announce: (msg: string) => void;
@@ -50,7 +52,9 @@ function getRowFocusables(row: HTMLElement): HTMLElement[] {
   return Array.from(row.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]'));
 }
 
-export function useRovingList<T>(o: RovingListOptions<T>): {
+export function useRovingList<T extends { id: string }>(
+  o: RovingListOptions<T>,
+): {
   activeIndex: Ref<number>;
   focusIndex: (i: number) => void;
   rowAttrs: (i: number) => Record<string, unknown>;
@@ -58,17 +62,31 @@ export function useRovingList<T>(o: RovingListOptions<T>): {
 } {
   const activeIndex = ref(o.items.value.length > 0 ? 0 : -1);
 
-  watch(
-    () => o.items.value.length,
-    (len) => {
-      if (len === 0) {
-        activeIndex.value = -1;
-        return;
-      }
-      if (activeIndex.value < 0) activeIndex.value = 0;
-      if (activeIndex.value >= len) activeIndex.value = len - 1;
-    },
-  );
+  /**
+   * The active row's identity, tracked so a filter that empties and refills the
+   * list restores your place instead of snapping back to row 0. Deliberately
+   * NOT cleared when the list empties — that is the whole point.
+   */
+  let activeId: string | null = o.items.value[0]?.id ?? null;
+
+  watch(activeIndex, (i) => {
+    const item = o.items.value[i];
+    if (item) activeId = item.id;
+  });
+
+  watch(o.items, (items) => {
+    if (items.length === 0) {
+      activeIndex.value = -1;
+      return;
+    }
+    const found = activeId === null ? -1 : items.findIndex((x) => x.id === activeId);
+    if (found >= 0) {
+      activeIndex.value = found;
+      return;
+    }
+    // The active row is gone (deleted, or filtered out) — clamp into range.
+    activeIndex.value = Math.max(0, Math.min(items.length - 1, activeIndex.value));
+  });
 
   function onRowFocus(i: number) {
     activeIndex.value = i;
@@ -250,17 +268,22 @@ export function useRovingList<T>(o: RovingListOptions<T>): {
       o.onEdit?.(item, i);
       return;
     }
-    if ((key === 'Delete' || key === 'Backspace') && bareLetter && item && modifiable) {
-      // Only Delete is listed in the key table; Backspace is common on mac.
-      if (key === 'Delete') {
-        e.preventDefault();
-        o.onDelete?.(item, i);
-      }
+    // Delete only — Backspace is browser Back in some contexts, so it stays untouched.
+    if (key === 'Delete' && bareLetter && item && modifiable) {
+      e.preventDefault();
+      o.onDelete?.(item, i);
       return;
     }
     if ((key === 'n' || key === 'N') && bareLetter) {
       e.preventDefault();
       o.onNew?.();
+      return;
+    }
+    // `?` is Shift+/, so it must be matched before the bare `/` branch —
+    // bareLetter permits Shift, which is what makes both reachable.
+    if (key === '?' && bareLetter) {
+      e.preventDefault();
+      o.onHelp?.();
       return;
     }
     if (key === '/' && bareLetter) {

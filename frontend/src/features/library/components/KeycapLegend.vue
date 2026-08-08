@@ -5,17 +5,37 @@
  * translated labels so <kbd> never renders diacritic-bearing copy.
  *
  * Caps use font-label (Press Start 2P has no ↑/↓ glyphs). Labels use font-body.
- * Hidden below 768px where the documented affordances are pointer-only.
+ *
+ * `layout="strip"` is the inline row, hidden below 768px where the affordances
+ * it documents are pointer-only. `layout="panel"` is the modal form: always
+ * visible (that width gate is exactly why the modal exists) and laid out as a
+ * column of rows so long labels don't ragged-wrap mid-item.
  */
-defineProps<{
-  items: { keys: string[]; label: string }[];
-  /** Group accessible name (not named `ariaLabel` — Vue treats `aria-*` specially). */
-  legendLabel: string;
-}>();
+export interface KeycapItem {
+  keys: string[];
+  label: string;
+}
+
+withDefaults(
+  defineProps<{
+    items: KeycapItem[];
+    /** Group accessible name (not named `ariaLabel` — Vue treats `aria-*` specially). */
+    legendLabel: string;
+    layout?: 'strip' | 'panel';
+    /** Renders the caps dimmed — used when the group's keys are unavailable here. */
+    muted?: boolean;
+  }>(),
+  { layout: 'strip', muted: false },
+);
 </script>
 
 <template>
-  <div class="keycap-legend" role="group" :aria-label="legendLabel">
+  <div
+    class="keycap-legend"
+    :class="[`keycap-legend--${layout}`, { 'keycap-legend--muted': muted }]"
+    role="group"
+    :aria-label="legendLabel"
+  >
     <div v-for="(item, i) in items" :key="i" class="keycap-item">
       <span class="keycap-keys">
         <template v-for="(key, ki) in item.keys" :key="ki">
@@ -30,17 +50,37 @@ defineProps<{
 
 <style scoped>
 .keycap-legend {
-  display: none;
   flex-wrap: wrap;
-  gap: var(--space-5) var(--space-8);
-  margin-bottom: var(--space-7);
   align-items: center;
 }
+
+/* Inline strip — desktop only */
+.keycap-legend--strip {
+  display: none;
+  gap: var(--space-5) var(--space-8);
+  margin-bottom: var(--space-7);
+}
 @media (min-width: 768px) {
-  .keycap-legend {
+  .keycap-legend--strip {
     display: flex;
   }
 }
+
+/* Panel — inside the hotkeys modal, always visible at every width */
+.keycap-legend--panel {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4) var(--space-8);
+}
+@media (min-width: 480px) {
+  .keycap-legend--panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.keycap-legend--panel .keycap-item {
+  justify-content: flex-start;
+}
+
 .keycap-item {
   display: inline-flex;
   align-items: center;
@@ -71,5 +111,13 @@ defineProps<{
 .keycap-label {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+
+.keycap-legend--muted .keycap {
+  color: var(--text-disabled);
+  border-color: var(--text-disabled);
+}
+.keycap-legend--muted .keycap-label {
+  color: var(--text-disabled);
 }
 </style>

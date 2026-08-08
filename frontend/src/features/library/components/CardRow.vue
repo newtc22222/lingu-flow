@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Row *content* for a card inside ManageListShell (or a plain list).
+ * Row *content* for a card inside KeyboardGridList (or a plain list).
  *
  * The shell owns the <li>, drag listeners, and focus ring. This component
  * only renders the handle, index, term/definition cells, and optional

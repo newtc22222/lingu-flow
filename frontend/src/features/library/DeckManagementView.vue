@@ -2,11 +2,13 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import ManageListShell from '@/shared/components/ManageListShell.vue';
+import KeyboardGridList from '@/shared/components/KeyboardGridList.vue';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
 import AppButton from '@/shared/components/AppButton.vue';
 import DeckForm, { type DeckFormModel } from './components/DeckForm.vue';
-import KeycapLegend from './components/KeycapLegend.vue';
+import ConsoleHeader from './components/ConsoleHeader.vue';
+import HotkeysDialog, { type HotkeyGroup } from './components/HotkeysDialog.vue';
 import { libraryApi } from './api';
 import { useRovingList } from './composables/useRovingList';
 import { UNFILED_ROW_ID, type LibraryDeck } from './types';
@@ -33,10 +35,12 @@ const isEditing = ref(false);
 const editingDeck = ref<LibraryDeck | null>(null);
 
 const showDeleteConfirm = ref(false);
+const showHotkeys = ref(false);
 const pendingDelete = ref<LibraryDeck | null>(null);
 const focusAfterDialog = ref(-1);
 
-const isBlocked = computed(() => showDeleteConfirm.value);
+// Any open modal must gag the shortcuts, or E/N/Del fire behind it.
+const isBlocked = computed(() => showDeleteConfirm.value || showHotkeys.value);
 
 function announce(msg: string) {
   liveMessage.value = '';
@@ -86,14 +90,24 @@ const emptyText = computed(() => {
   return t('decks.empty');
 });
 
-const legendItems = computed(() => [
-  { keys: ['↑', '↓'], label: t('library.legend.navigate') },
-  { keys: ['↵'], label: t('library.legend.open') },
-  { keys: ['E'], label: t('library.legend.edit') },
-  { keys: ['N'], label: t('library.legend.new') },
-  { keys: ['Del'], label: t('library.legend.delete') },
-  { keys: ['/'], label: t('library.legend.search') },
-  { keys: ['Esc'], label: t('library.legend.cancel') },
+const hotkeyGroups = computed<HotkeyGroup[]>(() => [
+  {
+    label: t('library.legend.groups.navigate'),
+    items: [
+      { keys: ['↑', '↓'], label: t('library.legend.navigate') },
+      { keys: ['↵'], label: t('library.legend.open') },
+      { keys: ['/'], label: t('library.legend.search') },
+      { keys: ['Esc'], label: t('library.legend.cancel') },
+    ],
+  },
+  {
+    label: t('library.legend.groups.edit'),
+    items: [
+      { keys: ['E'], label: t('library.legend.edit') },
+      { keys: ['N'], label: t('library.legend.new') },
+      { keys: ['Del'], label: t('library.legend.delete') },
+    ],
+  },
 ]);
 
 function canModify(d: LibraryDeck) {
@@ -229,6 +243,9 @@ const { activeIndex, focusIndex, onRowFocus } = useRovingList<LibraryDeck>({
   onDelete: (item) => requestDelete(item.id),
   onNew: () => startNew(),
   onSearch: () => focusSearch(),
+  onHelp: () => {
+    showHotkeys.value = true;
+  },
   announce,
   isBlocked,
   searchQuery,
@@ -258,86 +275,106 @@ onMounted(async () => {
 <template>
   <div ref="shellRef" class="deck-rack">
     <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ liveMessage }}</div>
-    <p v-if="listError" class="rack-error font-body" role="alert">
-      {{ listError }}
-      <AppButton variant="secondary" class="rack-retry" @click="fetchDecks">
-        {{ t('common.retry') }}
-      </AppButton>
-    </p>
 
-    <KeycapLegend :items="legendItems" :legend-label="t('library.legend.title')" />
-
-    <ManageListShell
+    <ConsoleHeader
       :title="t('decks.title')"
+      :count="isLoading ? -1 : realDecks.length"
       :count-label="t('decks.countLabel')"
-      :count="realDecks.length"
-      :is-loading="isLoading"
-      :loading-text="t('decks.loading')"
-      :empty-text="emptyText"
-      :rows="rows"
-      :can-modify="canModify"
-      row-navigation
-      :active-index="activeIndex"
-      :list-label="t('library.a11y.deckList')"
-      @edit="startEdit"
-      @delete="requestDelete"
-      @row-activate="(item) => openDeck(item)"
-      @row-focus="onRowFocus"
     >
-      <template #header-extra>
-        <label class="sr-only" for="deck-search">{{ t('library.search') }}</label>
-        <input
-          id="deck-search"
-          ref="searchInputRef"
-          v-model="searchQuery"
-          type="search"
-          class="arcade-input rack-search"
-          :placeholder="t('library.searchPlaceholder')"
-        />
+      <template #actions>
+        <AppButton variant="secondary" @click="showHotkeys = true">
+          ? {{ t('library.hotkeys') }}
+        </AppButton>
       </template>
+    </ConsoleHeader>
 
-      <template #form>
-        <DeckForm
-          :key="formKey"
-          ref="formRef"
-          :deck="
-            editingDeck ? { name: editingDeck.name, description: editingDeck.description } : null
-          "
-          :is-saving="isSaving"
-          :error="formError"
-          @submit="saveDeck"
-          @cancel="cancelEdit"
-        />
+    <div class="rack-body">
+      <!-- Left: create / edit form -->
+      <section class="rack-compose" :aria-label="t('library.composeBay')">
+        <div class="rack-bay-label font-label">{{ t('library.composeBay') }}</div>
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3">
+          <DeckForm
+            :key="formKey"
+            ref="formRef"
+            :deck="
+              editingDeck ? { name: editingDeck.name, description: editingDeck.description } : null
+            "
+            :is-saving="isSaving"
+            :error="formError"
+            :framed="false"
+            @submit="saveDeck"
+            @cancel="cancelEdit"
+          />
+        </PixelFrame>
+      </section>
 
-        <div v-if="searchQuery.trim() && rows.length === 0 && !isLoading" class="rack-search-empty">
-          <AppButton variant="secondary" @click="searchQuery = ''">
+      <!-- Right: deck list -->
+      <section class="rack-list" :aria-label="t('library.deckListBay')">
+        <div class="rack-bay-label font-label">{{ t('library.deckListBay') }}</div>
+
+        <div class="rack-toolbar">
+          <label class="sr-only" for="deck-search">{{ t('library.search') }}</label>
+          <input
+            id="deck-search"
+            ref="searchInputRef"
+            v-model="searchQuery"
+            type="search"
+            class="arcade-input rack-search"
+            :placeholder="t('library.searchPlaceholder')"
+          />
+          <AppButton v-if="searchQuery.trim()" variant="secondary" @click="searchQuery = ''">
             {{ t('library.clearSearch') }}
           </AppButton>
         </div>
-      </template>
 
-      <template #row="{ item }">
-        <RouterLink
-          :to="
-            item.id === UNFILED_ROW_ID
-              ? { name: 'deck-unfiled' }
-              : { name: 'deck-detail', params: { deckId: item.id } }
-          "
-          class="deck-row-link"
-          tabindex="-1"
-          @click.stop
+        <p v-if="listError" class="rack-error font-body" role="alert">
+          {{ listError }}
+          <AppButton variant="secondary" @click="fetchDecks">{{ t('common.retry') }}</AppButton>
+        </p>
+
+        <KeyboardGridList
+          :rows="rows"
+          :is-loading="isLoading"
+          :loading-text="t('decks.loading')"
+          :empty-text="emptyText"
+          :list-label="t('library.a11y.deckList')"
+          :active-index="activeIndex"
+          :can-modify="canModify"
+          @edit="startEdit"
+          @delete="requestDelete"
+          @row-activate="(item) => openDeck(item)"
+          @row-focus="onRowFocus"
         >
-          <div class="deck-row-name font-body">{{ item.name }}</div>
-          <div class="deck-row-desc font-body">{{ item.description }}</div>
-          <div class="deck-row-meta font-label">
-            <span v-if="item.cardCount >= 0">{{
-              t('decks.cardCount', { count: item.cardCount })
-            }}</span>
-            <span class="deck-row-open">{{ t('decks.open') }} →</span>
-          </div>
-        </RouterLink>
-      </template>
-    </ManageListShell>
+          <template #row="{ item }">
+            <RouterLink
+              :to="
+                item.id === UNFILED_ROW_ID
+                  ? { name: 'deck-unfiled' }
+                  : { name: 'deck-detail', params: { deckId: item.id } }
+              "
+              class="deck-row-link"
+              tabindex="-1"
+              @click.stop
+            >
+              <div class="deck-row-name font-body">{{ item.name }}</div>
+              <div class="deck-row-desc font-body">{{ item.description }}</div>
+              <div class="deck-row-meta font-label">
+                <span v-if="item.cardCount >= 0">{{
+                  t('decks.cardCount', { count: item.cardCount })
+                }}</span>
+                <span class="deck-row-open">{{ t('decks.open') }} →</span>
+              </div>
+            </RouterLink>
+          </template>
+        </KeyboardGridList>
+      </section>
+    </div>
+
+    <HotkeysDialog
+      v-model:is-open="showHotkeys"
+      :title="t('library.hotkeysTitle')"
+      :groups="hotkeyGroups"
+    />
 
     <ConfirmDialog
       v-model:is-open="showDeleteConfirm"
@@ -352,6 +389,91 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/*
+ * Full-bleed console — but only where there is height to split. Below 768px
+ * the two bays stack and the page scrolls normally; pinning the viewport there
+ * leaves the list fighting the form for ~90px and losing.
+ */
+.deck-rack {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-9) var(--space-9) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+@media (min-width: 768px) {
+  .deck-rack {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.rack-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+}
+@media (min-width: 768px) {
+  .rack-body {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+    overflow: hidden;
+  }
+}
+
+.rack-bay-label {
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-3);
+  flex-shrink: 0;
+}
+
+/*
+ * The deck form is two fields — the bay hugs it rather than stretching to
+ * full height, which would recreate the empty space this layout removes.
+ */
+.rack-compose {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rack-compose .rack-bay-label {
+  color: var(--text-label-accent);
+}
+@media (min-width: 768px) {
+  .rack-compose {
+    max-height: 100%;
+    overflow-y: auto;
+  }
+}
+
+.rack-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .rack-list {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+.rack-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+  flex-shrink: 0;
+}
+
 .rack-error {
   color: var(--status-danger);
   font-size: var(--font-size-md);
@@ -360,15 +482,12 @@ onMounted(async () => {
   align-items: center;
   gap: var(--space-5);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 .rack-search {
   min-width: 160px;
-  max-width: 240px;
-}
-.rack-search-empty {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-7);
+  flex: 1 1 auto;
+  max-width: 320px;
 }
 .deck-row-link {
   display: block;

@@ -13,11 +13,16 @@ export interface DeckFormModel {
   description: string;
 }
 
-const props = defineProps<{
-  deck: DeckFormModel | null;
-  isSaving: boolean;
-  error: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    deck: DeckFormModel | null;
+    isSaving: boolean;
+    error: string;
+    /** False when a console bay already owns the frame and the scroll. */
+    framed?: boolean;
+  }>(),
+  { framed: true },
+);
 
 const emit = defineEmits<{
   (e: 'submit', payload: DeckFormModel): void;
@@ -53,7 +58,11 @@ defineExpose({ focusFirstField });
 </script>
 
 <template>
-  <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="deck-form-frame">
+  <component
+    :is="framed ? PixelFrame : 'div'"
+    v-bind="framed ? { frameColor: 'amber', surface: 'cabinet', ringWidth: 3 } : {}"
+    :class="framed ? 'deck-form-frame' : 'deck-form-bare'"
+  >
     <form class="deck-form" @submit.prevent="onSubmit">
       <h3 class="form-title font-label">
         {{ deck ? t('decks.editTitle') : t('decks.createTitle') }}
@@ -102,12 +111,15 @@ defineExpose({ focusFirstField });
         </AppButton>
       </div>
     </form>
-  </PixelFrame>
+  </component>
 </template>
 
 <style scoped>
 .deck-form-frame {
   margin-bottom: var(--space-11);
+}
+.deck-form-bare {
+  display: block;
 }
 .deck-form {
   padding: var(--space-10);

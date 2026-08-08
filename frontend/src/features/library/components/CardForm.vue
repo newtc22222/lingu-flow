@@ -26,8 +26,10 @@ const props = withDefaults(
     isSaving: boolean;
     error: string;
     showDeckSelect?: boolean;
+    /** False when a console bay already owns the frame and the scroll. */
+    framed?: boolean;
   }>(),
-  { showDeckSelect: true },
+  { showDeckSelect: true, framed: true },
 );
 
 const emit = defineEmits<{
@@ -81,8 +83,12 @@ defineExpose({ focusFirstField });
 </script>
 
 <template>
-  <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="card-form-frame">
-    <div class="card-form-grid">
+  <component
+    :is="framed ? PixelFrame : 'div'"
+    v-bind="framed ? { frameColor: 'amber', surface: 'cabinet', ringWidth: 3 } : {}"
+    :class="framed ? 'card-form-frame' : 'card-form-bare'"
+  >
+    <div class="card-form-grid" :class="{ 'card-form-grid--bay': !framed }">
       <form class="card-form" @submit.prevent="onSubmit">
         <h3 class="form-title font-label">
           {{ card ? t('cards.editTitle') : t('cards.createTitle') }}
@@ -184,7 +190,7 @@ defineExpose({ focusFirstField });
         </div>
       </div>
     </div>
-  </PixelFrame>
+  </component>
 </template>
 
 <style scoped>
@@ -200,6 +206,16 @@ defineExpose({ focusFirstField });
 @media (min-width: 768px) {
   .card-form-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+.card-form-bare {
+  display: block;
+}
+/* In a console bay the form already owns only half the page — keep the
+   preview stacked under the fields instead of halving the column again. */
+@media (min-width: 768px) {
+  .card-form-grid--bay {
+    grid-template-columns: 1fr;
   }
 }
 .card-form {

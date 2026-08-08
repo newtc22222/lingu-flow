@@ -2,12 +2,14 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import ManageListShell from '@/shared/components/ManageListShell.vue';
+import KeyboardGridList from '@/shared/components/KeyboardGridList.vue';
+import PixelFrame from '@/shared/components/PixelFrame.vue';
 import ConfirmDialog from '@/shared/components/ConfirmDialog.vue';
 import AppButton from '@/shared/components/AppButton.vue';
 import CardForm, { type CardFormModel } from './components/CardForm.vue';
 import CardRow from './components/CardRow.vue';
-import KeycapLegend from './components/KeycapLegend.vue';
+import ConsoleHeader from './components/ConsoleHeader.vue';
+import HotkeysDialog, { type HotkeyGroup } from './components/HotkeysDialog.vue';
 import { libraryApi } from './api';
 import { useRovingList } from './composables/useRovingList';
 import type { DeckCard, DeckOption } from './types';
@@ -43,13 +45,15 @@ const isEditing = ref(false);
 const editingCard = ref<DeckCard | null>(null);
 
 const showDeleteConfirm = ref(false);
+const showHotkeys = ref(false);
 const pendingDeleteId = ref<string | null>(null);
 const focusAfterDialog = ref(-1);
 
 const draggingIndex = ref<number | null>(null);
 const savedOrder = ref<string[]>([]);
 
-const isBlocked = computed(() => showDeleteConfirm.value);
+// Any open modal must gag the shortcuts, or E/N/Del fire behind it.
+const isBlocked = computed(() => showDeleteConfirm.value || showHotkeys.value);
 
 const isDirty = computed(
   () =>
@@ -74,26 +78,49 @@ const emptyText = computed(() => {
   if (searchQuery.value.trim()) {
     return t('library.searchNoResults', { query: searchQuery.value.trim() });
   }
+  // Unfiled is not a deck, and having nothing in it is a healthy state.
+  if (isUnfiled.value) return t('library.unfiledEmpty');
   return t('deckDetail.empty');
 });
 
-const legendItems = computed(() => {
-  const base = [
-    { keys: ['↑', '↓'], label: t('library.legend.navigate') },
-    { keys: ['↵'], label: t('library.legend.open') },
-    { keys: ['E'], label: t('library.legend.edit') },
-    { keys: ['N'], label: t('library.legend.new') },
-    { keys: ['Del'], label: t('library.legend.delete') },
-    { keys: ['/'], label: t('library.legend.search') },
+/**
+ * The legend plate tracks machine state: the ORDER group is always listed, but
+ * on Unfiled it arrives muted with the reason attached rather than vanishing
+ * and leaving the user to wonder where the keys went.
+ */
+const hotkeyGroups = computed<HotkeyGroup[]>(() => {
+  const orderItems = [
+    { keys: ['Alt', '↑/↓'], label: t('library.legend.reorder') },
+    { keys: ['S'], label: t('library.legend.saveOrder') },
   ];
-  if (canReorder.value) {
-    base.push(
-      { keys: ['Alt', '↑/↓'], label: t('library.legend.reorder') },
-      { keys: ['S'], label: t('library.legend.saveOrder') },
-    );
-  }
-  base.push({ keys: ['Esc'], label: t('library.legend.cancel') });
-  return base;
+  return [
+    {
+      label: t('library.legend.groups.navigate'),
+      items: [
+        { keys: ['↑', '↓'], label: t('library.legend.navigate') },
+        { keys: ['↵'], label: t('library.legend.open') },
+        { keys: ['/'], label: t('library.legend.search') },
+        { keys: ['Esc'], label: t('library.legend.cancel') },
+      ],
+    },
+    {
+      label: t('library.legend.groups.edit'),
+      items: [
+        { keys: ['E'], label: t('library.legend.edit') },
+        { keys: ['N'], label: t('library.legend.new') },
+        { keys: ['Del'], label: t('library.legend.delete') },
+      ],
+    },
+    {
+      label: t('library.legend.groups.order'),
+      items: orderItems,
+      note: isUnfiled.value
+        ? t('library.reorderDisabled')
+        : canReorder.value
+          ? undefined
+          : t('library.reorderWhileFiltered'),
+    },
+  ];
 });
 
 function announce(msg: string) {
@@ -245,6 +272,9 @@ const { activeIndex, focusIndex, onRowFocus } = useRovingList<DeckCard>({
   onDelete: (item) => requestDelete(item.id),
   onNew: () => startNew(),
   onSearch: () => focusSearch(),
+  onHelp: () => {
+    showHotkeys.value = true;
+  },
   onSave: () => {
     if (canReorder.value && isDirty.value) void saveOrder();
   },
@@ -399,25 +429,16 @@ onMounted(fetchWorkspace);
   <div ref="shellRef" class="deck-workspace">
     <div class="sr-only" role="status" aria-live="polite" aria-atomic="true">{{ liveMessage }}</div>
 
-    <div class="ws-top">
-      <AppButton variant="secondary" @click="router.push({ name: 'decks' })">
-        {{ t('library.backToDecks') }}
-      </AppButton>
-    </div>
-
-    <p v-if="isLoading" class="ws-status font-label">{{ t('deckDetail.loading') }}</p>
-    <p v-else-if="notFound" class="ws-status ws-status--error font-label">
-      {{ t('deckDetail.notFound') }}
-    </p>
-    <p v-else-if="loadError" class="ws-status ws-status--error font-body" role="alert">
-      {{ loadError }}
-      <AppButton variant="secondary" @click="fetchWorkspace">{{ t('common.retry') }}</AppButton>
-    </p>
-
-    <template v-else>
-      <div class="ws-header">
-        <h1 class="ws-title font-body">{{ deckName }}</h1>
-        <div v-if="!isUnfiled" class="ws-actions">
+    <ConsoleHeader
+      :title="isLoading ? t('deckDetail.loading') : deckName"
+      :back-label="t('library.backToDecks')"
+      @back="router.push({ name: 'decks' })"
+    >
+      <template #actions>
+        <AppButton variant="secondary" @click="showHotkeys = true">
+          ? {{ t('library.hotkeys') }}
+        </AppButton>
+        <template v-if="!isUnfiled && !isLoading && !notFound && !loadError">
           <AppButton
             variant="secondary"
             @click="router.push({ name: 'learn', params: { deckId: props.deckId! } })"
@@ -430,34 +451,47 @@ onMounted(fetchWorkspace);
           >
             {{ t('deckDetail.startMatch') }}
           </AppButton>
-        </div>
-      </div>
+        </template>
+      </template>
+    </ConsoleHeader>
 
-      <KeycapLegend :items="legendItems" :legend-label="t('library.legend.title')" />
+    <p v-if="isLoading" class="ws-status font-label">{{ t('deckDetail.loading') }}</p>
+    <p v-else-if="notFound" class="ws-status ws-status--error font-label">
+      {{ t('deckDetail.notFound') }}
+    </p>
+    <p v-else-if="loadError" class="ws-status ws-status--error font-body" role="alert">
+      {{ loadError }}
+      <AppButton variant="secondary" @click="fetchWorkspace">{{ t('common.retry') }}</AppButton>
+    </p>
 
-      <p v-if="listError" class="ws-alert font-body" role="alert">{{ listError }}</p>
+    <div v-else class="ws-body">
+      <!-- Left: create / edit form -->
+      <section class="ws-compose" :aria-label="t('library.composeBay')">
+        <div class="ws-bay-label font-label">{{ t('library.composeBay') }}</div>
+        <PixelFrame frame-color="amber" surface="cabinet" :ring-width="3" class="ws-compose-frame">
+          <div class="ws-compose-scroll">
+            <CardForm
+              :key="formKey"
+              ref="formRef"
+              :card="editingFormModel()"
+              :decks="allDecks"
+              :default-deck-id="props.deckId"
+              :is-saving="isSaving"
+              :error="formError"
+              :show-deck-select="true"
+              :framed="false"
+              @submit="saveCard"
+              @cancel="cancelEdit"
+            />
+          </div>
+        </PixelFrame>
+      </section>
 
-      <ManageListShell
-        :title="deckName"
-        :count-label="t('cards.countLabel')"
-        :count="filteredCards.length"
-        :is-loading="false"
-        :loading-text="t('deckDetail.loading')"
-        :empty-text="emptyText"
-        :rows="filteredCards"
-        row-navigation
-        :active-index="activeIndex"
-        :list-label="t('library.a11y.cardList')"
-        :draggable-rows="canReorder"
-        @edit="startEdit"
-        @delete="requestDelete"
-        @row-activate="(item) => startEdit(item)"
-        @row-focus="onRowFocus"
-        @row-dragstart="onDragStart"
-        @row-dragenter="onDragEnter"
-        @row-dragend="onDragEnd"
-      >
-        <template #header-extra>
+      <!-- Right: card list -->
+      <section class="ws-list" :aria-label="t('library.cardListBay')">
+        <div class="ws-bay-label font-label">{{ t('library.cardListBay') }}</div>
+
+        <div class="ws-toolbar">
           <label class="sr-only" for="card-search">{{ t('library.search') }}</label>
           <input
             id="card-search"
@@ -467,54 +501,65 @@ onMounted(fetchWorkspace);
             class="arcade-input ws-search"
             :placeholder="t('library.searchPlaceholder')"
           />
+          <span class="ws-count font-label">
+            {{ filteredCards.length }} {{ t('cards.countLabel') }}
+          </span>
+          <AppButton v-if="searchQuery.trim()" variant="secondary" @click="searchQuery = ''">
+            {{ t('library.clearSearch') }}
+          </AppButton>
           <AppButton variant="secondary" @click="startNew">
             {{ t('library.addCard') }}
           </AppButton>
-        </template>
+        </div>
 
-        <template #form>
-          <CardForm
-            :key="formKey"
-            ref="formRef"
-            :card="editingFormModel()"
-            :decks="allDecks"
-            :default-deck-id="props.deckId"
-            :is-saving="isSaving"
-            :error="formError"
-            :show-deck-select="true"
-            @submit="saveCard"
-            @cancel="cancelEdit"
-          />
+        <!-- Reorder controls belong with the list they reorder, not the form. -->
+        <div v-if="canReorder && cards.length > 0" class="ws-reorder-bar">
+          <span class="ws-hint font-body">{{ t('deckDetail.reorderHint') }}</span>
+          <span v-if="orderSaved && !isDirty" class="ws-saved font-label">
+            {{ t('deckDetail.orderSaved') }}
+          </span>
+          <AppButton :disabled="!isDirty || isSavingOrder" @click="saveOrder">
+            {{ t('deckDetail.saveOrder') }}
+          </AppButton>
+        </div>
 
-          <div v-if="canReorder && cards.length > 0" class="ws-reorder-bar">
-            <span class="ws-hint font-body">{{ t('deckDetail.reorderHint') }}</span>
-            <span v-if="orderSaved && !isDirty" class="ws-saved font-label">
-              {{ t('deckDetail.orderSaved') }}
-            </span>
-            <AppButton :disabled="!isDirty || isSavingOrder" @click="saveOrder">
-              {{ t('deckDetail.saveOrder') }}
-            </AppButton>
-          </div>
+        <p v-if="listError" class="ws-alert font-body" role="alert">{{ listError }}</p>
 
-          <div v-if="searchQuery.trim() && filteredCards.length === 0" class="ws-search-empty">
-            <AppButton variant="secondary" @click="searchQuery = ''">
-              {{ t('library.clearSearch') }}
-            </AppButton>
-          </div>
-        </template>
+        <KeyboardGridList
+          :rows="filteredCards"
+          :is-loading="false"
+          :loading-text="t('deckDetail.loading')"
+          :empty-text="emptyText"
+          :list-label="t('library.a11y.cardList')"
+          :active-index="activeIndex"
+          :draggable-rows="canReorder"
+          @edit="startEdit"
+          @delete="requestDelete"
+          @row-activate="(item) => startEdit(item)"
+          @row-focus="onRowFocus"
+          @row-dragstart="onDragStart"
+          @row-dragenter="onDragEnter"
+          @row-dragend="onDragEnd"
+        >
+          <template #row="{ item, index }">
+            <CardRow
+              :card="item"
+              :index="index"
+              :is-dragging="draggingIndex === index"
+              :is-reorderable="canReorder"
+              @move-up="moveBy(-1, index)"
+              @move-down="moveBy(1, index)"
+            />
+          </template>
+        </KeyboardGridList>
+      </section>
+    </div>
 
-        <template #row="{ item, index }">
-          <CardRow
-            :card="item"
-            :index="index"
-            :is-dragging="draggingIndex === index"
-            :is-reorderable="canReorder"
-            @move-up="moveBy(-1, index)"
-            @move-down="moveBy(1, index)"
-          />
-        </template>
-      </ManageListShell>
-    </template>
+    <HotkeysDialog
+      v-model:is-open="showHotkeys"
+      :title="t('library.hotkeysTitle')"
+      :groups="hotkeyGroups"
+    />
 
     <ConfirmDialog
       v-model:is-open="showDeleteConfirm"
@@ -529,37 +574,118 @@ onMounted(fetchWorkspace);
 </template>
 
 <style scoped>
-.ws-top {
-  margin-bottom: var(--space-7);
+/*
+ * Full-bleed console — but only where there is height to split. Below 768px
+ * the two bays stack and the page scrolls normally; pinning the viewport there
+ * leaves the list fighting the form for ~90px and losing.
+ */
+.deck-workspace {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--space-9) var(--space-9) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
 }
-.ws-header {
+@media (min-width: 768px) {
+  .deck-workspace {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.ws-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-7);
+}
+@media (min-width: 768px) {
+  .ws-body {
+    flex: 1 1 0;
+    min-height: 0;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: stretch;
+    overflow: hidden;
+  }
+}
+
+.ws-bay-label {
+  font-size: var(--font-size-2xs);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-3);
+  flex-shrink: 0;
+}
+
+/* CardForm is six fields plus a live preview — this bay fills and scrolls. */
+.ws-compose {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ws-compose .ws-bay-label {
+  color: var(--text-label-accent);
+}
+@media (min-width: 768px) {
+  .ws-compose {
+    min-height: 0;
+    height: 100%;
+  }
+  .ws-compose-frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .ws-compose-scroll {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+}
+
+.ws-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .ws-list {
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.ws-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-7);
-  margin-bottom: var(--space-7);
-}
-.ws-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-accent);
-  margin: 0;
-}
-.ws-actions {
-  display: flex;
   gap: var(--space-5);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+  flex-shrink: 0;
+}
+.ws-count {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-accent);
+  background: var(--surface-page);
+  border: var(--space-1) solid var(--color-accent);
+  padding: var(--space-2) var(--space-5);
+  flex-shrink: 0;
 }
 .ws-search {
   min-width: 160px;
-  max-width: 220px;
+  flex: 1 1 auto;
+  max-width: 280px;
 }
 .ws-reorder-bar {
   display: flex;
   align-items: center;
   gap: var(--space-7);
   flex-wrap: wrap;
-  margin-bottom: var(--space-7);
+  margin-bottom: var(--space-6);
+  flex-shrink: 0;
 }
 .ws-hint {
   flex: 1;
@@ -587,12 +713,8 @@ onMounted(fetchWorkspace);
 .ws-alert {
   color: var(--status-danger);
   font-size: var(--font-size-md);
-  margin: 0 0 var(--space-7);
-}
-.ws-search-empty {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--space-7);
+  margin: 0 0 var(--space-6);
+  flex-shrink: 0;
 }
 .arcade-input:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus-ring);
