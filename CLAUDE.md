@@ -31,8 +31,14 @@ Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bum
 
 - `get_db()` is the sole **commit** point for HTTP requests (`backend/app/database.py`).
 - Services may `flush()` to obtain IDs or enforce constraints mid-method; they must **not** `commit()` or `rollback()`.
-- Background jobs (`app/jobs/*`) and one-shot seed/CLI entrypoints open their own session and commit at the end of their unit of work (e.g. guest cleanup batches, `seed_builtin_exams`).
+- Background jobs (`app/jobs/*`) and one-shot seed/CLI entrypoints open their own session and commit at the end of their unit of work (e.g. guest cleanup batches, `python -m app.seed.exam_seed`).
 - Prefer one service call per mutation endpoint; multi-step workflows stay in one service method so they share one transaction.
+
+**Built-in exam seed ownership**
+
+- Seed runs once from `backend/entrypoint.sh` after `alembic upgrade head` (`python -m app.seed.exam_seed`), **not** from FastAPI lifespan (multi-worker races).
+- On Postgres, `seed_builtin_exams` takes `pg_advisory_lock` so concurrent entrypoints cannot double-apply a `seed_version` bump.
+- Production seed failure exits non-zero so the container does not serve half-seeded content.
 
 **Tests & quality gates**
 

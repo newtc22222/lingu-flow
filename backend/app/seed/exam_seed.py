@@ -1,14 +1,23 @@
+import asyncio
 import logging
+import sys
 from datetime import datetime, timezone
 from typing import List
-from sqlalchemy import delete, select, update
+
+from sqlalchemy import delete, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import AsyncSessionLocal
+from app.config import get_settings
+from app.database import AsyncSessionLocal, engine
 from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
 from app.seed.data.toeic_reading import TOEIC_READING_TEMPLATE
 
 logger = logging.getLogger("linguflow")
+
+# Stable Postgres advisory-lock key for built-in exam seeding. Prevents two
+# workers/replicas from running a seed_version bump concurrently.
+SEED_ADVISORY_LOCK_KEY = 0x4C46_5345_4544_0001  # "LFSEED\0\1"
+
 
 BUILTIN_SEED_DATA = [
     TOEIC_READING_TEMPLATE,
@@ -308,6 +317,33 @@ async def _link_questions(
     template.total_questions = len(questions)
 
 
+async def _acquire_seed_lock(db: AsyncSession) -> bool:
+    """
+    Take a session-level advisory lock on Postgres.
+
+    Returns True if a lock was acquired (caller must unlock). Returns False on
+    non-Postgres dialects (SQLite tests) where advisory locks do not exist.
+    """
+    bind = db.get_bind()
+    dialect = getattr(bind.dialect, "name", "") if bind is not None else ""
+    if dialect != "postgresql":
+        return False
+    await db.execute(
+        text("SELECT pg_advisory_lock(:k)"),
+        {"k": SEED_ADVISORY_LOCK_KEY},
+    )
+    return True
+
+
+async def _release_seed_lock(db: AsyncSession, held: bool) -> None:
+    if not held:
+        return
+    await db.execute(
+        text("SELECT pg_advisory_unlock(:k)"),
+        {"k": SEED_ADVISORY_LOCK_KEY},
+    )
+
+
 async def seed_builtin_exams(db: AsyncSession) -> None:
     """
     Idempotently seed the built-in exams, keyed on `seed_key`.
@@ -321,89 +357,123 @@ async def seed_builtin_exams(db: AsyncSession) -> None:
     id survives - past ExamSessions point at it, and those sessions resolve
     their own questions from their answer records, so re-seeding cannot rewrite
     anyone's finished results.
+
+    On Postgres, the whole run is serialized with ``pg_advisory_lock`` so two
+    entrypoint processes cannot apply the same version bump concurrently.
     """
     logger.info("Checking built-in exam seed data...")
+    held = await _acquire_seed_lock(db)
+    try:
+        for seed in BUILTIN_SEED_DATA:
+            seed_key = seed["seedKey"]
+            seed_version = seed["seedVersion"]
 
-    for seed in BUILTIN_SEED_DATA:
-        seed_key = seed["seedKey"]
-        seed_version = seed["seedVersion"]
-
-        existing = (
-            await db.execute(
-                select(ExamTemplate).where(ExamTemplate.seed_key == seed_key)
-            )
-        ).scalar_one_or_none()
-
-        if existing and existing.seed_version == seed_version:
-            logger.info(f"  [SKIP] '{seed['name']}' already at v{seed_version}.")
-            continue
-
-        if existing:
-            logger.info(
-                f"  [UPDATE] '{seed['name']}' "
-                f"v{existing.seed_version} -> v{seed_version}"
-            )
-            template = existing
-            template.name = seed["name"]
-            template.exam_type = seed["examType"]
-            template.description = seed["description"]
-            template.duration_minutes = seed["durationMinutes"]
-            template.passing_score = seed["passingScore"]
-            template.level = seed["level"]
-            template.tags = [seed["examType"], seed["level"]]
-            template.seed_version = seed_version
-
-            # Archive the questions this template previously held rather than
-            # deleting them: past sessions' answer records still reference them.
-            previous_ids = list(
-                (
-                    await db.execute(
-                        select(ExamTemplateQuestion.question_id).where(
-                            ExamTemplateQuestion.exam_template_id == template.id
-                        )
-                    )
-                ).scalars().all()
-            )
-            await db.execute(
-                delete(ExamTemplateQuestion).where(
-                    ExamTemplateQuestion.exam_template_id == template.id
-                )
-            )
-            if previous_ids:
+            existing = (
                 await db.execute(
-                    update(Question)
-                    .where(
-                        Question.id.in_(previous_ids),
-                        Question.user_id.is_(None),
-                        Question.archived_at.is_(None),
-                        ~select(ExamTemplateQuestion.question_id)
-                        .where(ExamTemplateQuestion.question_id == Question.id)
-                        .exists(),
-                    )
-                    .values(archived_at=datetime.now(timezone.utc))
+                    select(ExamTemplate).where(ExamTemplate.seed_key == seed_key)
                 )
-        else:
-            template = ExamTemplate(
-                user_id=None,
-                name=seed["name"],
-                exam_type=seed["examType"],
-                description=seed["description"],
-                duration_minutes=seed["durationMinutes"],
-                total_questions=len(seed["questions"]),
-                passing_score=seed["passingScore"],
-                level=seed["level"],
-                is_public=True,
-                tags=[seed["examType"], seed["level"]],
-                seed_key=seed_key,
-                seed_version=seed_version,
+            ).scalar_one_or_none()
+
+            if existing and existing.seed_version == seed_version:
+                logger.info(f"  [SKIP] '{seed['name']}' already at v{seed_version}.")
+                continue
+
+            if existing:
+                logger.info(
+                    f"  [UPDATE] '{seed['name']}' "
+                    f"v{existing.seed_version} -> v{seed_version}"
+                )
+                template = existing
+                template.name = seed["name"]
+                template.exam_type = seed["examType"]
+                template.description = seed["description"]
+                template.duration_minutes = seed["durationMinutes"]
+                template.passing_score = seed["passingScore"]
+                template.level = seed["level"]
+                template.tags = [seed["examType"], seed["level"]]
+                template.seed_version = seed_version
+
+                # Archive the questions this template previously held rather than
+                # deleting them: past sessions' answer records still reference them.
+                previous_ids = list(
+                    (
+                        await db.execute(
+                            select(ExamTemplateQuestion.question_id).where(
+                                ExamTemplateQuestion.exam_template_id == template.id
+                            )
+                        )
+                    ).scalars().all()
+                )
+                await db.execute(
+                    delete(ExamTemplateQuestion).where(
+                        ExamTemplateQuestion.exam_template_id == template.id
+                    )
+                )
+                if previous_ids:
+                    await db.execute(
+                        update(Question)
+                        .where(
+                            Question.id.in_(previous_ids),
+                            Question.user_id.is_(None),
+                            Question.archived_at.is_(None),
+                            ~select(ExamTemplateQuestion.question_id)
+                            .where(ExamTemplateQuestion.question_id == Question.id)
+                            .exists(),
+                        )
+                        .values(archived_at=datetime.now(timezone.utc))
+                    )
+            else:
+                template = ExamTemplate(
+                    user_id=None,
+                    name=seed["name"],
+                    exam_type=seed["examType"],
+                    description=seed["description"],
+                    duration_minutes=seed["durationMinutes"],
+                    total_questions=len(seed["questions"]),
+                    passing_score=seed["passingScore"],
+                    level=seed["level"],
+                    is_public=True,
+                    tags=[seed["examType"], seed["level"]],
+                    seed_key=seed_key,
+                    seed_version=seed_version,
+                )
+                db.add(template)
+                await db.flush()
+
+            await _link_questions(db, template, _build_questions(seed))
+            await db.commit()
+            logger.info(
+                f"  Seeded '{seed['name']}' with {len(seed['questions'])} questions."
             )
-            db.add(template)
-            await db.flush()
 
-        await _link_questions(db, template, _build_questions(seed))
-        await db.commit()
-        logger.info(
-            f"  Seeded '{seed['name']}' with {len(seed['questions'])} questions."
-        )
+        logger.info("Exam seeding complete.")
+    finally:
+        await _release_seed_lock(db, held)
 
-    logger.info("Exam seeding complete.")
+
+async def run_seed_cli() -> int:
+    """
+    One-shot seed for container entrypoint / ops.
+
+    Owns its own engine session. On production, any failure exits non-zero so
+    the deploy does not serve half-seeded content. Dev/test logs and exits 1
+    only when seeding itself fails (same exit code); callers with ``set -e``
+    treat that as a hard stop either way.
+    """
+    settings = get_settings()
+    try:
+        async with AsyncSessionLocal() as session:
+            await seed_builtin_exams(session)
+    except Exception:
+        logger.exception("Built-in exam seed failed")
+        if settings.ENVIRONMENT.strip().lower() == "production":
+            logger.error("Failing boot: seed is required in production")
+        return 1
+    finally:
+        await engine.dispose()
+    return 0
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    sys.exit(asyncio.run(run_seed_cli()))

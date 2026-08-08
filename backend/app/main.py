@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.database import AsyncSessionLocal, engine
+from app.database import engine
 from app.routers import (
     auth,
     cards,
@@ -15,7 +15,6 @@ from app.routers import (
     questions,
 )
 from app.routers import settings as settings_router
-from app.seed.exam_seed import seed_builtin_exams
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("linguflow")
@@ -27,13 +26,10 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting LinguFlow FastAPI Backend...")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info(f"Port: {settings.PORT}")
-
-    # Run idempotent built-in exam seeding on startup
-    try:
-        async with AsyncSessionLocal() as session:
-            await seed_builtin_exams(session)
-    except Exception as e:
-        logger.warning(f"⚠️ Built-in exam seed skipped (DB not ready or error): {e}")
+    # Built-in exam seed is owned by entrypoint.sh (migrate → seed → uvicorn),
+    # not lifespan: multi-worker / multi-replica boots would race on seed_version
+    # bumps if every process seeded here.
+    logger.info("Exam seed is entrypoint-owned (not run in lifespan)")
 
     yield
     logger.info("🛑 Shutting down LinguFlow FastAPI Backend...")
