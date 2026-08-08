@@ -193,9 +193,14 @@ async def test_mid_exam_details_withholds_answer_keys(client: AsyncClient):
     """Case 5: the owner of an in-progress session must not get the key."""
     owner = await _register(client, "keys_midexam")
     template_id = await _private_template(client, owner)
-    await _add_question(client, owner, template_id)
+    question_id = await _add_question(client, owner, template_id)
 
     session_id = await _start_session(client, owner, template_id)
+    await client.put(
+        f"/api/exams/sessions/{session_id}/answer",
+        json={"questionId": question_id, "userAnswer": "A"},
+        headers=owner,
+    )
     res = await client.get(
         f"/api/exams/sessions/{session_id}/details", headers=owner
     )
@@ -208,6 +213,9 @@ async def test_mid_exam_details_withholds_answer_keys(client: AsyncClient):
         assert "explanation" not in question
         # The question itself is still renderable — only the key is missing.
         assert len(question["options"]) == 4
+    # isCorrect is also key-derived feedback — withhold it mid-exam.
+    assert question_id in body["userAnswers"]
+    assert "isCorrect" not in body["userAnswers"][question_id]
 
 
 @pytest.mark.asyncio

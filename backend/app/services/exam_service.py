@@ -556,13 +556,18 @@ class ExamService:
         ans_res = await db.execute(ans_stmt)
         answers = ans_res.scalars().all()
 
+        # Correctness feedback is results-only, same gate as answer keys:
+        # mid-exam details must not leak isCorrect (an oracle for the key).
+        reveal_feedback = session.status == "completed"
         user_answers_map = {}
         for a in answers:
-            user_answers_map[str(a.question_id)] = {
+            entry: dict = {
                 "userAnswer": a.user_answer,
-                "isCorrect": a.is_correct,
                 "timeTakenSeconds": a.time_taken_seconds,
             }
+            if reveal_feedback:
+                entry["isCorrect"] = a.is_correct
+            user_answers_map[str(a.question_id)] = entry
 
         return {
             "session": session,
@@ -573,7 +578,7 @@ class ExamService:
             # explanations belong to the results review, so they stay withheld
             # until the sitting is over. While it is in progress this endpoint
             # would otherwise hand the owner the whole key mid-exam.
-            "revealAnswerKeys": session.status == "completed",
+            "revealAnswerKeys": reveal_feedback,
         }
 
     async def record_answer(
@@ -582,8 +587,13 @@ class ExamService:
         session_id: uuid.UUID,
         user_id: uuid.UUID,
         req: SubmitAnswerRequest,
-    ) -> AnswerRecord:
-        """Submit or update an answer for a single question in an active exam session."""
+    ) -> dict:
+        """Submit or update an answer for a single question in an active exam session.
+
+        Correctness is persisted for scoring on finish, but the return value
+        withholds `is_correct` — this path only accepts in-progress sessions, so
+        revealing it would be immediate mid-exam feedback.
+        """
         session = await self.get_session_by_id(db, session_id, user_id)
         if not session or session.status != "in-progress":
             raise HTTPException(
@@ -628,7 +638,10 @@ class ExamService:
 
         await db.commit()
         await db.refresh(record)
-        return record
+        return {
+            "question_id": record.question_id,
+            "user_answer": record.user_answer,
+        }
 
     async def finish_session(
         self, db: AsyncSession, session_id: uuid.UUID, user_id: uuid.UUID

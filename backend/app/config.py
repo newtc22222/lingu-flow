@@ -72,8 +72,17 @@ class Settings(BaseSettings):
         # deploy that declared production purely in `backend/.env` booted on the
         # committed dev secret below.
         env = (info.data.get("ENVIRONMENT") or "development").strip().lower()
-        if env == "production" and (not secret or secret in dev_fallbacks):
-            raise ValueError("JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!")
+        if env == "production":
+            if not secret or secret in dev_fallbacks:
+                raise ValueError(
+                    "JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!"
+                )
+            # HS256 secrets should be long enough to resist brute force; 32 bytes
+            # is the minimum we accept (matches common guidance for JWT HMAC keys).
+            if len(secret.encode("utf-8")) < 32:
+                raise ValueError(
+                    "JWT_SECRET must be at least 32 bytes in production!"
+                )
         if not secret:
             return "lingu_dev_jwt_secret_key_change_in_production_99"
         return secret

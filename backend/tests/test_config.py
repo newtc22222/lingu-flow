@@ -22,7 +22,7 @@ def test_jwt_secret_validation_in_production(monkeypatch):
 
 def test_custom_jwt_secret():
     """Test setting a custom secure JWT secret."""
-    custom_secret = "super_secure_custom_secret_key_123456789"
+    custom_secret = "super_secure_custom_secret_key_123456789"  # noqa: S105
     settings = Settings(JWT_SECRET=custom_secret)
     assert settings.JWT_SECRET == custom_secret
 
@@ -32,7 +32,7 @@ def test_custom_jwt_secret():
 # `backend/.env`, without ever exporting it. The guard used to read
 # `os.getenv("ENVIRONMENT")`, so that deploy booted on the committed dev secret.
 
-DEV_FALLBACK_SECRET = "lingu_dev_jwt_secret_key_change_in_production_99"
+DEV_FALLBACK_SECRET = "lingu_dev_jwt_secret_key_change_in_production_99"  # noqa: S105
 
 
 @pytest.fixture
@@ -70,9 +70,16 @@ def test_production_env_file_is_case_insensitive(env_file):
         Settings(_env_file=path)
 
 
+def test_production_env_file_rejects_short_secret(env_file):
+    """Production must reject secrets shorter than 32 bytes (even if non-fallback)."""
+    path = env_file("ENVIRONMENT=production\nJWT_SECRET=short-but-not-a-fallback\n")
+    with pytest.raises(ValueError, match="JWT_SECRET must be at least 32 bytes"):
+        Settings(_env_file=path)
+
+
 def test_production_env_file_accepts_strong_secret(env_file):
     """A real secret boots production: the guard rejects weakness, not production."""
-    strong_secret = "j8Qw2fN4tR7vZ1cL5mP9sX3bK6hY0dG2aE4uT8nW1rV5"
+    strong_secret = "j8Qw2fN4tR7vZ1cL5mP9sX3bK6hY0dG2aE4uT8nW1rV5"  # noqa: S105
     path = env_file(f"ENVIRONMENT=production\nJWT_SECRET={strong_secret}\n")
     settings = Settings(_env_file=path)
     assert settings.ENVIRONMENT == "production"

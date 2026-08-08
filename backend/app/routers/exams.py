@@ -329,15 +329,18 @@ async def record_answer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Record or update an answer for a single question in an active exam session."""
-    record = await exam_service.record_answer(
+    """Record or update an answer for a single question in an active exam session.
+
+    Correctness is withheld here: the sitting is always in-progress on this
+    path. Review feedback comes from session details after finish.
+    """
+    recorded = await exam_service.record_answer(
         db, session_id, current_user.id, req
     )
     return {
         "success": True,
-        "questionId": str(record.question_id),
-        "userAnswer": record.user_answer,
-        "isCorrect": record.is_correct,
+        "questionId": str(recorded["question_id"]),
+        "userAnswer": recorded["user_answer"],
     }
 
 
