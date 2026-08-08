@@ -1,7 +1,8 @@
 # LinguFlow Component Inventory
 
 Post-Step-3.5 state: documents the arcade design system's core UI primitives
-after the shared-component extraction (`AppButton.vue`, `ManageListShell.vue`)
+after the shared-component extraction (`AppButton.vue`, and `ManageListShell.vue`
+— since superseded by `KeyboardGridList.vue`, see below)
 and the accompanying token additions (`--focus-ring-width`,
 `--font-size-md-plus`, `--tracking-wider`). Priority order: Button, Input,
 Modal/Dialog, the manage-list pattern, ExamHud, FlashCard, PixelFrame,
@@ -73,7 +74,7 @@ Fully tokenized — every variant uses `var(--space-*)`, `var(--font-size-*)`, `
 
 ### Consumers
 
-`features/exam/ExamCreatorView.vue` (×2), `ExamHubView.vue`, `ExamResultsView.vue` (×2 — a retake button was added alongside back-to-exams), `features/exam/components/QuestionCard.vue`, `features/auth/AuthView.vue` (×2), `features/dashboard/DashboardView.vue` (×2), `features/flashcards/FlashcardsView.vue` (×2, `primary`/`danger`), `features/library/DeckManagementView.vue` and `DeckDetailView.vue` (via themselves + `ManageListShell` + form components).
+`features/exam/ExamCreatorView.vue` (×2), `ExamHubView.vue`, `ExamResultsView.vue` (×2 — a retake button was added alongside back-to-exams), `features/exam/components/QuestionCard.vue`, `features/auth/AuthView.vue` (×2), `features/dashboard/DashboardView.vue` (×2), `features/flashcards/FlashcardsView.vue` (×2, `primary`/`danger`), `features/library/DeckManagementView.vue` and `DeckDetailView.vue` (via themselves + `KeyboardGridList` + `ConsoleHeader` + form components).
 
 Phase 1.5 additions: `features/library/DeckDetailView.vue`, `features/flashcards/LearnView.vue`, `MatchView.vue`, and `components/McqPrompt.vue` (which renders one `AppButton` per option).
 
@@ -120,28 +121,26 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 ---
 
-## ManageListShell
+## KeyboardGridList
 
-`frontend/src/shared/components/ManageListShell.vue` — generic (`<script setup generic="T extends { id: string }">`) shell extracted from `CardManagementView.vue`/`DeckManagementView.vue`'s ~60%-duplicated CSS/structure: header + count badge, loading/empty status text, row shell (border, hover, spacing), and the edit/delete action buttons (now `AppButton` instances). The create/edit form area and each row's info content stay in the parent view via slots, since those are the genuinely different parts (Card's 2-column form + live markdown preview vs. Deck's single-column form; front/back vs. name/description row content).
+`frontend/src/shared/components/KeyboardGridList.vue` — generic (`<script setup generic="T extends { id: string }">`) keyboard-navigable list. **Replaced `ManageListShell.vue`**, which was deleted once the library views moved to the full-width console layout and its last consumers went away (`QuestionBankView` had already stopped using it).
+
+The split honours `ManageListShell`'s own tripwire (_"a fifth opt-in flag means split into chrome + a thin wrapper"_): the console needed the list to own `overflow-y: auto`, which would have been that flag. Header, count badge and form moved out to `ConsoleHeader` and the form bay; this component renders one grid and nothing else.
 
 ### Props
 
-| Prop            | Type                                | Purpose                                                                                                                                                                                                                                                                                                                                                                              |
-| --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `title`         | `string`                            | header `<h2>` text                                                                                                                                                                                                                                                                                                                                                                   |
-| `countLabel`    | `string`                            | badge suffix (`"THẺ"` / `"BỘ"`)                                                                                                                                                                                                                                                                                                                                                      |
-| `count`         | `number`                            | badge count                                                                                                                                                                                                                                                                                                                                                                          |
-| `isLoading`     | `boolean`                           | gates loading-text vs. list/empty rendering                                                                                                                                                                                                                                                                                                                                          |
-| `loadingText`   | `string`                            | shown while `isLoading`                                                                                                                                                                                                                                                                                                                                                              |
-| `emptyText`     | `string`                            | shown when `rows.length === 0`                                                                                                                                                                                                                                                                                                                                                       |
-| `rows`          | `T[]`                               | the list to render                                                                                                                                                                                                                                                                                                                                                                   |
-| `canModify`     | `(item: T) => boolean` _(optional)_ | **Phase 1.6 addition.** Per-row guard; return false to disable that row's edit/delete buttons. Added for the question bank, where seeded questions have no owner and can never be edited — without it the shell offered actions whose only possible outcome was a silent 404. Omitting it leaves every row editable. Also used by the deck rack to freeze the synthetic Unfiled row. |
-| `rowNavigation` | `boolean`                           | **Library remake.** Default `false`. When true, the list is an ARIA layout-grid with roving tabindex (`data-roving-item` on each row); action buttons get `tabindex="-1"`. Logic stays in the parent (`useRovingList`); the shell only renders attributes and forwards events.                                                                                                       |
-| `activeIndex`   | `number`                            | Which row holds the tab stop when `rowNavigation` is on (controlled by the parent). Default `-1`.                                                                                                                                                                                                                                                                                    |
-| `listLabel`     | `string`                            | `aria-label` on the grid when `rowNavigation` is on. Default `''`.                                                                                                                                                                                                                                                                                                                   |
-| `draggableRows` | `boolean`                           | Default `false`. When true, each `<li>` is `draggable` and emits drag lifecycle events. Parent owns the array.                                                                                                                                                                                                                                                                       |
+| Prop            | Type                                | Purpose                                                                                                      |
+| --------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `rows`          | `T[]`                               | the list to render                                                                                           |
+| `isLoading`     | `boolean`                           | gates loading-text vs. list/empty rendering                                                                  |
+| `loadingText`   | `string`                            | shown while `isLoading`                                                                                      |
+| `emptyText`     | `string`                            | shown when `rows.length === 0`                                                                               |
+| `listLabel`     | `string`                            | `aria-label` on the grid                                                                                     |
+| `activeIndex`   | `number`                            | which row holds the tab stop (controlled by the parent's `useRovingList`). Default `-1`                      |
+| `canModify`     | `(item: T) => boolean` _(optional)_ | per-row guard; return false to disable that row's edit/delete. Used to freeze the synthetic Unfiled row      |
+| `draggableRows` | `boolean`                           | Default `false`. When true each `<li>` is `draggable` and emits drag lifecycle events. Parent owns the array |
 
-**Tripwire:** a fifth opt-in flag means split into chrome + a thin `SortableRows` wrapper — do not add a sixth prop.
+ARIA is always on (grid/row/gridcell + roving tabindex) — it is no longer opt-in, because a list that is not keyboard-navigable has no reason to use this component.
 
 ### Emits
 
@@ -157,42 +156,43 @@ Unchanged from the pre-extraction audit — still a real shared CSS-only pattern
 
 ### Slots
 
-| Slot           | Scope                        | Purpose                                                                      |
-| -------------- | ---------------------------- | ---------------------------------------------------------------------------- |
-| `header-extra` | —                            | optional content after the count badge (search field, add-card button, etc.) |
-| `form`         | —                            | the create/edit form area, entirely owned by the parent                      |
-| `row`          | `{ item: T, index: number }` | the row's info content (left of the edit/delete buttons)                     |
+| Slot  | Scope                        | Purpose                                                  |
+| ----- | ---------------------------- | -------------------------------------------------------- |
+| `row` | `{ item: T, index: number }` | the row's info content (left of the edit/delete buttons) |
 
-### Anatomy
+### Scroll containment
 
-```
-┌───────────────────────────────────────────┐
-│ Title                    [count] [extra?] │
-├───────────────────────────────────────────┤
-│ <slot name="form" />                      │
-├───────────────────────────────────────────┤
-│ loading text / empty text / row list:     │
-│  ┌─────────────────────────────────────┐  │
-│  │ <slot name="row"/>      [SỬA][XÓA]  │  │
-│  └─────────────────────────────────────┘  │
-└───────────────────────────────────────────┘
-```
+`.grid-list-wrap` is `flex: 1 1 auto; min-height: 0; overflow-y: auto`. Basis `auto` (not `0`) is deliberate: inside a height-constrained console bay it shrinks and scrolls; in normal document flow (mobile, where the console model is off) it takes its content height instead of collapsing to `0px`.
 
-### Token usage
-
-Fully tokenized — carries forward every `var(--space-*)`/`var(--font-size-*)`/`var(--tracking-*)`/`var(--border-width-accent)` reference from the two original files' shared blocks.
-
-### Normalization made during extraction (visible delta — flag for spot-check)
-
-**Row vertical alignment changed for `DeckManagementView`.** The original `.card-row` used `align-items: flex-start` (correct for its 4-line front/back content) while `.deck-row` used `align-items: center` (fine for its shorter 2-line name/description content). The shared `.manage-row` uses `flex-start` (the `CardManagementView` behavior) for both, since a single shell can only pick one. Deck rows will now render with their edit/delete buttons top-aligned instead of vertically centered against the name/description text — a subtle but real visual change worth a look.
+The focus ring uses `outline-offset: -2px` so it draws _inside_ the row and is not clipped by the scroll container on the first/last row.
 
 ### Consumers
 
-`DeckManagementView.vue` (rack), `DeckDetailView.vue` (workspace), and `features/question-bank/QuestionBankView.vue`. (`CardManagementView` was removed; card CRUD lives in the deck workspace.)
+`DeckManagementView.vue` (rack), `DeckDetailView.vue` (workspace).
 
-### Delete confirmation
+---
 
-Library views use `ConfirmDialog`. `QuestionBankView` still uses an inline two-step confirm in the row slot — prefer migrating it to `ConfirmDialog` when next touched.
+## ConsoleHeader
+
+`frontend/src/features/library/components/ConsoleHeader.vue` — the console top bar: optional back button, title, optional count badge, and an `#actions` slot. Props: `title`, `backLabel?` (omit → no back button), `count?`, `countLabel?` (a negative `count` hides the badge, used while loading). Emits `back`.
+
+Feature-private. `QuestionBankView`'s own title+count header is the obvious third consumer — fold it in and promote to `shared/` the next time that file is touched.
+
+---
+
+## ModalShell
+
+`frontend/src/shared/components/ModalShell.vue` — overlay + cabinet frame shared by every modal. Owns Teleport, backdrop, `Escape`, body scroll lock, click-outside, and a **real focus trap**: initial focus in (falling back to the dialog container when there are no focusable children, as in the hotkeys legend), Tab/Shift+Tab cycling, and focus restored to the trigger on close. Props: `isOpen`, `title`, `variant?` (`primary`|`danger`, drives the frame ring). Emits `update:isOpen`, `close`. Slots: default, `footer`.
+
+Consumers: `ConfirmDialog.vue`, `HotkeysDialog.vue`. This closes the previously-flagged "ConfirmDialog has no focus trap and no autofocus" issue for every dialog at once.
+
+---
+
+## HotkeysDialog
+
+`frontend/src/features/library/components/HotkeysDialog.vue` — the console's legend plate. Props: `isOpen`, `title`, `groups: { label, items, note? }[]`.
+
+Not a static cheat sheet: callers build `groups` from current state, so the ORDER group can arrive **muted with a `note`** explaining why its keys are unavailable (Unfiled cards can't be reordered; a search filter is active) instead of silently disappearing. Opened by the header button or `?`; the parent must include it in `isBlocked` so row shortcuts stay inert behind it.
 
 ---
 
@@ -222,7 +222,16 @@ Used both standalone (bank, unframed inside Compose bay) and inline inside the c
 
 ## Question Bank console layout
 
-`QuestionBankView.vue` is a **full-bleed, full-width** operator console (not `ManageListShell`): **left** COMPOSE form (amber), **right** SCAN filters + RESULTS list stacked. Form and list scroll independently inside the viewport. Route sets `meta.fullBleed`. Delete uses `ConfirmDialog`.
+`QuestionBankView.vue` is a **full-bleed, full-width** operator console: **left** COMPOSE form (amber), **right** SCAN filters + RESULTS list stacked. Form and list scroll independently inside the viewport. Route sets `meta.fullBleed`. Delete uses `ConfirmDialog`.
+
+## Library console layout
+
+`DeckManagementView.vue` (rack) and `DeckDetailView.vue` (workspace) follow the same console pattern, deliberately reusing the bank's conventions rather than inventing parallel ones: `minmax(0, 2fr) minmax(0, 3fr)` split, amber ring on the left form bay, `font-label` section labels, independently scrolling panes. Routes set `meta.fullBleed`.
+
+Two deliberate differences from the bank:
+
+- **The console model is a `@media (min-width: 768px)` opt-in.** Below that the bays stack and the page scrolls normally. Pinning the viewport on a phone leaves the list fighting the form for ~90px of height and rendering at `0px` — measured, not theorised.
+- **The rack's left bay hugs its content** (`align-items: start`) while the workspace's fills the column. The deck form is two fields; stretching it would recreate the empty space the full-width layout exists to remove.
 
 ---
 
@@ -236,7 +245,7 @@ Its destructive action is **detach**, labelled "remove from exam" — the questi
 
 ## CardRow
 
-`frontend/src/features/library/components/CardRow.vue` — **row content only** for a card inside `ManageListShell` (deck workspace). Renders handle glyph, zero-padded index, optional ▲/▼ reorder controls, term/definition cells, and thumbnail. The shell owns the `<li>`, drag listeners, and focus ring.
+`frontend/src/features/library/components/CardRow.vue` — **row content only** for a card inside `KeyboardGridList` (deck workspace). Renders handle glyph, zero-padded index, optional ▲/▼ reorder controls, term/definition cells, and thumbnail. The list owns the `<li>`, drag listeners, and focus ring.
 
 ### Props
 
@@ -263,7 +272,9 @@ Its destructive action is **detach**, labelled "remove from exam" — the questi
 
 ## KeycapLegend
 
-`frontend/src/features/library/components/KeycapLegend.vue` — keyboard shortcut discoverability strip. Props: `items: { keys: string[]; label: string }[]`, `legendLabel` (group accessible name; not named `ariaLabel` because Vue treats `aria-*` specially on component props). Contains **no** key values or copy of its own — callers pass literal glyphs and already-translated labels. Caps use `font-label`; labels use `font-body`. Hidden below 768px.
+`frontend/src/features/library/components/KeycapLegend.vue` — keyboard shortcut display. Props: `items: KeycapItem[]` (`{ keys: string[]; label: string }`), `legendLabel` (group accessible name; not named `ariaLabel` because Vue treats `aria-*` specially on component props), `layout?: 'strip' | 'panel'`, `muted?: boolean`. Contains **no** key values or copy of its own — callers pass literal glyphs and already-translated labels. Caps use `font-label`; labels use `font-body`.
+
+`layout="strip"` (default) is the inline row, hidden below 768px. `layout="panel"` is the form used inside `HotkeysDialog`: always visible at every width — that width gate is precisely why the modal replaced the always-on strip in the library — and laid out as a wrapping two-column grid. `muted` dims the caps for a group whose keys are unavailable in the current context.
 
 ## useRovingList
 
@@ -285,7 +296,19 @@ Both are presentational — neither calls the API, and neither knows about SM-2.
 
 ## ExamHud
 
-Structurally unchanged from the pre-extraction audit, with one **Phase 1.5 removal**: the lives/hearts counter is gone. It was bound to `session.maxLives`, a field the API never returned, so it rendered a constant 3/3 that no answer could decrement — a HUD element with no backend concept behind it. It was replaced by an answered/total counter (`.hud-progress`) rather than being faked. The old `--font-size-md-plus`/`--tracking-wider` usages moved onto that replacement element.
+`features/exam/components/ExamHud.vue` — live-booth chrome: exam title, CRT time bar (scan-line amber → red under 20%), answered/total, and **SUBMIT EXAM**. Lives/hearts were removed in Phase 1.5 (no API support).
+
+## ExamAnswerSheet
+
+`features/exam/components/ExamAnswerSheet.vue` — signature answer-sheet map (`01…N`). Current / filled / empty states; emits `select(index)` to `examStore.goToQuestion`.
+
+## Exam flows (proctored CRT booth)
+
+| Surface          | Route                          | Notes                                                                                                        |
+| ---------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Lobby            | `/exams` fullBleed             | Catalog + history; **TAKE** → session briefing; **EDIT** when `!isPublic`                                    |
+| Briefing → booth | `/exams/session/:id` fullBleed | Loads template meta **without** creating a session until START; then HUD + split passage/stem + answer sheet |
+| Report           | `/exams/results/:id` fullBleed | Score hero + scrollable review; RETAKE → briefing again                                                      |
 
 ---
 
