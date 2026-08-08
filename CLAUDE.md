@@ -8,7 +8,7 @@ LinguFlow is a keyboard-driven flashcard app with Spaced Repetition (SM-2 algori
 
 ## Backend status
 
-The backend was rewritten from Node.js/Express/MongoDB to Python/FastAPI/PostgreSQL (commit `a9fec74`). That migration is **done** — `backend/app/{models,schemas,services,routers}/` are fully populated and `main.py` registers auth, cards, dashboard, decks, exams, events, media, and health routers.
+The backend was rewritten from Node.js/Express/MongoDB to Python/FastAPI/PostgreSQL (commit `a9fec74`). That migration is **done** — `backend/app/{models,schemas,services,routers}/` are fully populated and `main.py` registers auth, cards, dashboard, decks, exams, questions, media, settings, and health routers. (An SSE `events` router existed until the Horizon A security pass removed it — it authenticated via a JWT in the query string and had no frontend consumer.)
 
 The API is the source of truth for request/response shapes; the Pydantic schemas in `backend/app/schemas/` use camelCase aliases to match the frontend. Note that `ExamTemplateResponse`/`QuestionResponse`/`ExamSessionResponse` still emit a computed `_id` alongside `id` — a Mongo-era holdover. **Prefer `id` in new frontend code**; the `_id` reads were removed from the frontend during Phase 1.5.
 
@@ -20,9 +20,14 @@ When adding an endpoint a component already calls, check the call site for the s
 - **Deleting a question is a soft delete** (`Question.archived_at`). `AnswerRecord.question_id` cascades, so a hard delete erases the answer history of every past session that used it. Bank listings filter archived rows; session/results resolution deliberately does not.
 - **An answered question's `options`/`correct_answer` are frozen** (409). Changing them would leave every stored `is_correct` disagreeing with the displayed key.
 
+**Exam authz invariants** (Horizon A security pass, guarded by `backend/tests/test_exam_visibility.py`) — also don't work around these:
+
+- **Every by-id template read goes through `ExamService.readable_template_or_404`** (`is_public OR owned`, else **404** — never 403, which would confirm the id exists). That includes `create_session`: an unfiltered lookup let strangers sit private exams. The one deliberate exception is `get_session_details`, whose template read is already scoped to a session the caller owns.
+- **Session answer keys are gated on the session, not the question.** `get_session_details` returns `revealAnswerKeys = status == "completed"`, and the router serializes through `build_session_question_response`. Do **not** switch it to `build_question_response`: that gates on question ownership, and built-in questions have `user_id = NULL`, so every seeded exam's results page would lose its answer key.
+
 Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bumping the version updates the template row **in place** so its id survives for past sessions. Never match seed content by `name`.
 
-Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 73 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
+Tests: `backend/tests/` runs under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), currently 103 tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **There is still no frontend test suite** (no vitest/jest) — `npm run build` (which runs `vue-tsc`) plus the two lint scripts are the only frontend gates.
 
 Migrations are Alembic under `backend/alembic/versions/` (`0001_initial_schema`, `0002_card_position_image_notes`, `0003_question_bank`).
 

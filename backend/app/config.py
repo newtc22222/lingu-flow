@@ -1,4 +1,3 @@
-import os
 from functools import lru_cache
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -67,7 +66,12 @@ class Settings(BaseSettings):
             "change-me",
             "secret",
         }
-        env = os.getenv("ENVIRONMENT", "development")
+        # Read the resolved *field*, not the process env: `ENVIRONMENT` is
+        # declared above `JWT_SECRET`, so pydantic-settings has already merged
+        # process env over `.env` by now. `os.getenv` saw only the former, so a
+        # deploy that declared production purely in `backend/.env` booted on the
+        # committed dev secret below.
+        env = (info.data.get("ENVIRONMENT") or "development").strip().lower()
         if env == "production" and (not secret or secret in dev_fallbacks):
             raise ValueError("JWT_SECRET environment variable MUST be explicitly set to a secure random key in production!")
         if not secret:

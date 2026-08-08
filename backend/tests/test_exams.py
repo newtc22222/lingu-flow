@@ -90,8 +90,11 @@ async def test_exam_question_management(client: AsyncClient):
     assert q_data["part"] == "reading"
     assert "examTemplateId" not in q_data
 
-    # Get questions for template
-    q_list_res = await client.get(f"/api/exams/templates/{t_id}/questions")
+    # Get questions for template (as the owner — a private template is not
+    # readable anonymously; see test_exam_visibility.py)
+    q_list_res = await client.get(
+        f"/api/exams/templates/{t_id}/questions", headers=headers
+    )
     assert q_list_res.status_code == 200
     questions = q_list_res.json()
     assert len(questions) == 1

@@ -22,6 +22,7 @@ from app.schemas.exam import (
     TemplateQuestionResponse,
     TemplateQuestionResponsePublic,
     build_question_response,
+    build_session_question_response,
     build_template_question_response,
 )
 from app.services.exam_service import ExamService
@@ -74,14 +75,13 @@ async def create_template(
 @router.get("/templates/{template_id}", response_model=ExamTemplateResponse)
 async def get_template_by_id(
     template_id: uuid.UUID,
+    current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get exam template metadata by ID."""
-    template = await exam_service.get_template_by_id(db, template_id)
-    if not template:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-        )
+    """Get exam template metadata by ID, if the viewer may read it."""
+    template = await exam_service.readable_template_or_404(
+        db, template_id, viewer_id(current_user)
+    )
     return ExamTemplateResponse.model_validate(template)
 
 
@@ -130,7 +130,10 @@ async def get_template_questions(
     current_user: Optional[User] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Fetch a template's questions in composition order."""
+    """Fetch a template's questions in composition order, if the viewer may read it."""
+    await exam_service.readable_template_or_404(
+        db, template_id, viewer_id(current_user)
+    )
     pairs = await exam_service.get_questions_with_order(db, template_id)
     return [
         build_template_question_response(q, order_index, viewer_id(current_user))
@@ -301,12 +304,20 @@ async def get_session_details(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get complete session details, template metadata, questions, and user answers map."""
+    """
+    Get complete session details, template metadata, questions, and user answers map.
+
+    Owner-only (the service 404s otherwise), and answer keys are included only
+    once the sitting is completed.
+    """
     details = await exam_service.get_session_details(db, session_id, current_user.id)
     return SessionDetailsResponse(
         session=ExamSessionResponse.model_validate(details["session"]),
         template=ExamTemplateResponse.model_validate(details["template"]),
-        questions=[QuestionResponse.model_validate(q) for q in details["questions"]],
+        questions=[
+            build_session_question_response(q, details["revealAnswerKeys"])
+            for q in details["questions"]
+        ],
         user_answers=details["userAnswers"],
     )
 

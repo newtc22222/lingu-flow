@@ -5,7 +5,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.exam import ExamTemplate, ExamTemplateQuestion, Question
-from app.routers.events import event_generator
 from app.seed.exam_seed import BUILTIN_SEED_DATA, seed_builtin_exams
 
 # Derived, not hardcoded: the counts move whenever seed content is authored,
@@ -134,17 +133,3 @@ async def test_seed_version_bump_updates_in_place(monkeypatch, db_session: Async
         )
     ).scalars().all()
     assert len(archived) == len(BUILTIN_SEED_DATA[0]["questions"])
-
-
-@pytest.mark.asyncio
-async def test_sse_events_generator():
-    """Test SSE event_generator output."""
-    class DummyRequest:
-        async def is_disconnected(self):
-            return True  # Exit loop immediately after first yield
-
-    gen = event_generator(DummyRequest(), user_id="test_user_123")
-    first_event = await anext(gen)
-
-    assert first_event["event"] == "connected"
-    assert "test_user_123" in first_event["data"]

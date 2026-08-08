@@ -221,6 +221,39 @@ class ExamService:
             )
         return template
 
+    async def readable_template_or_404(
+        self,
+        db: AsyncSession,
+        template_id: uuid.UUID,
+        user_id: Optional[uuid.UUID],
+    ) -> ExamTemplate:
+        """
+        Resolve a template the viewer is allowed to read, or raise 404.
+
+        Readable means public (the built-ins anyone may browse and sit) or owned
+        by the viewer. Same predicate as the list endpoint `get_templates`; the
+        by-id reads used to skip it entirely, so a leaked UUID was enough to read
+        and sit somebody else's private exam.
+
+        404 rather than 403 on purpose: a 403 would confirm that the id exists.
+        """
+        conditions = [ExamTemplate.is_public == True]  # noqa: E712
+        if user_id:
+            conditions.append(ExamTemplate.user_id == user_id)
+
+        template = (
+            await db.execute(
+                select(ExamTemplate).where(
+                    ExamTemplate.id == template_id, or_(*conditions)
+                )
+            )
+        ).scalar_one_or_none()
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
+            )
+        return template
+
     async def _next_order_index(
         self, db: AsyncSession, template_id: uuid.UUID
     ) -> int:
@@ -431,12 +464,10 @@ class ExamService:
     async def create_session(
         self, db: AsyncSession, user_id: uuid.UUID, template_id: uuid.UUID
     ) -> ExamSession:
-        """Start a new exam session for a template."""
-        template = await self.get_template_by_id(db, template_id)
-        if not template:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Exam template not found"
-            )
+        """Start a new exam session for a template the user may read."""
+        # Visibility, not just existence: an unfiltered lookup here let anyone
+        # with the UUID sit a stranger's private exam.
+        template = await self.readable_template_or_404(db, template_id, user_id)
 
         questions = await self.get_questions(db, template_id)
 
@@ -486,13 +517,21 @@ class ExamService:
     async def get_session_details(
         self, db: AsyncSession, session_id: uuid.UUID, user_id: uuid.UUID
     ) -> Dict[str, Any]:
-        """Fetch full session details, template metadata, questions, and user answers map."""
+        """
+        Fetch full session details, template metadata, questions, and user answers map.
+
+        `get_session_by_id` filters on `user_id`, so a non-owner gets 404 here —
+        the answer-key policy below therefore only ever applies to the owner.
+        """
         session = await self.get_session_by_id(db, session_id, user_id)
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Exam session not found"
             )
 
+        # Deliberately unfiltered by visibility: this read is already scoped to a
+        # session the caller owns, and a template that later went private must
+        # not erase their history (same reasoning as the AnswerRecord snapshot).
         template = await self.get_template_by_id(db, session.exam_template_id)
 
         # Resolve the questions through this session's own answer records, NOT
@@ -530,6 +569,11 @@ class ExamService:
             "template": template,
             "questions": questions,
             "userAnswers": user_answers_map,
+            # The answer-key gate, owned here rather than in the router: keys and
+            # explanations belong to the results review, so they stay withheld
+            # until the sitting is over. While it is in progress this endpoint
+            # would otherwise hand the owner the whole key mid-exam.
+            "revealAnswerKeys": session.status == "completed",
         }
 
     async def record_answer(
