@@ -181,22 +181,15 @@ async def test_delete_template_removes_links_not_questions(
     assert q.archived_at is None
 
 
-# ─── Dual-commit create_session (documents F-04 until A5 lands) ───────────────
+# ─── Atomic create_session (F-04 / A5) ─────────────────────────────────────────
 @pytest.mark.asyncio
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "F-04 / #48: create_session commits the ExamSession before AnswerRecords. "
-        "A crash between those commits leaves an unplayable session. Remove this "
-        "xfail when services stop mid-request committing (A5)."
-    ),
-)
 async def test_create_session_is_atomic_under_midway_failure(
     pg_session: AsyncSession,
 ):
     """
-    Inject a failure after the session row is committed but before answer
-    records land. Atomic create_session must leave zero orphan sessions.
+    Inject a failure after the session row is flushed but before answer records
+    are added. Because services no longer commit mid-request, rolling back the
+    unit of work must leave zero orphan ExamSession rows.
     """
     user = User(
         username=unique_name("u"),
@@ -228,39 +221,34 @@ async def test_create_session_is_atomic_under_midway_failure(
         )
     )
     await pg_session.commit()
+    user_id = user.id
+    template_id = template.id
 
-    original_commit = AsyncSession.commit
-    commits = {"n": 0}
+    # create_session: add session → flush → add_all(answer_records).
+    # Fail on add_all so the session was flushed inside the open transaction
+    # but never committed with answers.
+    original_add_all = AsyncSession.add_all
 
-    async def flaky_commit(self):  # type: ignore[no-untyped-def]
-        # create_session does: commit(session row) then commit(answer records).
-        # Fail on the second service-level commit so the session row is durable
-        # but answer rows are not — the dual-commit bug.
-        commits["n"] += 1
-        if commits["n"] == 2:
-            raise RuntimeError("injected failure between session and answer commits")
-        return await original_commit(self)
+    def boom_add_all(self, instances):  # type: ignore[no-untyped-def]
+        raise RuntimeError("injected failure after session flush")
 
-    # Bind the flaky commit only for this probe.
-    AsyncSession.commit = flaky_commit  # type: ignore[method-assign]
+    AsyncSession.add_all = boom_add_all  # type: ignore[method-assign]
     try:
         with pytest.raises(RuntimeError, match="injected failure"):
-            await exam_service.create_session(pg_session, user.id, template.id)
+            await exam_service.create_session(pg_session, user_id, template_id)
     finally:
-        AsyncSession.commit = original_commit  # type: ignore[method-assign]
+        AsyncSession.add_all = original_add_all  # type: ignore[method-assign]
 
-    # Use a fresh lookup after the failed unit of work.
     await pg_session.rollback()
     orphan_sessions = (
         await pg_session.execute(
-            select(ExamSession).where(ExamSession.user_id == user.id)
+            select(ExamSession).where(ExamSession.user_id == user_id)
         )
     ).scalars().all()
     orphan_answers = (
         await pg_session.execute(select(AnswerRecord))
     ).scalars().all()
 
-    # Desired invariant (fails today under dual commit → xfail until A5):
     assert orphan_sessions == [], (
         f"expected no session after midway failure, found {len(orphan_sessions)} "
         f"(answers={len(orphan_answers)})"

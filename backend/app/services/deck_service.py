@@ -47,7 +47,7 @@ class DeckService:
             description=req.description,
         )
         db.add(deck)
-        await db.commit()
+        await db.flush()
         await db.refresh(deck)
 
         return {
@@ -78,7 +78,7 @@ class DeckService:
         deck.name = req.name
         deck.description = req.description
 
-        await db.commit()
+        await db.flush()
         await db.refresh(deck)
 
         # Get card_count
@@ -107,5 +107,5 @@ class DeckService:
             return False
 
         await db.delete(deck)
-        await db.commit()
+        await db.flush()
         return True

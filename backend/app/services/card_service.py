@@ -45,7 +45,7 @@ class CardService:
         card.srs_repetitions = sm2_data["repetitions"]
         card.srs_next_review = sm2_data["next_review_date"]
 
-        await db.commit()
+        await db.flush()
         await db.refresh(card)
         return card
 
@@ -94,7 +94,7 @@ class CardService:
         for index, card_id in enumerate(card_ids):
             by_id[card_id].position = index
 
-        await db.commit()
+        await db.flush()
         return await self.get_deck_cards(db, deck_id, user_id)
 
     async def _next_position(
@@ -125,7 +125,7 @@ class CardService:
             position=await self._next_position(db, req.deck_id, user_id),
         )
         db.add(card)
-        await db.commit()
+        await db.flush()
         await db.refresh(card)
         return card
 
@@ -155,7 +155,7 @@ class CardService:
         if moved_deck:
             card.position = await self._next_position(db, req.deck_id, user_id)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(card)
         return card
 
@@ -171,5 +171,5 @@ class CardService:
             return False
 
         await db.delete(card)
-        await db.commit()
+        await db.flush()
         return True

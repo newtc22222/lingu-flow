@@ -27,6 +27,13 @@ When adding an endpoint a component already calls, check the call site for the s
 
 Built-in exams are keyed on `exam_templates.seed_key` with a `seed_version`; bumping the version updates the template row **in place** so its id survives for past sessions. Never match seed content by `name`.
 
+**Transaction ownership**
+
+- `get_db()` is the sole **commit** point for HTTP requests (`backend/app/database.py`).
+- Services may `flush()` to obtain IDs or enforce constraints mid-method; they must **not** `commit()` or `rollback()`.
+- Background jobs (`app/jobs/*`) and one-shot seed/CLI entrypoints open their own session and commit at the end of their unit of work (e.g. guest cleanup batches, `seed_builtin_exams`).
+- Prefer one service call per mutation endpoint; multi-step workflows stay in one service method so they share one transaction.
+
 **Tests & quality gates**
 
 - Backend: `backend/tests/` under pytest (`cd backend && ./venv/Scripts/python.exe -m pytest`), ~104+ tests against SQLite in-memory via the `client`/`db_session` fixtures in `conftest.py`. **Always run the relevant pytest modules after backend changes** — do not skip the suite.

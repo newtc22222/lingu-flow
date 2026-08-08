@@ -95,7 +95,7 @@ class AuthService:
             )
             db.add(user)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         token = create_access_token(user.id)
@@ -130,7 +130,7 @@ class AuthService:
                 await purge_guest_user(db, guest_user)
 
         user.last_active = utcnow()
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         token = create_access_token(user.id)
@@ -154,7 +154,7 @@ class AuthService:
                 if client_ip:
                     guest_user.last_ip = client_ip
                 guest_user.last_active = utcnow()
-                await db.commit()
+                await db.flush()
                 await db.refresh(guest_user)
                 token = create_access_token(guest_user.id)
                 return AuthTokenResponse(
@@ -163,7 +163,7 @@ class AuthService:
 
         user = User(is_guest=True, last_ip=client_ip)
         db.add(user)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         token = create_access_token(user.id)
@@ -246,7 +246,7 @@ class AuthService:
                 )
                 db.add(user)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         token = create_access_token(user.id)
