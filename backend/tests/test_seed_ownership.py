@@ -34,6 +34,15 @@ def test_entrypoint_runs_seed_after_migrate():
     assert joined.index("python -m app.seed.exam_seed") < joined.index("uvicorn")
 
 
+def test_deployment_md_railway_start_includes_seed():
+    """Primary prod docs must not document a non-seeding Railway start command."""
+    deploy = Path(__file__).resolve().parents[2] / "DEPLOYMENT.md"
+    text = deploy.read_text(encoding="utf-8")
+    assert "python -m app.seed.exam_seed" in text
+    # Stale migrate-only then uvicorn without seed is the production footgun.
+    assert "alembic upgrade head && uvicorn" not in text
+    assert "alembic upgrade head && python -m app.seed.exam_seed && uvicorn" in text
+
 def test_lifespan_does_not_call_seed():
     """API workers must not re-seed on every process start."""
     source = inspect.getsource(lifespan)
