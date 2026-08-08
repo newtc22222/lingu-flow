@@ -30,17 +30,16 @@ backend/app/
    - Always await DB operations (`await db.execute(...)`, `await db.commit()`, etc.).
 
 2. **Schema & API Contracts**
-   - Use Pydantic v2 schemas (`BaseModel` with `ConfigDict(from_attributes=True)`).
-   - Ensure router responses match what the Vue frontend expects. The frontend was **not** touched by the Node→FastAPI rewrite, so every call site (mostly under `frontend/src/features/**`, plus legacy `frontend/src/components/*.vue` and `frontend/src/utils/api.ts`) is the de facto spec — grep for the route path and read the exact fields it sends/reads before writing the schema, don't assume.
-   - Decide the `_id` vs `id` question per endpoint: many frontend call sites still read Mongo-style `_id`. Default to Postgres-native `id` in the model/schema, and either update the frontend call site or alias in the Pydantic response schema (`serialization_alias="_id"`) — don't silently leave a mismatch.
+   - Use Pydantic v2 schemas (`BaseModel` with `ConfigDict(from_attributes=True)`). Backend schemas under `backend/app/schemas/` are the source of truth for shapes.
+   - When a Vue call site already exists, still grep `frontend/src/features/**` and `utils/api.ts` for the route path and read the fields it sends/reads — silent `??` fallbacks can hide drift. Prefer `id` over residual `_id` aliases.
+   - Phase 1.5/1.6 largely aligned FE/BE; residual risk is field-name fallbacks, not Mongo as the only API spec.
 
 3. **Router Registration**
    - Register all new routers in `backend/app/main.py` using `app.include_router(router, prefix="/api/...", tags=[...])`. Easy to forget — verify it manually after implementing.
 
-4. **Known-stale docs — don't trust without cross-checking code**
-   - `DEPLOYMENT.md` / `api/index.ts` describe deploying `backend/src` (Express) on Vercel; `backend/src` no longer exists (it's `backend/app`, FastAPI).
-   - Root `.env.example` still lists `MONGO_URI`; real backend vars are in `backend/.env.example`.
-   - No test suite exists yet (no pytest configured) — verify changes manually (start the app, exercise the frontend flow) rather than assuming a test will catch mistakes.
+4. **Quality gates & deploy**
+   - Run relevant pytest after backend changes: `cd backend && ./venv/Scripts/python.exe -m pytest` (~104 tests, `tests/conftest.py` fixtures).
+   - Primary production: Vercel + Railway + R2 (`DEPLOYMENT.md`). Local full stack: `docker-compose.yml`. Full env list: `backend/.env.example`.
 
 ## Example Feature Template
 

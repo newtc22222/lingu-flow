@@ -11,11 +11,11 @@ This skill provides guidelines and patterns for developing Vue 3 components in t
 
 1. **Composition API only** — every component uses `<script setup lang="ts">`. Never Options API (`data`, `methods`, `computed` option objects).
 
-2. **Folder structure — feature folders, mid-migration**
-   - New/actively-developed UI lives under `frontend/src/features/<domain>/` (e.g. `features/auth`, `features/dashboard`, `features/exam`, `features/flashcards`, `features/library`): a top-level `<Name>View.vue`, a `components/` subfolder for domain-local pieces, and optionally `store/` for Pinia stores (e.g. `features/exam/store/examStore.ts`).
-   - Cross-feature reusable primitives go in `frontend/src/shared/components/` (e.g. `PixelFrame.vue`).
-   - The old flat `frontend/src/components/` folder is legacy: `ExamHub.vue`, `ExamResults.vue`, `ExamCreator.vue`, `MarkdownRenderer.vue` are still live and imported. `StudyDashboard.vue` and `HelloWorld.vue` are orphaned dead code (not imported by `App.vue` anymore, superseded by `features/dashboard/DashboardView.vue`) — don't treat a grep hit on them as a real call site; check `App.vue`'s actual imports.
-   - Path alias `@` maps to `frontend/src` (`vite.config.ts` / `tsconfig.app.json`) — prefer `@/...` imports in new `features/` code.
+2. **Folder structure — feature folders (Phase 1.5 complete)**
+   - UI lives under `frontend/src/features/<domain>/` (e.g. `features/auth`, `features/dashboard`, `features/exam`, `features/flashcards`, `features/library`, plus `profile`, `question-bank`): a top-level `<Name>View.vue`, a `components/` subfolder for domain-local pieces, and optionally `store/` for Pinia stores (e.g. `features/exam/store/examStore.ts`).
+   - Cross-feature reusable primitives go in `frontend/src/shared/components/` (e.g. `PixelFrame.vue`, `MarkdownRenderer.vue`, `AppButton.vue`).
+   - The flat `frontend/src/components/` folder is **gone** — do not reintroduce it; promote shared pieces to `shared/`.
+   - Path alias `@` maps to `frontend/src` (`vite.config.ts` / `tsconfig.app.json`) — prefer `@/...` imports in `features/` code.
 
 3. **API communication**
    - Relative `/api/...` paths only (Vite proxies to FastAPI on `:8000` in dev) — never an absolute backend URL.
@@ -30,9 +30,9 @@ This skill provides guidelines and patterns for developing Vue 3 components in t
    - Fonts: `font-pixel` (Press Start 2P, headers/short labels only), `font-body` (IBM Plex Sans, prose), `font-label` (IBM Plex Mono, short uppercase UI labels). **`font-pixel` has no Vietnamese diacritic glyphs** — any string that may contain Vietnamese text must use `font-body`/`font-label`, never `font-pixel`.
    - Shared low-level visual patterns (pixel-notch border, form-field styling) are global utility classes/components once more than one consumer needs them (`.arcade-field`/`.arcade-label`/`.arcade-input` in `tokens.css`, `shared/components/PixelFrame.vue`) — don't reimplement per-component scoped CSS for these.
 
-6. **Navigation** — no router library. `App.vue` holds a single `currentView` ref (`AppView` string union) and conditionally renders views.
+6. **Navigation** — `vue-router` (`src/router/index.ts`). `App.vue` is a `RouterView` shell. Routes are lazy-loaded; `beforeEach` redirects to `/auth` unless `meta.public`. Full-bleed layouts use `meta.fullBleed`. Auth state lives in `features/auth/store/authStore.ts` — don't read `localStorage` directly for auth.
 
-7. **Markdown** — use the existing `MarkdownRenderer.vue` (`marked` + `dompurify`); don't add a second markdown pipeline.
+7. **Markdown** — use the existing `shared/components/MarkdownRenderer.vue` (`marked` + `dompurify`); don't add a second markdown pipeline.
 
 ## Component Template
 
