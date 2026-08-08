@@ -29,6 +29,7 @@ const routes: RouteRecordRaw[] = [
     path: '/flashcards',
     name: 'flashcards',
     component: () => import('@/features/flashcards/FlashcardsView.vue'),
+    meta: { fullBleed: true },
   },
   {
     path: '/flashcards/learn/:deckId',
